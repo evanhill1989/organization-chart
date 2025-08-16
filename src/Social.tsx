@@ -1,5 +1,5 @@
-import { cleoTree } from "./data/cleoTree";
-import type { OrgNode } from "./data/cleoTree";
+import { socialTree } from "./data/socialTree";
+import type { OrgNode } from "./data/socialTree";
 import { useState } from "react";
 
 type OrgChartNodeProps = {
@@ -76,10 +76,10 @@ function OrgChartNode({
   );
 }
 
-function Cleo() {
+function Social() {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({
-    "/Cleo": true,
+    "/Social": true,
   });
 
   const toggleOpen = (path: string) => {
@@ -88,13 +88,13 @@ function Cleo() {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8">
-      <h2 className="text-3xl font-bold text-center mb-8">Cleo</h2>
+      <h2 className="text-3xl font-bold text-center mb-8">Social</h2>
       <OrgChartNode
-        node={cleoTree}
+        node={socialTree}
         onTaskClick={setModalTask}
         openMap={openMap}
         toggleOpen={toggleOpen}
-        path="/Cleo"
+        path="/Social"
       />
 
       {/* Modal for task details */}
@@ -117,4 +117,4 @@ function Cleo() {
   );
 }
 
-export default Cleo;
+export default Social;

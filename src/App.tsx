@@ -1,9 +1,13 @@
 import { useState } from "react";
 
-import Household from "./Household";
-import Finances from "./Finances";
-import Cleo from "./Cleo";
-import Job from "./Job";
+import OrgChartTab from "./OrgChartTab";
+import { householdTree } from "./data/householdTree";
+import { financesTree } from "./data/financesTree";
+import { cleoTree } from "./data/cleoTree";
+import { jobTree } from "./data/jobTree";
+import { socialTree } from "./data/socialTree";
+
+import { orphansTree } from "./data/orphansTree";
 
 function App() {
   const [activeTab, setActiveTab] = useState("Household");
@@ -51,12 +55,42 @@ function App() {
         >
           Job
         </button>
+        <button
+          onClick={() => setActiveTab("Orphans")}
+          className={`px-6 py-3 text-lg font-medium transition-colors duration-200 border-b-2 outline-2 outline-green-500 ${
+            activeTab === "Orphans"
+              ? "border-white text-white bg-gray-800"
+              : "border-transparent text-gray-300 hover:text-white hover:bg-gray-800"
+          }`}
+        >
+          Orphans
+        </button>
+        <button
+          onClick={() => setActiveTab("Social")}
+          className={`px-6 py-3 text-lg font-medium transition-colors duration-200 border-b-2 outline-2 outline-green-500 ${
+            activeTab === "Social"
+              ? "border-white text-white bg-gray-800"
+              : "border-transparent text-gray-300 hover:text-white hover:bg-gray-800"
+          }`}
+        >
+          Social
+        </button>
       </nav>
       <main className="flex-1 flex items-center justify-center outline-2 outline-purple-500">
-        {activeTab === "Household" && <Household />}
-        {activeTab === "Finances" && <Finances />}
-        {activeTab === "Cleo" && <Cleo />}
-        {activeTab === "Job" && <Job />}
+        {activeTab === "Household" && (
+          <OrgChartTab tree={householdTree} tabName="Household" />
+        )}
+        {activeTab === "Finances" && (
+          <OrgChartTab tree={financesTree} tabName="Finances" />
+        )}
+        {activeTab === "Cleo" && <OrgChartTab tree={cleoTree} tabName="Cleo" />}
+        {activeTab === "Job" && <OrgChartTab tree={jobTree} tabName="Job" />}
+        {activeTab === "Orphans" && (
+          <OrgChartTab tree={orphansTree} tabName="Orphans" />
+        )}
+        {activeTab === "Social" && (
+          <OrgChartTab tree={socialTree} tabName="Social" />
+        )}
       </main>
     </div>
   );

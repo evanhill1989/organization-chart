@@ -1,14 +1,15 @@
-import { cleoTree } from "./data/cleoTree";
-import type { OrgNode } from "./data/cleoTree";
 import { useState } from "react";
 
-type OrgChartNodeProps = {
-  node: OrgNode;
-  level?: number;
-  onTaskClick: (node: OrgNode) => void;
-  openMap: Record<string, boolean>;
-  toggleOpen: (path: string) => void;
-  path: string;
+export type OrgNode = {
+  name: string;
+  type: "category" | "task";
+  children?: OrgNode[];
+  details?: string;
+};
+
+export type OrgChartTabProps = {
+  tree: OrgNode;
+  tabName: string;
 };
 
 function OrgChartNode({
@@ -18,7 +19,14 @@ function OrgChartNode({
   openMap,
   toggleOpen,
   path,
-}: OrgChartNodeProps) {
+}: {
+  node: OrgNode;
+  level?: number;
+  onTaskClick: (node: OrgNode) => void;
+  openMap: Record<string, boolean>;
+  toggleOpen: (path: string) => void;
+  path: string;
+}) {
   const hasChildren = node.children && node.children.length > 0;
   const isTask = node.type === "task";
   const isOpen = openMap[path] || false;
@@ -28,17 +36,17 @@ function OrgChartNode({
         level === 0 ? "" : "mt-4"
       }`}
     >
-      <div className="bg-white rounded-lg shadow p-4 min-w-[120px] text-center outline outline-gray-400">
+      <div className="bg-white rounded-lg shadow min-w-[120px] text-center outline outline-gray-400">
         {isTask ? (
           <button
-            className="text-lg text-blue-600 font-semibold underline hover:text-blue-800 focus:outline-none"
+            className="text-lg text-white font-semibold underline hover:text-blue-200 focus:outline-none bg-blue-600"
             onClick={() => onTaskClick(node)}
           >
             {node.name}
           </button>
         ) : (
           <button
-            className="text-lg text-black font-semibold w-full text-center focus:outline-none"
+            className="text-lg text-white font-semibold w-full text-center focus:outline-none bg-gray-800"
             onClick={() => toggleOpen(path)}
             type="button"
           >
@@ -76,10 +84,10 @@ function OrgChartNode({
   );
 }
 
-function Cleo() {
+export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({
-    "/Cleo": true,
+    [`/${tabName}`]: true,
   });
 
   const toggleOpen = (path: string) => {
@@ -88,15 +96,14 @@ function Cleo() {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8">
-      <h2 className="text-3xl font-bold text-center mb-8">Cleo</h2>
+      <h2 className="text-3xl font-bold text-center mb-8">{tabName}</h2>
       <OrgChartNode
-        node={cleoTree}
+        node={tree}
         onTaskClick={setModalTask}
         openMap={openMap}
         toggleOpen={toggleOpen}
-        path="/Cleo"
+        path={`/${tabName}`}
       />
-
       {/* Modal for task details */}
       {modalTask && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -116,5 +123,3 @@ function Cleo() {
     </div>
   );
 }
-
-export default Cleo;
