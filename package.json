@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.55.0",
     "@tailwindcss/vite": "^4.1.11",
+    "@tanstack/react-query": "^5.85.3",
     "drizzle-orm": "^0.44.4",
     "postgres": "^3.4.7",
     "react": "^19.1.1",

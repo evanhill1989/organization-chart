@@ -1,16 +1,5 @@
 import { useState } from "react";
-
-export type OrgNode = {
-  name: string;
-  type: "category" | "task";
-  children?: OrgNode[];
-  details?: string;
-};
-
-export type OrgChartTabProps = {
-  tree: OrgNode;
-  tabName: string;
-};
+import type { OrgNode } from "./types/orgChart";
 
 function OrgChartNode({
   node,
