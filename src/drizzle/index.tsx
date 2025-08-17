@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { drizzle } from "drizzle-orm/supabase";
+import { drizzle } from "drizzle-orm";
 import * as schema from "./schema"; // your drizzle schema
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;

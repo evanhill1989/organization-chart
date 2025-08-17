@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { OrgNode } from "./types/orgChart";
+import AddNodeForm from "./AddNodeForm";
+import { useAddOrgNode } from "./hooks/useAddOrgNode";
 
 function OrgChartNode({
   node,
@@ -19,13 +21,28 @@ function OrgChartNode({
   const hasChildren = node.children && node.children.length > 0;
   const isTask = node.type === "task";
   const isOpen = openMap[path] || false;
+  const addNodeMutation = useAddOrgNode(node.tab_name ?? "");
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const handleAddNode = (newNode: {
+    name: string;
+    type: "category" | "task";
+    details?: string;
+  }) => {
+    addNodeMutation.mutate({
+      ...newNode,
+      parent_id: node.id,
+      tab_name: newNode.name,
+    });
+  };
+
   return (
     <div
       className={`flex flex-col items-center w-full ${
         level === 0 ? "" : "mt-4"
       }`}
     >
-      <div className="bg-white rounded-lg shadow min-w-[120px] text-center outline outline-gray-400">
+      <div className="bg-white rounded-lg shadow min-w-[120px] text-center outline outline-gray-400 relative">
         {isTask ? (
           <button
             className="text-lg text-white font-semibold underline hover:text-blue-200 focus:outline-none bg-blue-600"
@@ -45,6 +62,17 @@ function OrgChartNode({
                 <span className="ml-1 text-gray-400">{isOpen ? "▼" : "▶"}</span>
               )}
             </span>
+          </button>
+        )}
+        {/* "+" button for modal */}
+        {!isTask && (
+          <button
+            className="absolute top-2 right-2 bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
+            onClick={() => setShowAddModal(true)}
+            title="Add Node"
+            type="button"
+          >
+            +
           </button>
         )}
       </div>
@@ -69,9 +97,23 @@ function OrgChartNode({
           ))}
         </div>
       )}
+      {/* Modal for AddNodeForm */}
+      {showAddModal && (
+        <AddNodeForm
+          parent_id={node.id}
+          tab_name={node.tab_name ?? ""}
+          onAdd={handleAddNode}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
     </div>
   );
 }
+
+type OrgChartTabProps = {
+  tree: OrgNode;
+  tabName: string;
+};
 
 export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);

@@ -31,6 +31,7 @@ export default function App() {
     placeholderData: keepPreviousData,
   });
 
+  console.log(tree, "tree in APP");
   return (
     <div className="min-h-screen w-screen flex flex-col">
       <nav className="flex justify-center items-center bg-gray-900 sticky top-0 z-10">
