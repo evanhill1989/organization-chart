@@ -66,13 +66,7 @@ function OrgChartNode({
       </div>
       {/* Always render the children grid when expanded, even if empty */}
       {!isTask && isOpen && (
-        <div
-          className={`grid gap-4 mt-4 w-full ${
-            level === 0
-              ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4"
-              : "grid-cols-1 sm:grid-cols-2"
-          }`}
-        >
+        <div className="grid gap-4 mt-4 w-full auto-cols-min grid-flow-col outline-2 outline-amber-300">
           {node.children?.map((child) => (
             <OrgChartNode
               key={child.name}
@@ -85,16 +79,15 @@ function OrgChartNode({
             />
           ))}
           {/* "+" button as a sibling to children */}
-          <div className="flex items-center justify-center">
-            <button
-              className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
-              onClick={() => setShowAddModal(true)}
-              title="Add Node"
-              type="button"
-            >
-              +
-            </button>
-          </div>
+
+          <button
+            className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
+            onClick={() => setShowAddModal(true)}
+            title="Add Node"
+            type="button"
+          >
+            +
+          </button>
         </div>
       )}
       {/* Modal for AddNodeForm */}
@@ -144,7 +137,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   return (
     <div className="w-full max-w-4xl mx-auto p-8">
       <h2 className="text-3xl font-bold text-center mb-8">{tabName}</h2>
-      <div className="grid gap-4 w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-4 w-full auto-cols-min grid-flow-col">
         {/* Render all children of the top_category as siblings */}
         {tree.children?.map((child) => (
           <OrgChartNode
@@ -157,16 +150,15 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
           />
         ))}
         {/* "+" button as a sibling */}
-        <div className="flex items-center justify-center">
-          <button
-            className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
-            onClick={() => setShowAddModal(true)}
-            title="Add Node"
-            type="button"
-          >
-            +
-          </button>
-        </div>
+
+        <button
+          className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
+          onClick={() => setShowAddModal(true)}
+          title="Add Node"
+          type="button"
+        >
+          +
+        </button>
       </div>
       {/* Modal for AddNodeForm */}
       {showAddModal && (
