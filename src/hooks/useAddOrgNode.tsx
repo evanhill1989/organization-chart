@@ -13,6 +13,7 @@ export function useAddOrgNode(tab_name: string) {
       details?: string;
       parent_id?: number;
       tab_name: string;
+      root_category: string; // <-- Add this here!
     }) => addOrgNode(newNode),
     onMutate: async () => {
       // Optimistically update the cache

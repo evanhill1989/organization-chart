@@ -33,6 +33,7 @@ function OrgChartNode({
       ...newNode,
       parent_id: node.id,
       tab_name: newNode.name,
+      root_category: node.root_category,
     });
   };
 
@@ -58,25 +59,13 @@ function OrgChartNode({
           >
             <span className="flex items-center justify-center gap-2">
               {node.name}
-              {hasChildren && (
-                <span className="ml-1 text-gray-400">{isOpen ? "▼" : "▶"}</span>
-              )}
+              <span className="ml-1 text-gray-400">{isOpen ? "▼" : "▶"}</span>
             </span>
           </button>
         )}
-        {/* "+" button for modal */}
-        {!isTask && (
-          <button
-            className="absolute top-2 right-2 bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
-            onClick={() => setShowAddModal(true)}
-            title="Add Node"
-            type="button"
-          >
-            +
-          </button>
-        )}
       </div>
-      {hasChildren && isOpen && (
+      {/* Always render the children grid when expanded, even if empty */}
+      {!isTask && isOpen && (
         <div
           className={`grid gap-4 mt-4 w-full ${
             level === 0
@@ -84,7 +73,7 @@ function OrgChartNode({
               : "grid-cols-1 sm:grid-cols-2"
           }`}
         >
-          {node.children!.map((child) => (
+          {node.children?.map((child) => (
             <OrgChartNode
               key={child.name}
               node={child}
@@ -95,6 +84,17 @@ function OrgChartNode({
               path={`${path}/${child.name}`}
             />
           ))}
+          {/* "+" button as a sibling to children */}
+          <div className="flex items-center justify-center">
+            <button
+              className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
+              onClick={() => setShowAddModal(true)}
+              title="Add Node"
+              type="button"
+            >
+              +
+            </button>
+          </div>
         </div>
       )}
       {/* Modal for AddNodeForm */}
@@ -117,6 +117,7 @@ type OrgChartTabProps = {
 
 export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({
     [`/${tabName}`]: true,
   });
@@ -125,16 +126,57 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
     setOpenMap((prev) => ({ ...prev, [path]: !prev[path] }));
   };
 
+  // Handler for adding a node at the top level
+  const addNodeMutation = useAddOrgNode(tabName);
+  const handleAddNode = (newNode: {
+    name: string;
+    type: "category" | "task";
+    details?: string;
+  }) => {
+    addNodeMutation.mutate({
+      ...newNode,
+      parent_id: tree.id,
+      tab_name: newNode.name,
+      root_category: tabName, // <-- use tabName here
+    });
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto p-8">
       <h2 className="text-3xl font-bold text-center mb-8">{tabName}</h2>
-      <OrgChartNode
-        node={tree}
-        onTaskClick={setModalTask}
-        openMap={openMap}
-        toggleOpen={toggleOpen}
-        path={`/${tabName}`}
-      />
+      <div className="grid gap-4 w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+        {/* Render all children of the top_category as siblings */}
+        {tree.children?.map((child) => (
+          <OrgChartNode
+            key={child.name}
+            node={child}
+            onTaskClick={setModalTask}
+            openMap={openMap}
+            toggleOpen={toggleOpen}
+            path={`/${tabName}/${child.name}`}
+          />
+        ))}
+        {/* "+" button as a sibling */}
+        <div className="flex items-center justify-center">
+          <button
+            className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
+            onClick={() => setShowAddModal(true)}
+            title="Add Node"
+            type="button"
+          >
+            +
+          </button>
+        </div>
+      </div>
+      {/* Modal for AddNodeForm */}
+      {showAddModal && (
+        <AddNodeForm
+          parent_id={tree.id}
+          tab_name={tabName}
+          onAdd={handleAddNode}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
       {/* Modal for task details */}
       {modalTask && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">

@@ -8,12 +8,14 @@ export async function addOrgNode({
   details,
   parent_id,
   tab_name,
+  root_category,
 }: {
   name: string;
   type: "category" | "task";
   details?: string;
   parent_id?: number;
   tab_name: string;
+  root_category: string;
 }): Promise<OrgNodeRow> {
   const { data, error } = await supabase
     .from("org_nodes")
@@ -24,6 +26,7 @@ export async function addOrgNode({
         details,
         parent_id,
         tab_name,
+        root_category,
       },
     ])
     .select()
