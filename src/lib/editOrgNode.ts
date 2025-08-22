@@ -1,6 +1,7 @@
 import { supabase } from "./db/supabaseClient";
 import type { OrgNodeRow } from "../types/orgChart";
 
+// Just update the node and return the updated row - no need for tree rebuilding
 export async function editOrgNode({
   id,
   name,

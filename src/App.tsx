@@ -35,21 +35,9 @@ export default function App() {
     // isPlaceholderData,
   } = useQuery<OrgNode>({
     queryKey: ["orgTree", activeTab],
-    queryFn: () => {
-      console.log("📡 QUERY: Fetching tree for tab:", activeTab);
-      return fetchOrgTree(activeTab);
-    },
+    queryFn: () => fetchOrgTree(activeTab),
     placeholderData: keepPreviousData,
   });
-
-  useEffect(() => {
-    console.log(
-      "🔄 APP: Tree data changed for tab",
-      activeTab,
-      ":",
-      JSON.stringify(tree, null, 2)
-    );
-  }, [tree, activeTab]);
 
   return (
     <div className="min-h-screen w-screen flex flex-col">

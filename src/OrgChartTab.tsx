@@ -4,7 +4,7 @@ import AddNodeForm from "./AddNodeForm";
 import OrgChartNode from "./OrgChartNode";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
 import { useDeleteOrgNode } from "./hooks/useDeleteOrgNode";
-import { editOrgNode } from "./lib/editOrgNode";
+import { useEditOrgNode } from "./hooks/useEditOrgNode";
 
 type OrgChartTabProps = {
   tree: OrgNode;
@@ -40,6 +40,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
 
   // Handler for adding a node at the top level
   const addNodeMutation = useAddOrgNode(tabName);
+  const editNodeMutation = useEditOrgNode(tabName);
   const deleteNodeMutation = useDeleteOrgNode(tabName);
   const handleAddNode = (newNode: {
     name: string;
@@ -52,17 +53,6 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
       tab_name: tabName,
       root_category: tabName,
     };
-
-    console.log(
-      "🎯 COMPONENT: OrgChartTab calling mutation with:",
-      mutationData
-    );
-    console.log("🎯 COMPONENT: Current tree context:", {
-      treeId: tree.id,
-      treeName: tree.name,
-      tabName: tabName,
-      treeChildren: tree.children?.length || 0,
-    });
 
     addNodeMutation.mutate(mutationData);
   };
@@ -124,11 +114,10 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
               value={details}
               onChange={async (e) => {
                 setDetails(e.target.value);
-                await editOrgNode({
+                editNodeMutation.mutate({
                   id: modalTask.id,
                   details: e.target.value,
                 });
-                // Optionally update modalTask state for instant UI update
                 setModalTask({ ...modalTask, details: e.target.value });
               }}
             />
@@ -136,11 +125,6 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
             <button
               className="mt-6 bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700"
               onClick={() => {
-                console.log(
-                  "🎯 DELETE COMPONENT: Deleting node:",
-                  modalTask.id,
-                  modalTask.name
-                );
                 deleteNodeMutation.mutate(modalTask.id);
                 setModalTask(null);
               }}

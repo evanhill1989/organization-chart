@@ -38,18 +38,6 @@ export default function OrgChartNode({
       root_category: node.root_category,
     };
 
-    console.log(
-      "🎯 COMPONENT: OrgChartNode calling mutation with:",
-      mutationData
-    );
-    console.log("🎯 COMPONENT: Current node context:", {
-      nodeId: node.id,
-      nodeName: node.name,
-      nodeType: node.type,
-      tabName: node.tab_name,
-      rootCategory: node.root_category,
-    });
-
     addNodeMutation.mutate(mutationData);
   };
 
