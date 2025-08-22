@@ -9,12 +9,11 @@ export async function fetchOrgTree(tabName: string) {
     .eq("root_category", tabName);
 
   const typedData = data as OrgNodeRow[];
-  console.log(data, "raw data from DB");
 
   if (error) throw error;
 
   const tree = buildOrgTree(typedData ?? []);
-  console.log(tree, "tree in fetchOrgTree");
+
   // Always return a valid node (or a default empty node if not found)
   return (
     tree[tabName] ?? {

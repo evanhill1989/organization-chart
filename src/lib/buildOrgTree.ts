@@ -7,10 +7,6 @@ export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
   const roots: Record<string, OrgNode> = {};
 
   flatNodes.forEach((row) => {
-    console.log(
-      row.root_category,
-      "root_category in flatNodes.forEach buildOrgTree"
-    ); // Household
     nodeMap.set(row.id, {
       id: row.id,
       name: row.name,

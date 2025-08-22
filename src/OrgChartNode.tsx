@@ -1,0 +1,122 @@
+import { useState } from "react";
+import type { OrgNode } from "./types/orgChart";
+import AddNodeForm from "./AddNodeForm";
+import { useAddOrgNode } from "./hooks/useAddOrgNode";
+
+type OrgChartNodeProps = {
+  node: OrgNode;
+  level?: number;
+  onTaskClick: (node: OrgNode) => void;
+  openMap: Record<string, boolean>;
+  toggleOpen: (path: string) => void;
+  path: string;
+};
+
+export default function OrgChartNode({
+  node,
+  level = 0,
+  onTaskClick,
+  openMap,
+  toggleOpen,
+  path,
+}: OrgChartNodeProps) {
+  const hasChildren = node.children && node.children.length > 0;
+  const isTask = node.type === "task";
+  const isOpen = openMap[path] || false;
+  const addNodeMutation = useAddOrgNode(node.root_category);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const handleAddNode = (newNode: {
+    name: string;
+    type: "category" | "task";
+    details?: string;
+  }) => {
+    const mutationData = {
+      ...newNode,
+      parent_id: node.id,
+      tab_name: node.tab_name ?? "",
+      root_category: node.root_category,
+    };
+
+    console.log(
+      "🎯 COMPONENT: OrgChartNode calling mutation with:",
+      mutationData
+    );
+    console.log("🎯 COMPONENT: Current node context:", {
+      nodeId: node.id,
+      nodeName: node.name,
+      nodeType: node.type,
+      tabName: node.tab_name,
+      rootCategory: node.root_category,
+    });
+
+    addNodeMutation.mutate(mutationData);
+  };
+
+  return (
+    <div
+      className={`flex flex-col items-center w-full ${
+        level === 0 ? "" : "mt-4"
+      }`}
+    >
+      <div className="bg-white rounded-lg shadow min-w-[120px] text-center outline outline-gray-400 relative">
+        {isTask ? (
+          <button
+            className="text-lg text-white font-semibold underline hover:text-blue-200 focus:outline-none bg-blue-600"
+            onClick={() => onTaskClick(node)}
+          >
+            {node.name}
+          </button>
+        ) : (
+          <button
+            className="text-lg text-white font-semibold w-full text-center focus:outline-none bg-gray-800"
+            onClick={() => toggleOpen(path)}
+            type="button"
+          >
+            <span className="flex items-center justify-center gap-2">
+              {node.name}
+              <span className="ml-1 text-gray-400">{isOpen ? "▼" : "▶"}</span>
+            </span>
+          </button>
+        )}
+      </div>
+
+      {/* Always render the children grid when expanded, even if empty */}
+      {!isTask && isOpen && (
+        <div className="grid gap-4 mt-4 w-full auto-cols-min grid-flow-col outline-2 outline-amber-300">
+          {node.children?.map((child) => (
+            <OrgChartNode
+              key={child.name}
+              node={child}
+              level={level + 1}
+              onTaskClick={onTaskClick}
+              openMap={openMap}
+              toggleOpen={toggleOpen}
+              path={`${path}/${child.name}`}
+            />
+          ))}
+
+          {/* "+" button as a sibling to children */}
+          <button
+            className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
+            onClick={() => setShowAddModal(true)}
+            title="Add Node"
+            type="button"
+          >
+            +
+          </button>
+        </div>
+      )}
+
+      {/* Modal for AddNodeForm */}
+      {showAddModal && (
+        <AddNodeForm
+          parent_id={node.id}
+          tab_name={node.tab_name ?? ""}
+          onAdd={handleAddNode}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
+    </div>
+  );
+}

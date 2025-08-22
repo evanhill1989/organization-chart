@@ -1,107 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { OrgNode } from "./types/orgChart";
 import AddNodeForm from "./AddNodeForm";
+import OrgChartNode from "./OrgChartNode";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
-
-function OrgChartNode({
-  node,
-  level = 0,
-  onTaskClick,
-  openMap,
-  toggleOpen,
-  path,
-}: {
-  node: OrgNode;
-  level?: number;
-  onTaskClick: (node: OrgNode) => void;
-  openMap: Record<string, boolean>;
-  toggleOpen: (path: string) => void;
-  path: string;
-}) {
-  const hasChildren = node.children && node.children.length > 0;
-  const isTask = node.type === "task";
-  const isOpen = openMap[path] || false;
-  const addNodeMutation = useAddOrgNode(node.tab_name ?? "");
-  const [showAddModal, setShowAddModal] = useState(false);
-
-  const handleAddNode = (newNode: {
-    name: string;
-    type: "category" | "task";
-    details?: string;
-  }) => {
-    addNodeMutation.mutate({
-      ...newNode,
-      parent_id: node.id,
-      tab_name: newNode.name,
-      root_category: node.root_category,
-    });
-  };
-
-  return (
-    <div
-      className={`flex flex-col items-center w-full ${
-        level === 0 ? "" : "mt-4"
-      }`}
-    >
-      <div className="bg-white rounded-lg shadow min-w-[120px] text-center outline outline-gray-400 relative">
-        {isTask ? (
-          <button
-            className="text-lg text-white font-semibold underline hover:text-blue-200 focus:outline-none bg-blue-600"
-            onClick={() => onTaskClick(node)}
-          >
-            {node.name}
-          </button>
-        ) : (
-          <button
-            className="text-lg text-white font-semibold w-full text-center focus:outline-none bg-gray-800"
-            onClick={() => toggleOpen(path)}
-            type="button"
-          >
-            <span className="flex items-center justify-center gap-2">
-              {node.name}
-              <span className="ml-1 text-gray-400">{isOpen ? "▼" : "▶"}</span>
-            </span>
-          </button>
-        )}
-      </div>
-      {/* Always render the children grid when expanded, even if empty */}
-      {!isTask && isOpen && (
-        <div className="grid gap-4 mt-4 w-full auto-cols-min grid-flow-col outline-2 outline-amber-300">
-          {node.children?.map((child) => (
-            <OrgChartNode
-              key={child.name}
-              node={child}
-              level={level + 1}
-              onTaskClick={onTaskClick}
-              openMap={openMap}
-              toggleOpen={toggleOpen}
-              path={`${path}/${child.name}`}
-            />
-          ))}
-          {/* "+" button as a sibling to children */}
-
-          <button
-            className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
-            onClick={() => setShowAddModal(true)}
-            title="Add Node"
-            type="button"
-          >
-            +
-          </button>
-        </div>
-      )}
-      {/* Modal for AddNodeForm */}
-      {showAddModal && (
-        <AddNodeForm
-          parent_id={node.id}
-          tab_name={node.tab_name ?? ""}
-          onAdd={handleAddNode}
-          onClose={() => setShowAddModal(false)}
-        />
-      )}
-    </div>
-  );
-}
+import { deleteOrgNode } from "./lib/deleteOrgNode";
+import { editOrgNode } from "./lib/editOrgNode";
 
 type OrgChartTabProps = {
   tree: OrgNode;
@@ -110,6 +13,22 @@ type OrgChartTabProps = {
 
 export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
+  const [details, setDetails] = useState(modalTask?.details ?? "");
+
+  useEffect(() => {
+    setDetails(modalTask?.details ?? "");
+  }, [modalTask]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (details !== modalTask?.details) {
+        editOrgNode({ id: modalTask?.id, details });
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeout);
+  }, [details, modalTask?.id, modalTask?.details]);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({
     [`/${tabName}`]: true,
@@ -126,12 +45,25 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
     type: "category" | "task";
     details?: string;
   }) => {
-    addNodeMutation.mutate({
+    const mutationData = {
       ...newNode,
       parent_id: tree.id,
-      tab_name: newNode.name,
-      root_category: tabName, // <-- use tabName here
+      tab_name: tabName,
+      root_category: tabName,
+    };
+
+    console.log(
+      "🎯 COMPONENT: OrgChartTab calling mutation with:",
+      mutationData
+    );
+    console.log("🎯 COMPONENT: Current tree context:", {
+      treeId: tree.id,
+      treeName: tree.name,
+      tabName: tabName,
+      treeChildren: tree.children?.length || 0,
     });
+
+    addNodeMutation.mutate(mutationData);
   };
 
   return (
@@ -149,8 +81,8 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
             path={`/${tabName}/${child.name}`}
           />
         ))}
-        {/* "+" button as a sibling */}
 
+        {/* "+" button as a sibling */}
         <button
           className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
           onClick={() => setShowAddModal(true)}
@@ -160,6 +92,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
           +
         </button>
       </div>
+
       {/* Modal for AddNodeForm */}
       {showAddModal && (
         <AddNodeForm
@@ -169,6 +102,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
           onClose={() => setShowAddModal(false)}
         />
       )}
+
       {/* Modal for task details */}
       {modalTask && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -181,7 +115,33 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
               &times;
             </button>
             <h3 className="text-2xl font-bold mb-4">{modalTask.name}</h3>
-            <p className="text-gray-700">{modalTask.details}</p>
+            <label className="block mb-2 font-semibold text-gray-700">
+              Details:
+            </label>
+            <textarea
+              className="w-full text-black p-2 border rounded mb-4"
+              value={details}
+              onChange={async (e) => {
+                setDetails(e.target.value);
+                await editOrgNode({
+                  id: modalTask.id,
+                  details: e.target.value,
+                });
+                // Optionally update modalTask state for instant UI update
+                setModalTask({ ...modalTask, details: e.target.value });
+              }}
+            />
+
+            <button
+              className="mt-6 bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700"
+              onClick={async () => {
+                await deleteOrgNode(modalTask.id);
+                setModalTask(null);
+                // Optionally: refetch or invalidate query here
+              }}
+            >
+              Delete Task
+            </button>
           </div>
         </div>
       )}

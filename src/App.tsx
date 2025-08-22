@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 import OrgChartTab from "./OrgChartTab";
@@ -11,13 +11,21 @@ const TABS = [
   "Finances",
   "Cleo",
   "Job",
-  "Orphans",
   "Social",
+  "Personal",
+  "Orphans",
 ] as const;
 
 export default function App() {
-  const [activeTab, setActiveTab] =
-    useState<(typeof TABS)[number]>("Household");
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>(
+    () =>
+      (localStorage.getItem("activeTab") as (typeof TABS)[number]) ||
+      "Household"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("activeTab", activeTab);
+  }, [activeTab]);
 
   // React Query fetch for the active tab
   const {
@@ -27,11 +35,22 @@ export default function App() {
     // isPlaceholderData,
   } = useQuery<OrgNode>({
     queryKey: ["orgTree", activeTab],
-    queryFn: () => fetchOrgTree(activeTab),
+    queryFn: () => {
+      console.log("📡 QUERY: Fetching tree for tab:", activeTab);
+      return fetchOrgTree(activeTab);
+    },
     placeholderData: keepPreviousData,
   });
 
-  console.log(tree, "tree in APP");
+  useEffect(() => {
+    console.log(
+      "🔄 APP: Tree data changed for tab",
+      activeTab,
+      ":",
+      JSON.stringify(tree, null, 2)
+    );
+  }, [tree, activeTab]);
+
   return (
     <div className="min-h-screen w-screen flex flex-col">
       <nav className="flex justify-center items-center bg-gray-900 sticky top-0 z-10">
