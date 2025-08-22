@@ -3,7 +3,7 @@ import type { OrgNode } from "./types/orgChart";
 import AddNodeForm from "./AddNodeForm";
 import OrgChartNode from "./OrgChartNode";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
-import { deleteOrgNode } from "./lib/deleteOrgNode";
+import { useDeleteOrgNode } from "./hooks/useDeleteOrgNode";
 import { editOrgNode } from "./lib/editOrgNode";
 
 type OrgChartTabProps = {
@@ -40,6 +40,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
 
   // Handler for adding a node at the top level
   const addNodeMutation = useAddOrgNode(tabName);
+  const deleteNodeMutation = useDeleteOrgNode(tabName);
   const handleAddNode = (newNode: {
     name: string;
     type: "category" | "task";
@@ -134,10 +135,14 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
 
             <button
               className="mt-6 bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700"
-              onClick={async () => {
-                await deleteOrgNode(modalTask.id);
+              onClick={() => {
+                console.log(
+                  "🎯 DELETE COMPONENT: Deleting node:",
+                  modalTask.id,
+                  modalTask.name
+                );
+                deleteNodeMutation.mutate(modalTask.id);
                 setModalTask(null);
-                // Optionally: refetch or invalidate query here
               }}
             >
               Delete Task
