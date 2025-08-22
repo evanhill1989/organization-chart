@@ -14,31 +14,6 @@ type OrgChartTabProps = {
 export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
   const [details, setDetails] = useState(modalTask?.details ?? "");
-
-  useEffect(() => {
-    setDetails(modalTask?.details ?? "");
-  }, [modalTask]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (details !== modalTask?.details) {
-        editOrgNode({ id: modalTask?.id, details });
-      }
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(timeout);
-  }, [details, modalTask?.id, modalTask?.details]);
-
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>({
-    [`/${tabName}`]: true,
-  });
-
-  const toggleOpen = (path: string) => {
-    setOpenMap((prev) => ({ ...prev, [path]: !prev[path] }));
-  };
-
-  // Handler for adding a node at the top level
   const addNodeMutation = useAddOrgNode(tabName);
   const editNodeMutation = useEditOrgNode(tabName);
   const deleteNodeMutation = useDeleteOrgNode(tabName);
@@ -56,6 +31,35 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
 
     addNodeMutation.mutate(mutationData);
   };
+
+  useEffect(() => {
+    setDetails(modalTask?.details ?? "");
+  }, [modalTask]);
+
+  useEffect(() => {
+    if (!modalTask) return;
+    const timeout = setTimeout(() => {
+      if (details !== modalTask.details) {
+        editNodeMutation.mutate({
+          id: modalTask.id,
+          details,
+        });
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeout);
+  }, [details, modalTask, editNodeMutation]);
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({
+    [`/${tabName}`]: true,
+  });
+
+  const toggleOpen = (path: string) => {
+    setOpenMap((prev) => ({ ...prev, [path]: !prev[path] }));
+  };
+
+  // Handler for adding a node at the top level
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8">
