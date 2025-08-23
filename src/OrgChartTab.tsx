@@ -1,14 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "gsap";
 import type { OrgNode } from "./types/orgChart";
 import AddNodeForm from "./AddNodeForm";
 import OrgChartNode from "./OrgChartNode";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
 import { useDeleteOrgNode } from "./hooks/useDeleteOrgNode";
 import { useEditOrgNode } from "./hooks/useEditOrgNode";
-// import {
-//   getUrgencyBorderClasses,
-//   getUrgencyGlowClasses,
-// } from "./lib/urgencyUtils";
 
 type OrgChartTabProps = {
   tree: OrgNode;
@@ -22,6 +20,22 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const addNodeMutation = useAddOrgNode(tabName);
   const editNodeMutation = useEditOrgNode(tabName);
   const deleteNodeMutation = useDeleteOrgNode(tabName);
+
+  // Ref for modal GSAP animation
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // GSAP animation for modal urgency level 10
+  useGSAP(() => {
+    if (modalTask?.type === "task" && urgency === 10) {
+      gsap.to(modalRef.current, {
+        scale: 1.02,
+        duration: 1,
+        ease: "power2.inOut",
+        yoyo: true,
+        repeat: -1,
+      });
+    }
+  }, [modalTask, urgency]);
 
   const handleAddNode = (newNode: {
     name: string;

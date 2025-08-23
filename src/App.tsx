@@ -6,6 +6,11 @@ import OrgChartTab from "./OrgChartTab";
 import type { OrgNode } from "./types/orgChart";
 import { fetchOrgTree } from "./lib/fetchOrgTree";
 
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(useGSAP);
+
 const TABS = [
   "Household",
   "Finances",
