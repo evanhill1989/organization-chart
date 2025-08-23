@@ -2,6 +2,11 @@ import { useState } from "react";
 import type { OrgNode } from "./types/orgChart";
 import AddNodeForm from "./AddNodeForm";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
+import {
+  getUrgencyBorderClasses,
+  getUrgencyGlowClasses,
+  getEffectiveUrgency,
+} from "./lib/urgencyUtils";
 
 type OrgChartNodeProps = {
   node: OrgNode;
@@ -25,6 +30,8 @@ export default function OrgChartNode({
   const addNodeMutation = useAddOrgNode(node.root_category);
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const effectiveUrgency = getEffectiveUrgency(node);
+
   const handleAddNode = (newNode: {
     name: string;
     type: "category" | "task";
@@ -47,17 +54,21 @@ export default function OrgChartNode({
         level === 0 ? "" : "mt-4"
       }`}
     >
-      <div className="bg-white rounded-lg shadow min-w-[120px] text-center outline outline-gray-400 relative">
+      <div
+        className={`bg-white rounded-lg shadow min-w-[120px] text-center outline outline-gray-400 relative ${getUrgencyBorderClasses(
+          effectiveUrgency
+        )} ${getUrgencyGlowClasses(effectiveUrgency)}`}
+      >
         {isTask ? (
           <button
-            className="text-lg text-white font-semibold underline hover:text-blue-200 focus:outline-none bg-blue-600"
+            className="text-lg text-white font-semibold underline hover:text-blue-200 focus:outline-none bg-blue-600 w-full h-full p-2 rounded-lg"
             onClick={() => onTaskClick(node)}
           >
             {node.name}
           </button>
         ) : (
           <button
-            className="text-lg text-white font-semibold w-full text-center focus:outline-none bg-gray-800"
+            className="text-lg text-white font-semibold w-full text-center focus:outline-none bg-gray-800 p-2 rounded-lg"
             onClick={() => toggleOpen(path)}
             type="button"
           >
