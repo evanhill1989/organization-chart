@@ -7,11 +7,46 @@ import OrgChartNode from "./OrgChartNode";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
 import { useDeleteOrgNode } from "./hooks/useDeleteOrgNode";
 import { useEditOrgNode } from "./hooks/useEditOrgNode";
+import { getEffectiveUrgency } from "./lib/urgencyUtils";
 
 type OrgChartTabProps = {
   tree: OrgNode;
   tabName: string;
 };
+
+// Helper function to find the deepest visible node that should animate
+function findDeepestAnimationTarget(
+  node: OrgNode,
+  openMap: Record<string, boolean>,
+  basePath: string
+): string | null {
+  const currentPath = basePath ? `${basePath}/${node.name}` : `/${node.name}`;
+  const effectiveUrgency = getEffectiveUrgency(node);
+
+  // If this node doesn't have level 10 urgency, it and its children can't be targets
+  if (effectiveUrgency !== 10) return null;
+
+  // If this is a task with level 10 urgency, it should animate
+  if (node.type === "task") return currentPath;
+
+  // If this is a closed category with level 10 urgency, it should animate
+  const isOpen = openMap[currentPath];
+  if (!isOpen) return currentPath;
+
+  // If this category is open, check its children for deeper targets
+  if (node.children) {
+    for (const child of node.children) {
+      const childTarget = findDeepestAnimationTarget(
+        child,
+        openMap,
+        currentPath
+      );
+      if (childTarget) return childTarget; // Return first found deep target
+    }
+  }
+
+  return null; // This open category has no deeper targets
+}
 
 export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
@@ -81,6 +116,40 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const toggleOpen = (path: string) => {
     setOpenMap((prev) => ({ ...prev, [path]: !prev[path] }));
   };
+
+  // Global animation management from OrgChartTab
+  useGSAP(() => {
+    // Clear all existing animations first
+    gsap.killTweensOf("*");
+    gsap.set("*", { scale: 1 });
+
+    // Find which node should animate
+    if (tree.children) {
+      for (const child of tree.children) {
+        const targetPath = findDeepestAnimationTarget(
+          child,
+          openMap,
+          `/${tabName}`
+        );
+        if (targetPath) {
+          // Convert path to a CSS selector - we'll need to add data attributes to nodes
+          const targetSelector = `[data-node-path="${targetPath}"]`;
+          const targetElement = document.querySelector(targetSelector);
+
+          if (targetElement) {
+            gsap.to(targetElement, {
+              scale: 1.05,
+              duration: 0.8,
+              ease: "power2.inOut",
+              yoyo: true,
+              repeat: -1,
+            });
+            break; // Only animate one node
+          }
+        }
+      }
+    }
+  }, [openMap, tree]);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8">

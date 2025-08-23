@@ -1,6 +1,4 @@
-import { useState, useRef } from "react";
-import { useGSAP } from "@gsap/react";
-import { gsap } from "gsap";
+import { useState } from "react";
 import type { OrgNode } from "./types/orgChart";
 import AddNodeForm from "./AddNodeForm";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
@@ -35,22 +33,6 @@ export default function OrgChartNode({
   // Calculate the effective urgency (own urgency for tasks, max child urgency for categories)
   const effectiveUrgency = getEffectiveUrgency(node);
 
-  // Ref for GSAP animation
-  const nodeRef = useRef<HTMLDivElement>(null);
-
-  // GSAP animation for urgency level 10
-  useGSAP(() => {
-    if (effectiveUrgency === 10) {
-      gsap.to(nodeRef.current, {
-        scale: 1.05,
-        duration: 0.8,
-        ease: "power2.inOut",
-        yoyo: true,
-        repeat: -1,
-      });
-    }
-  }, [effectiveUrgency]);
-
   const handleAddNode = (newNode: {
     name: string;
     type: "category" | "task";
@@ -74,8 +56,8 @@ export default function OrgChartNode({
       }`}
     >
       <div
-        ref={nodeRef}
-        className={`bg-white rounded-lg shadow min-w-[120px] text-center outline outline-gray-400 relative ${getUrgencyBorderClasses(
+        data-node-path={path}
+        className={`bg-white rounded-lg shadow-amber-600 min-w-[120px] text-center outline outline-gray-400 relative ${getUrgencyBorderClasses(
           effectiveUrgency
         )} ${getUrgencyGlowClasses(effectiveUrgency)}`}
       >

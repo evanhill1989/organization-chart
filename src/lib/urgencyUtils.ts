@@ -76,7 +76,7 @@ export function getUrgencyGlowClasses(urgency: number = 1): string {
     case 9:
       return "shadow-lg shadow-red-500/50";
     case 10:
-      return "shadow-xl shadow-red-600/75 animate-pulse";
+      return "shadow-xl shadow-red-600/75";
     default:
       return "";
   }
