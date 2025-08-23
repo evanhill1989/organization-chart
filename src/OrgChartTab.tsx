@@ -14,13 +14,16 @@ type OrgChartTabProps = {
 export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
   const [details, setDetails] = useState(modalTask?.details ?? "");
+  const [urgency, setUrgency] = useState(modalTask?.urgency ?? 1);
   const addNodeMutation = useAddOrgNode(tabName);
   const editNodeMutation = useEditOrgNode(tabName);
   const deleteNodeMutation = useDeleteOrgNode(tabName);
+
   const handleAddNode = (newNode: {
     name: string;
     type: "category" | "task";
     details?: string;
+    urgency?: number;
   }) => {
     const mutationData = {
       ...newNode,
@@ -34,21 +37,23 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
 
   useEffect(() => {
     setDetails(modalTask?.details ?? "");
+    setUrgency(modalTask?.urgency ?? 1);
   }, [modalTask]);
 
   useEffect(() => {
     if (!modalTask) return;
     const timeout = setTimeout(() => {
-      if (details !== modalTask.details) {
+      if (details !== modalTask.details || urgency !== modalTask.urgency) {
         editNodeMutation.mutate({
           id: modalTask.id,
           details,
+          urgency: modalTask.type === "task" ? urgency : undefined,
         });
       }
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeout);
-  }, [details, modalTask, editNodeMutation]);
+  }, [details, urgency, modalTask, editNodeMutation]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({
@@ -58,8 +63,6 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const toggleOpen = (path: string) => {
     setOpenMap((prev) => ({ ...prev, [path]: !prev[path] }));
   };
-
-  // Handler for adding a node at the top level
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8">
@@ -110,13 +113,41 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
               &times;
             </button>
             <h3 className="text-2xl font-bold mb-4">{modalTask.name}</h3>
+
+            {modalTask.type === "task" && (
+              <div className="mb-4">
+                <label className="block mb-2 font-semibold text-gray-700">
+                  Urgency (1-10):
+                </label>
+                <select
+                  className="w-full text-black p-2 border rounded"
+                  value={urgency}
+                  onChange={(e) => {
+                    const newUrgency = Number(e.target.value);
+                    setUrgency(newUrgency);
+                    editNodeMutation.mutate({
+                      id: modalTask.id,
+                      urgency: newUrgency,
+                    });
+                    setModalTask({ ...modalTask, urgency: newUrgency });
+                  }}
+                >
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <label className="block mb-2 font-semibold text-gray-700">
               Details:
             </label>
             <textarea
               className="w-full text-black p-2 border rounded mb-4"
               value={details}
-              onChange={async (e) => {
+              onChange={(e) => {
                 setDetails(e.target.value);
                 editNodeMutation.mutate({
                   id: modalTask.id,

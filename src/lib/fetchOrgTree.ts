@@ -17,8 +17,10 @@ export async function fetchOrgTree(tabName: string) {
   // Always return a valid node (or a default empty node if not found)
   return (
     tree[tabName] ?? {
+      id: 0,
       name: tabName,
       type: "category",
+      root_category: tabName,
       children: [],
     }
   );

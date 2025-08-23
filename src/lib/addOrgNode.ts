@@ -7,6 +7,7 @@ export async function addOrgNode({
   name,
   type,
   details,
+  urgency,
   parent_id,
   tab_name,
   root_category,
@@ -14,6 +15,7 @@ export async function addOrgNode({
   name: string;
   type: "category" | "task";
   details?: string;
+  urgency?: number;
   parent_id?: number;
   tab_name: string;
   root_category: string;
@@ -26,6 +28,7 @@ export async function addOrgNode({
         name,
         type,
         details,
+        urgency: type === "task" ? urgency ?? 1 : undefined,
         parent_id,
         tab_name,
         root_category,
@@ -50,8 +53,10 @@ export async function addOrgNode({
   // Return the complete tree for this root_category
   return (
     tree[root_category] ?? {
+      id: 0,
       name: root_category,
       type: "category",
+      root_category,
       children: [],
     }
   );

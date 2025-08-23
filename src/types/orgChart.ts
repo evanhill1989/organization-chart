@@ -6,6 +6,7 @@ export type OrgNode = {
   root_category: string;
   children?: OrgNode[];
   details?: string;
+  urgency?: number; // 1-10, defaults to 1
   parent_id?: number;
   tab_name?: string;
 };
@@ -16,7 +17,7 @@ export interface OrgNodeRow {
   type: string;
   root_category: string;
   details?: string;
-
+  urgency?: number; // 1-10, defaults to 1
   parent_id?: number;
   tab_name?: string;
 }

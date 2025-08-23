@@ -7,19 +7,16 @@ type AddNodeFormProps = {
     name: string;
     type: "category" | "task";
     details?: string;
+    urgency?: number;
   }) => void;
   onClose: () => void;
 };
 
-export default function AddNodeForm({
-  parent_id,
-  tab_name,
-  onAdd,
-  onClose,
-}: AddNodeFormProps) {
+export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
   const [name, setName] = useState("");
   const [type, setType] = useState<"category" | "task">("task");
   const [details, setDetails] = useState("");
+  const [urgency, setUrgency] = useState(1);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -32,9 +29,11 @@ export default function AddNodeForm({
               name: name.trim(),
               type,
               details: details.trim() || undefined,
+              urgency: type === "task" ? urgency : undefined,
             });
             setName("");
             setDetails("");
+            setUrgency(1);
             onClose();
           }
         }}
@@ -71,6 +70,24 @@ export default function AddNodeForm({
           value={details}
           onChange={(e) => setDetails(e.target.value)}
         />
+        {type === "task" && (
+          <div className="w-full mb-2">
+            <label className="block text-white text-sm font-medium mb-1">
+              Urgency (1-10):
+            </label>
+            <select
+              className="px-2 py-1 rounded w-full text-black"
+              value={urgency}
+              onChange={(e) => setUrgency(Number(e.target.value))}
+            >
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num}>
+                  {num}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <button
           className="bg-blue-600 text-white px-4 py-1 rounded font-semibold hover:bg-blue-700 mt-2"
           type="submit"

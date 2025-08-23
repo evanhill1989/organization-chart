@@ -20,7 +20,6 @@ export default function OrgChartNode({
   toggleOpen,
   path,
 }: OrgChartNodeProps) {
-  const hasChildren = node.children && node.children.length > 0;
   const isTask = node.type === "task";
   const isOpen = openMap[path] || false;
   const addNodeMutation = useAddOrgNode(node.root_category);
@@ -30,6 +29,7 @@ export default function OrgChartNode({
     name: string;
     type: "category" | "task";
     details?: string;
+    urgency?: number;
   }) => {
     const mutationData = {
       ...newNode,

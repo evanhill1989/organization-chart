@@ -12,6 +12,7 @@ export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
       name: row.name,
       type: row.type as "top_category" | "category" | "task",
       details: row.details ?? undefined,
+      urgency: row.urgency ?? (row.type === "task" ? 1 : undefined),
       children: [],
       tab_name: row.tab_name,
       root_category: row.root_category,
@@ -24,7 +25,7 @@ export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
       const parent = nodeMap.get(row.parent_id);
       if (parent) parent.children!.push(node);
     } else {
-      roots[row.root_category ?? "default"] = node; // <-- FIXED!
+      roots[row.root_category ?? "default"] = node;
     }
   });
 
