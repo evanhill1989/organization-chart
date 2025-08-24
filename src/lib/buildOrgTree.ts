@@ -13,6 +13,7 @@ export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
       type: row.type as "top_category" | "category" | "task",
       details: row.details ?? undefined,
       urgency: row.urgency ?? (row.type === "task" ? 1 : undefined),
+      importance: row.importance ?? (row.type === "task" ? 1 : undefined),
       children: [],
       tab_name: row.tab_name,
       root_category: row.root_category,

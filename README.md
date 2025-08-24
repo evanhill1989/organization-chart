@@ -89,7 +89,7 @@ types/ # Shared TypeScript types (OrgNode, OrgNodeRow)
 ## 📌 Future Improvements
 
 - [ ] Drag-and-drop reordering
-- [ ] Node editing & deletion
+- [ ] Category Node editing & deletion
 - [ ] Supabase realtime channels for multi-user collaboration
 - [ ] Deploy live demo (Vercel/Netlify)
 

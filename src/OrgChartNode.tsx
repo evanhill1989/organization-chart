@@ -3,10 +3,17 @@ import type { OrgNode } from "./types/orgChart";
 import AddNodeForm from "./AddNodeForm";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
 import {
-  getUrgencyBorderClasses,
-  getUrgencyGlowClasses,
   getEffectiveUrgency,
+  shouldShowUrgencyBall,
+  getUrgencyBallColor,
+  getUrgencyBallSize,
+  getUrgencyBallGlow,
 } from "./lib/urgencyUtils";
+import {
+  getImportanceBorderClasses,
+  getImportanceGlowClasses,
+  getEffectiveImportance,
+} from "./lib/importanceUtils";
 
 type OrgChartNodeProps = {
   node: OrgNode;
@@ -30,14 +37,16 @@ export default function OrgChartNode({
   const addNodeMutation = useAddOrgNode(node.root_category);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Calculate the effective urgency (own urgency for tasks, max child urgency for categories)
+  // Calculate the effective urgency and importance
   const effectiveUrgency = getEffectiveUrgency(node);
+  const effectiveImportance = getEffectiveImportance(node);
 
   const handleAddNode = (newNode: {
     name: string;
     type: "category" | "task";
     details?: string;
     urgency?: number;
+    importance?: number;
   }) => {
     const mutationData = {
       ...newNode,
@@ -57,10 +66,29 @@ export default function OrgChartNode({
     >
       <div
         data-node-path={path}
-        className={`bg-white rounded-lg shadow-amber-600 min-w-[120px] text-center outline outline-gray-400 relative ${getUrgencyBorderClasses(
-          effectiveUrgency
-        )} ${getUrgencyGlowClasses(effectiveUrgency)}`}
+        data-urgency={effectiveUrgency}
+        className={`bg-white rounded-lg shadow-amber-600 min-w-[120px] text-center outline outline-gray-400 relative ${getImportanceBorderClasses(
+          effectiveImportance
+        )} ${getImportanceGlowClasses(effectiveImportance)}`}
       >
+        {/* Urgency Ball - positioned absolutely to orbit around the node */}
+        {shouldShowUrgencyBall(effectiveUrgency) && (
+          <div
+            className={`absolute rounded-full pointer-events-none z-10 ${getUrgencyBallColor(
+              effectiveUrgency
+            )} ${getUrgencyBallSize(effectiveUrgency)} ${getUrgencyBallGlow(
+              effectiveUrgency
+            )}`}
+            data-urgency-ball={path}
+            style={{
+              // Initial position - will be animated by GSAP
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+            }}
+          />
+        )}
+
         {isTask ? (
           <button
             className="text-lg text-white font-semibold underline hover:text-blue-200 focus:outline-none bg-blue-600 w-full h-full p-2 rounded-lg"

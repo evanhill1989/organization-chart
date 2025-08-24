@@ -13,6 +13,7 @@ export function useAddOrgNode(root_category: string) {
       type: "category" | "task";
       details?: string;
       urgency?: number;
+      importance?: number;
       parent_id?: number;
       tab_name: string;
       root_category: string;
@@ -44,6 +45,8 @@ export function useAddOrgNode(root_category: string) {
         root_category: newNode.root_category,
         details: newNode.details,
         urgency: newNode.type === "task" ? newNode.urgency ?? 1 : undefined,
+        importance:
+          newNode.type === "task" ? newNode.importance ?? 1 : undefined,
         children: [],
       };
 

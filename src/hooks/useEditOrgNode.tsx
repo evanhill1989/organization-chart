@@ -13,6 +13,7 @@ export function useEditOrgNode(root_category: string) {
       name?: string;
       details?: string;
       urgency?: number;
+      importance?: number;
     }) => {
       console.log(
         "🚀 EDIT MUTATION: Starting edit of node:",
@@ -60,7 +61,12 @@ export function useEditOrgNode(root_category: string) {
       function updateNodeInTree(
         tree: OrgNode,
         targetId: number,
-        updates: { name?: string; details?: string; urgency?: number }
+        updates: {
+          name?: string;
+          details?: string;
+          urgency?: number;
+          importance?: number;
+        }
       ): OrgNode {
         console.log(
           `🔍 EDIT ONMUTATE: Checking node ${tree.id} (${tree.name}) for update`
@@ -77,6 +83,9 @@ export function useEditOrgNode(root_category: string) {
             ...(updates.name !== undefined && { name: updates.name }),
             ...(updates.details !== undefined && { details: updates.details }),
             ...(updates.urgency !== undefined && { urgency: updates.urgency }),
+            ...(updates.importance !== undefined && {
+              importance: updates.importance,
+            }),
           };
           console.log("🔄 EDIT ONMUTATE: Updated node:", updatedNode);
           return updatedNode;
@@ -107,6 +116,7 @@ export function useEditOrgNode(root_category: string) {
         name: editData.name,
         details: editData.details,
         urgency: editData.urgency,
+        importance: editData.importance,
       });
 
       console.log(

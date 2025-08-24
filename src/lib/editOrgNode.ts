@@ -7,17 +7,20 @@ export async function editOrgNode({
   name,
   details,
   urgency,
+  importance,
 }: {
   id?: number;
   name?: string;
   details?: string;
   urgency?: number;
+  importance?: number;
 }): Promise<OrgNodeRow> {
   const updateData: Partial<OrgNodeRow> = {};
 
   if (name !== undefined) updateData.name = name;
   if (details !== undefined) updateData.details = details;
   if (urgency !== undefined) updateData.urgency = urgency;
+  if (importance !== undefined) updateData.importance = importance;
 
   const { data, error } = await supabase
     .from("org_nodes")

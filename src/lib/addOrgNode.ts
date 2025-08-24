@@ -8,6 +8,7 @@ export async function addOrgNode({
   type,
   details,
   urgency,
+  importance,
   parent_id,
   tab_name,
   root_category,
@@ -16,6 +17,7 @@ export async function addOrgNode({
   type: "category" | "task";
   details?: string;
   urgency?: number;
+  importance?: number;
   parent_id?: number;
   tab_name: string;
   root_category: string;
@@ -29,6 +31,7 @@ export async function addOrgNode({
         type,
         details,
         urgency: type === "task" ? urgency ?? 1 : undefined,
+        importance: type === "task" ? importance ?? 1 : undefined,
         parent_id,
         tab_name,
         root_category,
