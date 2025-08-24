@@ -111,3 +111,22 @@ export function getMaxChildTaskUrgency(node: OrgNode): number {
 export function getEffectiveUrgency(node: OrgNode): number {
   return getMaxChildTaskUrgency(node);
 }
+
+export function getUrgencyShadowColor(urgency?: number): string {
+  if (!urgency || urgency <= 1) return "rgba(0, 0, 0, 0)"; // No shadow
+  if (urgency <= 3) return "rgba(34, 197, 94, 0.6)"; // Green
+  if (urgency <= 5) return "rgba(234, 179, 8, 0.6)"; // Yellow
+  if (urgency <= 7) return "rgba(249, 115, 22, 0.6)"; // Orange
+  if (urgency <= 9) return "rgba(239, 68, 68, 0.6)"; // Red
+  return "rgba(220, 38, 38, 0.8)"; // Bright red
+}
+
+export function getHighestChildUrgency(node: OrgNode): number {
+  let maxUrgency = node.urgency || 1;
+  if (node.children) {
+    for (const child of node.children) {
+      maxUrgency = Math.max(maxUrgency, getHighestChildUrgency(child));
+    }
+  }
+  return maxUrgency;
+}

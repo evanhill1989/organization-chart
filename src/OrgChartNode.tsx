@@ -84,7 +84,7 @@ export default function OrgChartNode({
 
       {/* Always render the children grid when expanded, even if empty */}
       {!isTask && isOpen && (
-        <div className="grid gap-4 mt-4 w-full auto-cols-min grid-flow-col outline-2 outline-amber-300">
+        <div className="grid gap-4 mt-4 w-full auto-cols-min grid-flow-col">
           {node.children?.map((child) => (
             <OrgChartNode
               key={child.name}

@@ -7,7 +7,11 @@ import OrgChartNode from "./OrgChartNode";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
 import { useDeleteOrgNode } from "./hooks/useDeleteOrgNode";
 import { useEditOrgNode } from "./hooks/useEditOrgNode";
-import { getEffectiveUrgency } from "./lib/urgencyUtils";
+import {
+  getEffectiveUrgency,
+  getUrgencyShadowColor,
+  getHighestChildUrgency,
+} from "./lib/urgencyUtils";
 
 type OrgChartTabProps = {
   tree: OrgNode;
@@ -121,7 +125,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   useGSAP(() => {
     // Clear all existing animations first
     gsap.killTweensOf("*");
-    gsap.set("*", { scale: 1 });
+    gsap.set("*", { scale: 1, boxShadow: "none" }); // Also clear shadows
 
     // Find which node should animate
     if (tree.children) {
@@ -132,11 +136,20 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
           `/${tabName}`
         );
         if (targetPath) {
-          // Convert path to a CSS selector - we'll need to add data attributes to nodes
           const targetSelector = `[data-node-path="${targetPath}"]`;
           const targetElement = document.querySelector(targetSelector);
 
           if (targetElement) {
+            // Get the node's urgency to determine shadow color
+            const effectiveUrgency = getEffectiveUrgency(child);
+            const shadowColor = getUrgencyShadowColor(effectiveUrgency);
+
+            // Set the shadow
+            gsap.set(targetElement, {
+              boxShadow: `0 0 20px ${shadowColor}`,
+            });
+
+            // Animate the scale
             gsap.to(targetElement, {
               scale: 1.05,
               duration: 0.8,
@@ -144,7 +157,6 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
               yoyo: true,
               repeat: -1,
             });
-            break; // Only animate one node
           }
         }
       }
