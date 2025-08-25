@@ -12,8 +12,12 @@ export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
       name: row.name,
       type: row.type as "top_category" | "category" | "task",
       details: row.details ?? undefined,
-      urgency: row.urgency ?? (row.type === "task" ? 1 : undefined),
+      // Removed urgency as it's now calculated
       importance: row.importance ?? (row.type === "task" ? 1 : undefined),
+      // New deadline-related fields
+      deadline: row.deadline ?? undefined,
+      completion_time: row.completion_time ?? undefined,
+      unique_days_required: row.unique_days_required ?? undefined,
       children: [],
       tab_name: row.tab_name,
       root_category: row.root_category,

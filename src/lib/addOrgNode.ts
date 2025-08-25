@@ -7,8 +7,10 @@ export async function addOrgNode({
   name,
   type,
   details,
-  urgency,
   importance,
+  deadline,
+  completion_time,
+  unique_days_required,
   parent_id,
   tab_name,
   root_category,
@@ -16,8 +18,10 @@ export async function addOrgNode({
   name: string;
   type: "category" | "task";
   details?: string;
-  urgency?: number;
   importance?: number;
+  deadline?: string;
+  completion_time?: number;
+  unique_days_required?: number;
   parent_id?: number;
   tab_name: string;
   root_category: string;
@@ -30,8 +34,13 @@ export async function addOrgNode({
         name,
         type,
         details,
-        urgency: type === "task" ? urgency ?? 1 : undefined,
+        // Removed urgency as it's now calculated
         importance: type === "task" ? importance ?? 1 : undefined,
+        // New deadline-related fields (only for tasks)
+        deadline: type === "task" ? deadline : undefined,
+        completion_time: type === "task" ? completion_time : undefined,
+        unique_days_required:
+          type === "task" ? unique_days_required : undefined,
         parent_id,
         tab_name,
         root_category,

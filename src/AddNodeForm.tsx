@@ -7,8 +7,11 @@ type AddNodeFormProps = {
     name: string;
     type: "category" | "task";
     details?: string;
-    urgency?: number;
     importance?: number;
+    // New deadline-related fields (only for tasks)
+    deadline?: string;
+    completion_time?: number;
+    unique_days_required?: number;
   }) => void;
   onClose: () => void;
 };
@@ -17,13 +20,23 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
   const [name, setName] = useState("");
   const [type, setType] = useState<"category" | "task">("task");
   const [details, setDetails] = useState("");
-  const [urgency, setUrgency] = useState(1);
   const [importance, setImportance] = useState(1);
+
+  // New deadline-related states
+  const [deadline, setDeadline] = useState("");
+  const [completionTime, setCompletionTime] = useState<number | "">(1);
+  const [uniqueDaysRequired, setUniqueDaysRequired] = useState<number | "">(1);
+
+  // Helper to format date for input[type="date"]
+  const formatDateForInput = (date?: string) => {
+    if (!date) return "";
+    return new Date(date).toISOString().split("T")[0];
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <form
-        className="bg-gray-800 rounded-lg shadow-lg min-w-[320px] p-6 flex flex-col items-center relative"
+        className="bg-gray-800 rounded-lg shadow-lg min-w-[320px] max-w-[400px] p-6 flex flex-col items-center relative max-h-[90vh] overflow-y-auto"
         onSubmit={(e) => {
           e.preventDefault();
           if (name.trim()) {
@@ -31,13 +44,24 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
               name: name.trim(),
               type,
               details: details.trim() || undefined,
-              urgency: type === "task" ? urgency : undefined,
               importance: type === "task" ? importance : undefined,
+              // Only include deadline fields for tasks
+              deadline: type === "task" && deadline ? deadline : undefined,
+              completion_time:
+                type === "task" && completionTime
+                  ? Number(completionTime)
+                  : undefined,
+              unique_days_required:
+                type === "task" && uniqueDaysRequired
+                  ? Number(uniqueDaysRequired)
+                  : undefined,
             });
             setName("");
             setDetails("");
-            setUrgency(1);
             setImportance(1);
+            setDeadline("");
+            setCompletionTime(1);
+            setUniqueDaysRequired(1);
             onClose();
           }
         }}
@@ -50,7 +74,9 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
         >
           &times;
         </button>
+
         <h3 className="text-xl font-bold mb-4 text-white">Add New Node</h3>
+
         <input
           className="mb-2 px-2 py-1 rounded w-full text-black"
           type="text"
@@ -59,6 +85,7 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
           onChange={(e) => setName(e.target.value)}
           required
         />
+
         <select
           className="mb-2 px-2 py-1 rounded w-full"
           value={type}
@@ -67,6 +94,7 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
           <option value="category">Category</option>
           <option value="task">Task</option>
         </select>
+
         <input
           className="mb-2 px-2 py-1 rounded w-full text-black"
           type="text"
@@ -74,24 +102,9 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
           value={details}
           onChange={(e) => setDetails(e.target.value)}
         />
+
         {type === "task" && (
           <>
-            <div className="w-full mb-2">
-              <label className="block text-white text-sm font-medium mb-1">
-                Urgency (1-10):
-              </label>
-              <select
-                className="px-2 py-1 rounded w-full text-black"
-                value={urgency}
-                onChange={(e) => setUrgency(Number(e.target.value))}
-              >
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-                  <option key={num} value={num}>
-                    {num}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="w-full mb-2">
               <label className="block text-white text-sm font-medium mb-1">
                 Importance (1-10):
@@ -108,8 +121,63 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
                 ))}
               </select>
             </div>
+
+            <div className="w-full mb-2">
+              <label className="block text-white text-sm font-medium mb-1">
+                Deadline:
+              </label>
+              <input
+                className="px-2 py-1 rounded w-full text-black"
+                type="date"
+                value={formatDateForInput(deadline)}
+                onChange={(e) => setDeadline(e.target.value)}
+                min={new Date().toISOString().split("T")[0]} // Don't allow past dates
+              />
+            </div>
+
+            <div className="w-full mb-2">
+              <label className="block text-white text-sm font-medium mb-1">
+                Estimated Completion Time (hours):
+              </label>
+              <input
+                className="px-2 py-1 rounded w-full text-black"
+                type="number"
+                min="0.5"
+                step="0.5"
+                value={completionTime}
+                onChange={(e) =>
+                  setCompletionTime(
+                    e.target.value === "" ? "" : Number(e.target.value)
+                  )
+                }
+                placeholder="e.g. 8.5"
+              />
+            </div>
+
+            <div className="w-full mb-2">
+              <label className="block text-white text-sm font-medium mb-1">
+                Unique Days Required:
+              </label>
+              <input
+                className="px-2 py-1 rounded w-full text-black"
+                type="number"
+                min="0.5"
+                step="0.5"
+                value={uniqueDaysRequired}
+                onChange={(e) =>
+                  setUniqueDaysRequired(
+                    e.target.value === "" ? "" : Number(e.target.value)
+                  )
+                }
+                placeholder="e.g. 3"
+              />
+              <p className="text-xs text-gray-300 mt-1">
+                Number of separate days needed to complete this task
+              </p>
+            </div>
           </>
         )}
+
         <button
           className="bg-blue-600 text-white px-4 py-1 rounded font-semibold hover:bg-blue-700 mt-2"
           type="submit"

@@ -12,8 +12,10 @@ export function useAddOrgNode(root_category: string) {
       name: string;
       type: "category" | "task";
       details?: string;
-      urgency?: number;
       importance?: number;
+      deadline?: string;
+      completion_time?: number;
+      unique_days_required?: number;
       parent_id?: number;
       tab_name: string;
       root_category: string;
@@ -44,9 +46,15 @@ export function useAddOrgNode(root_category: string) {
         tab_name: newNode.tab_name,
         root_category: newNode.root_category,
         details: newNode.details,
-        urgency: newNode.type === "task" ? newNode.urgency ?? 1 : undefined,
+        // Removed urgency as it's now calculated
         importance:
           newNode.type === "task" ? newNode.importance ?? 1 : undefined,
+        // New deadline-related fields
+        deadline: newNode.type === "task" ? newNode.deadline : undefined,
+        completion_time:
+          newNode.type === "task" ? newNode.completion_time : undefined,
+        unique_days_required:
+          newNode.type === "task" ? newNode.unique_days_required : undefined,
         children: [],
       };
 

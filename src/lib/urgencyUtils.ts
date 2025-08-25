@@ -2,6 +2,79 @@
 import type { OrgNode } from "../types/orgChart";
 
 /**
+ * Calculates urgency level based on deadline, completion time, and unique days required
+ */
+export function calculateUrgencyLevel(
+  deadline?: string,
+  completionTime?: number,
+  uniqueDaysRequired?: number
+): number {
+  // If any required fields are missing, return level 1 (no urgency)
+  if (!deadline || !completionTime || !uniqueDaysRequired) {
+    return 1;
+  }
+
+  const currentDate = new Date();
+  const deadlineDate = new Date(deadline);
+
+  // Calculate days left (can be negative if overdue)
+  const timeDiff = deadlineDate.getTime() - currentDate.getTime();
+  const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+  // If deadline has passed or is today, return maximum urgency
+  if (daysLeft <= 0) {
+    return 10;
+  }
+
+  // If uniqueDaysRequired >= daysLeft, we're in trouble (urgent)
+  if (uniqueDaysRequired >= daysLeft) {
+    return 10;
+  }
+
+  try {
+    // Calculate urgency score using the provided formula
+    const urgencyScore =
+      (uniqueDaysRequired / daysLeft) * (completionTime / daysLeft) +
+      Math.exp(
+        (4 * (uniqueDaysRequired / daysLeft)) /
+          (1 - uniqueDaysRequired / daysLeft)
+      ) -
+      1;
+
+    // Convert score to urgency level using the provided thresholds
+    if (urgencyScore < 0.25) return 1;
+    if (urgencyScore >= 0.25 && urgencyScore < 0.5) return 2;
+    if (urgencyScore >= 0.5 && urgencyScore < 1) return 3;
+    if (urgencyScore >= 1 && urgencyScore < 1.75) return 4;
+    if (urgencyScore >= 1.75 && urgencyScore < 2.5) return 5;
+    if (urgencyScore >= 2.5 && urgencyScore < 4) return 6;
+    if (urgencyScore >= 4 && urgencyScore < 5.5) return 7;
+    if (urgencyScore >= 5.5 && urgencyScore < 7.5) return 8;
+    if (urgencyScore >= 7.5 && urgencyScore < 10) return 9;
+
+    // Anything 10 or greater is level 10
+    return 10;
+  } catch (error) {
+    // If calculation fails (e.g., division issues), return level 1
+    console.warn("Urgency calculation failed:", error);
+    return 1;
+  }
+}
+
+/**
+ * Gets the urgency level for a specific node
+ */
+export function getNodeUrgency(node: OrgNode): number {
+  if (node.type !== "task") return 1; // Only tasks have urgency
+
+  return calculateUrgencyLevel(
+    node.deadline,
+    node.completion_time,
+    node.unique_days_required
+  );
+}
+
+/**
  * Gets the color for the urgency ball based on urgency level
  */
 export function getUrgencyBallColor(urgency: number = 1): string {
@@ -125,67 +198,62 @@ export function shouldShowUrgencyBall(urgency: number = 1): boolean {
 }
 
 /**
- * Creates an SVG path for the urgency ball to orbit around a node
- * Uses MotionPathPlugin for smooth, customizable orbital motion
+ * Creates an SVG path that follows exactly along the border of a rounded rectangle node
+ * The ball will travel precisely on the node's border
  */
 export function createUrgencyOrbitalPath(
   containerElement: Element,
   urgency: number
 ): string {
   const rect = containerElement.getBoundingClientRect();
-  const centerX = rect.width / 2;
-  const centerY = rect.height / 2;
+  const width = rect.width;
+  const height = rect.height;
 
-  // Base radius with padding, scales slightly with urgency for visual variety
-  const baseRadius = Math.min(rect.width, rect.height) / 2 + 12;
-  const radiusVariation = urgency >= 8 ? 8 : urgency >= 5 ? 5 : 2;
-  const radius = baseRadius + radiusVariation;
+  // Get the border radius from computed styles (Tailwind's rounded-lg = 8px)
+  const computedStyles = window.getComputedStyle(containerElement);
+  const borderRadius = parseFloat(computedStyles.borderRadius) || 8; // fallback to 8px
 
-  // Create elliptical path for more organic motion
-  const horizontalRadius = radius;
-  const verticalRadius = radius * 0.85; // Slightly flattened for better visual flow
+  // Ensure radius doesn't exceed half the smaller dimension
+  const maxRadius = Math.min(width, height) / 2;
+  const radius = Math.min(borderRadius, maxRadius);
 
-  // More sophisticated path with variable curves based on urgency
   const pathCommands: string[] = [];
 
-  // Start at the rightmost point
-  pathCommands.push(`M ${centerX + horizontalRadius} ${centerY}`);
+  // Calculate key points for the rounded rectangle border
+  const left = 0;
+  const right = width;
+  const top = 0;
+  const bottom = height;
 
-  // Create smooth elliptical curve using cubic bezier curves
-  // Top curve
-  pathCommands.push(
-    `C ${centerX + horizontalRadius} ${centerY - verticalRadius * 0.552}, ${
-      centerX + horizontalRadius * 0.552
-    } ${centerY - verticalRadius}, ${centerX} ${centerY - verticalRadius}`
-  );
+  // Start at the middle of the top edge
+  pathCommands.push(`M ${width / 2} ${top}`);
 
-  // Left curve
-  pathCommands.push(
-    `C ${centerX - horizontalRadius * 0.552} ${centerY - verticalRadius}, ${
-      centerX - horizontalRadius
-    } ${centerY - verticalRadius * 0.552}, ${
-      centerX - horizontalRadius
-    } ${centerY}`
-  );
+  // Top edge to top-right corner
+  pathCommands.push(`L ${right - radius} ${top}`);
 
-  // Bottom curve
-  pathCommands.push(
-    `C ${centerX - horizontalRadius} ${centerY + verticalRadius * 0.552}, ${
-      centerX - horizontalRadius * 0.552
-    } ${centerY + verticalRadius}, ${centerX} ${centerY + verticalRadius}`
-  );
+  // Top-right rounded corner
+  pathCommands.push(`Q ${right} ${top} ${right} ${top + radius}`);
 
-  // Right curve (back to start)
-  pathCommands.push(
-    `C ${centerX + horizontalRadius * 0.552} ${centerY + verticalRadius}, ${
-      centerX + horizontalRadius
-    } ${centerY + verticalRadius * 0.552}, ${
-      centerX + horizontalRadius
-    } ${centerY}`
-  );
+  // Right edge
+  pathCommands.push(`L ${right} ${bottom - radius}`);
 
-  // Close the path
-  pathCommands.push("Z");
+  // Bottom-right rounded corner
+  pathCommands.push(`Q ${right} ${bottom} ${right - radius} ${bottom}`);
+
+  // Bottom edge
+  pathCommands.push(`L ${left + radius} ${bottom}`);
+
+  // Bottom-left rounded corner
+  pathCommands.push(`Q ${left} ${bottom} ${left} ${bottom - radius}`);
+
+  // Left edge
+  pathCommands.push(`L ${left} ${top + radius}`);
+
+  // Top-left rounded corner
+  pathCommands.push(`Q ${left} ${top} ${left + radius} ${top}`);
+
+  // Close the path back to start
+  pathCommands.push(`L ${width / 2} ${top}`);
 
   return pathCommands.join(" ");
 }
@@ -211,9 +279,9 @@ export function getUrgencyMotionConfig(urgency: number = 1) {
  * Recursively finds the highest urgency value among all descendant tasks
  */
 export function getMaxChildTaskUrgency(node: OrgNode): number {
-  // If this is a task, return its urgency
+  // If this is a task, calculate and return its urgency
   if (node.type === "task") {
-    return node.urgency ?? 1;
+    return getNodeUrgency(node);
   }
 
   // If this is a category with no children, return 1 (no urgency)
@@ -230,7 +298,7 @@ export function getMaxChildTaskUrgency(node: OrgNode): number {
 
 /**
  * Gets the effective urgency for a node:
- * - For tasks: returns the task's own urgency
+ * - For tasks: returns the task's calculated urgency
  * - For categories: returns the highest urgency among all descendant tasks
  */
 export function getEffectiveUrgency(node: OrgNode): number {
@@ -261,7 +329,7 @@ export function getUrgencyShadowColor(urgency?: number): string {
 }
 
 export function getHighestChildUrgency(node: OrgNode): number {
-  let maxUrgency = node.urgency || 1;
+  let maxUrgency = node.type === "task" ? getNodeUrgency(node) : 1;
   if (node.children) {
     for (const child of node.children) {
       maxUrgency = Math.max(maxUrgency, getHighestChildUrgency(child));

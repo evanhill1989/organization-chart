@@ -12,8 +12,10 @@ export function useEditOrgNode(root_category: string) {
       id?: number;
       name?: string;
       details?: string;
-      urgency?: number;
       importance?: number;
+      deadline?: string;
+      completion_time?: number;
+      unique_days_required?: number;
     }) => {
       console.log(
         "🚀 EDIT MUTATION: Starting edit of node:",
@@ -64,8 +66,10 @@ export function useEditOrgNode(root_category: string) {
         updates: {
           name?: string;
           details?: string;
-          urgency?: number;
           importance?: number;
+          deadline?: string;
+          completion_time?: number;
+          unique_days_required?: number;
         }
       ): OrgNode {
         console.log(
@@ -82,9 +86,18 @@ export function useEditOrgNode(root_category: string) {
             ...tree,
             ...(updates.name !== undefined && { name: updates.name }),
             ...(updates.details !== undefined && { details: updates.details }),
-            ...(updates.urgency !== undefined && { urgency: updates.urgency }),
             ...(updates.importance !== undefined && {
               importance: updates.importance,
+            }),
+            // New deadline-related fields
+            ...(updates.deadline !== undefined && {
+              deadline: updates.deadline,
+            }),
+            ...(updates.completion_time !== undefined && {
+              completion_time: updates.completion_time,
+            }),
+            ...(updates.unique_days_required !== undefined && {
+              unique_days_required: updates.unique_days_required,
             }),
           };
           console.log("🔄 EDIT ONMUTATE: Updated node:", updatedNode);
@@ -115,8 +128,10 @@ export function useEditOrgNode(root_category: string) {
       const newTree = updateNodeInTree(previousTree, editData.id, {
         name: editData.name,
         details: editData.details,
-        urgency: editData.urgency,
         importance: editData.importance,
+        deadline: editData.deadline,
+        completion_time: editData.completion_time,
+        unique_days_required: editData.unique_days_required,
       });
 
       console.log(

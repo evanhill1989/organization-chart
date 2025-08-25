@@ -6,21 +6,30 @@ export async function editOrgNode({
   id,
   name,
   details,
-  urgency,
   importance,
+  deadline,
+  completion_time,
+  unique_days_required,
 }: {
   id?: number;
   name?: string;
   details?: string;
-  urgency?: number;
   importance?: number;
+  deadline?: string;
+  completion_time?: number;
+  unique_days_required?: number;
 }): Promise<OrgNodeRow> {
   const updateData: Partial<OrgNodeRow> = {};
 
   if (name !== undefined) updateData.name = name;
   if (details !== undefined) updateData.details = details;
-  if (urgency !== undefined) updateData.urgency = urgency;
   if (importance !== undefined) updateData.importance = importance;
+  // New deadline-related fields
+  if (deadline !== undefined) updateData.deadline = deadline;
+  if (completion_time !== undefined)
+    updateData.completion_time = completion_time;
+  if (unique_days_required !== undefined)
+    updateData.unique_days_required = unique_days_required;
 
   const { data, error } = await supabase
     .from("org_nodes")
