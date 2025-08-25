@@ -6,8 +6,12 @@ export type OrgNode = {
   root_category: string;
   children?: OrgNode[];
   details?: string;
-  urgency?: number; // 1-10, defaults to 1
+  // Removed urgency as it's now calculated
   importance?: number; // 1-10, defaults to 1
+  // New deadline-related fields
+  deadline?: string; // ISO date string
+  completion_time?: number; // estimated total hours to complete
+  unique_days_required?: number; // estimated unique days of work required
   parent_id?: number;
   tab_name?: string;
 };
@@ -18,8 +22,12 @@ export interface OrgNodeRow {
   type: string;
   root_category: string;
   details?: string;
-  urgency?: number; // 1-10, defaults to 1
+  // Removed urgency as it's now calculated
   importance?: number; // 1-10, defaults to 1
+  // New deadline-related fields
+  deadline?: string; // ISO date string
+  completion_time?: number; // estimated total hours to complete
+  unique_days_required?: number; // estimated unique days of work required
   parent_id?: number;
   tab_name?: string;
 }

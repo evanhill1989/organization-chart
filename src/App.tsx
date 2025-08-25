@@ -8,6 +8,7 @@ import { fetchOrgTree } from "./lib/fetchOrgTree";
 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import TimeAvailabilityReport from "./components/TimeAvailabilityReport";
 
 gsap.registerPlugin(useGSAP);
 
@@ -46,20 +47,28 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-screen flex flex-col">
-      <nav className="flex justify-center items-center bg-gray-900 sticky top-0 z-10">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 text-lg font-medium border-b-2 transition-colors duration-200 ${
-              activeTab === tab
-                ? "border-white text-white bg-gray-800"
-                : "border-transparent text-gray-300 hover:text-white hover:bg-gray-800"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      <nav className="flex justify-between items-center bg-gray-900 sticky top-0 z-10 px-4">
+        {/* Tab Navigation */}
+        <div className="flex justify-center items-center">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-3 text-lg font-medium border-b-2 transition-colors duration-200 ${
+                activeTab === tab
+                  ? "border-white text-white bg-gray-800"
+                  : "border-transparent text-gray-300 hover:text-white hover:bg-gray-800"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Time Availability Report */}
+        <div className="flex-shrink-0">
+          <TimeAvailabilityReport />
+        </div>
       </nav>
 
       <main className="flex-1 flex items-center justify-center p-4">
