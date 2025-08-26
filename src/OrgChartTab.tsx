@@ -179,7 +179,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
         if (!shouldShowUrgencyBall(urgencyLevel)) return;
 
         // Create the border-following path
-        const borderPath = createUrgencyOrbitalPath(container, urgencyLevel);
+        const borderPath = createUrgencyOrbitalPath(container);
         const motionConfig = getUrgencyMotionConfig(urgencyLevel);
 
         // Position the ball relative to the container's coordinate system

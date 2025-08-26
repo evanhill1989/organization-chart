@@ -6,6 +6,7 @@ import { calculateUrgencyLevel } from "../lib/urgencyUtils";
 import TaskDetailsModal from "./TaskDetailsModal";
 
 interface CompleteTaskData extends OrgNodeRow {
+  type: "top_category" | "category" | "task";
   daysUntilDeadline: number;
   isOverdue: boolean;
   urgencyLevel: number;

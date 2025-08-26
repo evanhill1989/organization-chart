@@ -80,6 +80,8 @@ export function useDeleteOrgNode(root_category: string) {
 
     onError: (error, nodeId, context) => {
       // Rollback on error
+      console.error(error);
+      console.log(nodeId);
       if (context?.previousTree) {
         queryClient.setQueryData(
           ["orgTree", root_category],

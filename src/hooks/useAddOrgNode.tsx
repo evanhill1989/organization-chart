@@ -112,6 +112,7 @@ export function useAddOrgNode(root_category: string) {
 
     onError: (error, _newNode, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
+      console.error(error);
       if (context?.previousTree) {
         queryClient.setQueryData(
           ["orgTree", root_category],
