@@ -201,10 +201,7 @@ export function shouldShowUrgencyBall(urgency: number = 1): boolean {
  * Creates an SVG path that follows exactly along the border of a rounded rectangle node
  * The ball will travel precisely on the node's border
  */
-export function createUrgencyOrbitalPath(
-  containerElement: Element,
-  urgency: number
-): string {
+export function createUrgencyOrbitalPath(containerElement: Element): string {
   const rect = containerElement.getBoundingClientRect();
   const width = rect.width;
   const height = rect.height;
@@ -303,29 +300,6 @@ export function getMaxChildTaskUrgency(node: OrgNode): number {
  */
 export function getEffectiveUrgency(node: OrgNode): number {
   return getMaxChildTaskUrgency(node);
-}
-
-/**
- * Legacy function for backward compatibility - now returns empty string
- * since we're using orbiting balls instead of borders
- */
-export function getUrgencyBorderClasses(urgency: number = 1): string {
-  return ""; // No longer used - urgency now uses orbiting balls
-}
-
-/**
- * Legacy function for backward compatibility - now returns empty string
- * since we're using orbiting balls instead of glows
- */
-export function getUrgencyGlowClasses(urgency: number = 1): string {
-  return ""; // No longer used - urgency now uses orbiting balls
-}
-
-/**
- * Legacy function for backward compatibility
- */
-export function getUrgencyShadowColor(urgency?: number): string {
-  return "rgba(0, 0, 0, 0)"; // No longer used - urgency now uses orbiting balls
 }
 
 export function getHighestChildUrgency(node: OrgNode): number {

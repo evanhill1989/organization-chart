@@ -49,6 +49,7 @@ export async function addOrgNode({
     .select()
     .single();
 
+  console.log(insertedNode);
   if (insertError) throw insertError;
 
   // Fetch all nodes for this root_category to rebuild the complete tree
