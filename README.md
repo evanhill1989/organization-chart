@@ -107,4 +107,4 @@ This project is part of my developer portfolio. It showcases:
 
 ## 📜 License
 
-MIT © 2025 Evan Hill
+MIT © 2025 Cevan Higrave

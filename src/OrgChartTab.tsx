@@ -1,19 +1,17 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import type { OrgNode } from "./types/orgChart";
 import AddNodeForm from "./AddNodeForm";
 import OrgChartNode from "./OrgChartNode";
+import TaskDetailsModal from "./components/TaskDetailsModal";
 import { useAddOrgNode } from "./hooks/useAddOrgNode";
-import { useDeleteOrgNode } from "./hooks/useDeleteOrgNode";
-import { useEditOrgNode } from "./hooks/useEditOrgNode";
 import {
   getEffectiveUrgency,
   shouldShowUrgencyBall,
   createUrgencyOrbitalPath,
   getUrgencyMotionConfig,
-  calculateUrgencyLevel,
 } from "./lib/urgencyUtils";
 import {
   getEffectiveImportance,
@@ -98,46 +96,12 @@ function findDeepestUrgencyAnimationTarget(
 
 export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
-  const [details, setDetails] = useState(modalTask?.details ?? "");
-  const [importance, setImportance] = useState(modalTask?.importance ?? 1);
-
-  // New deadline-related states
-  const [deadline, setDeadline] = useState(modalTask?.deadline ?? "");
-  const [completionTime, setCompletionTime] = useState(
-    modalTask?.completion_time ?? 1
-  );
-  const [uniqueDaysRequired, setUniqueDaysRequired] = useState(
-    modalTask?.unique_days_required ?? 1
-  );
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({
+    [`/${tabName}`]: true,
+  });
 
   const addNodeMutation = useAddOrgNode(tabName);
-  const editNodeMutation = useEditOrgNode(tabName);
-  const deleteNodeMutation = useDeleteOrgNode(tabName);
-
-  // Ref for modal GSAP animation
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  // Calculate current urgency level for modal animation
-  const currentUrgencyLevel =
-    modalTask?.type === "task"
-      ? calculateUrgencyLevel(deadline, completionTime, uniqueDaysRequired)
-      : 1;
-
-  // GSAP animation for modal urgency or importance level 10
-  useGSAP(() => {
-    if (
-      modalTask?.type === "task" &&
-      (currentUrgencyLevel === 10 || importance === 10)
-    ) {
-      gsap.to(modalRef.current, {
-        scale: 1.02,
-        duration: 1,
-        ease: "power2.inOut",
-        yoyo: true,
-        repeat: -1,
-      });
-    }
-  }, [modalTask, currentUrgencyLevel, importance]);
 
   const handleAddNode = (newNode: {
     name: string;
@@ -157,59 +121,6 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
 
     addNodeMutation.mutate(mutationData);
   };
-
-  // Helper to format date for input[type="date"]
-  const formatDateForInput = (date?: string) => {
-    if (!date) return "";
-    return new Date(date).toISOString().split("T")[0];
-  };
-
-  useEffect(() => {
-    setDetails(modalTask?.details ?? "");
-    setImportance(modalTask?.importance ?? 1);
-    setDeadline(modalTask?.deadline ?? "");
-    setCompletionTime(modalTask?.completion_time ?? 1);
-    setUniqueDaysRequired(modalTask?.unique_days_required ?? 1);
-  }, [modalTask]);
-
-  useEffect(() => {
-    if (!modalTask) return;
-    const timeout = setTimeout(() => {
-      if (
-        details !== modalTask.details ||
-        importance !== modalTask.importance ||
-        deadline !== modalTask.deadline ||
-        completionTime !== modalTask.completion_time ||
-        uniqueDaysRequired !== modalTask.unique_days_required
-      ) {
-        editNodeMutation.mutate({
-          id: modalTask.id,
-          details,
-          importance: modalTask.type === "task" ? importance : undefined,
-          deadline: modalTask.type === "task" ? deadline : undefined,
-          completion_time:
-            modalTask.type === "task" ? completionTime : undefined,
-          unique_days_required:
-            modalTask.type === "task" ? uniqueDaysRequired : undefined,
-        });
-      }
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(timeout);
-  }, [
-    details,
-    importance,
-    deadline,
-    completionTime,
-    uniqueDaysRequired,
-    modalTask,
-    editNodeMutation,
-  ]);
-
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>({
-    [`/${tabName}`]: true,
-  });
 
   const toggleOpen = (path: string) => {
     setOpenMap((prev) => ({ ...prev, [path]: !prev[path] }));
@@ -375,168 +286,9 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
         />
       )}
 
-      {/* Modal for task details */}
-      {modalTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div
-            ref={modalRef}
-            className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full relative max-h-[90vh] overflow-y-auto"
-          >
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold"
-              onClick={() => setModalTask(null)}
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <h3 className="text-2xl font-bold mb-4">{modalTask.name}</h3>
+      {/* Task Details Modal */}
 
-            {modalTask.type === "task" && (
-              <>
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold text-gray-700">
-                    Importance (1-10):
-                  </label>
-                  <select
-                    className="w-full text-black p-2 border rounded"
-                    value={importance}
-                    onChange={(e) => {
-                      const newImportance = Number(e.target.value);
-                      setImportance(newImportance);
-                      editNodeMutation.mutate({
-                        id: modalTask.id,
-                        importance: newImportance,
-                      });
-                      setModalTask({ ...modalTask, importance: newImportance });
-                    }}
-                  >
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-                      <option key={num} value={num}>
-                        {num}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold text-gray-700">
-                    Deadline:
-                  </label>
-                  <input
-                    className="w-full text-black p-2 border rounded"
-                    type="date"
-                    value={formatDateForInput(deadline)}
-                    onChange={(e) => {
-                      setDeadline(e.target.value);
-                      editNodeMutation.mutate({
-                        id: modalTask.id,
-                        deadline: e.target.value,
-                      });
-                      setModalTask({ ...modalTask, deadline: e.target.value });
-                    }}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold text-gray-700">
-                    Estimated Completion Time (hours):
-                  </label>
-                  <input
-                    className="w-full text-black p-2 border rounded"
-                    type="number"
-                    min="0.5"
-                    step="0.5"
-                    value={completionTime}
-                    onChange={(e) => {
-                      const newCompletionTime = Number(e.target.value);
-                      setCompletionTime(newCompletionTime);
-                      editNodeMutation.mutate({
-                        id: modalTask.id,
-                        completion_time: newCompletionTime,
-                      });
-                      setModalTask({
-                        ...modalTask,
-                        completion_time: newCompletionTime,
-                      });
-                    }}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold text-gray-700">
-                    Unique Days Required:
-                  </label>
-                  <input
-                    className="w-full text-black p-2 border rounded"
-                    type="number"
-                    min="0.5"
-                    step="0.5"
-                    value={uniqueDaysRequired}
-                    onChange={(e) => {
-                      const newUniqueDaysRequired = Number(e.target.value);
-                      setUniqueDaysRequired(newUniqueDaysRequired);
-                      editNodeMutation.mutate({
-                        id: modalTask.id,
-                        unique_days_required: newUniqueDaysRequired,
-                      });
-                      setModalTask({
-                        ...modalTask,
-                        unique_days_required: newUniqueDaysRequired,
-                      });
-                    }}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Number of separate days needed to complete this task
-                  </p>
-                </div>
-
-                {/* Show calculated urgency level */}
-                <div className="mb-4 p-3 bg-gray-100 rounded">
-                  <label className="block mb-1 font-semibold text-gray-700">
-                    Calculated Urgency Level:
-                  </label>
-                  <div className="text-lg font-bold text-blue-600">
-                    Level {currentUrgencyLevel}
-                  </div>
-                  {deadline && completionTime && uniqueDaysRequired && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      Based on deadline, completion time, and unique days
-                      required
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            <label className="block mb-2 font-semibold text-gray-700">
-              Details:
-            </label>
-            <textarea
-              className="w-full text-black p-2 border rounded mb-4"
-              rows={4}
-              value={details}
-              onChange={(e) => {
-                setDetails(e.target.value);
-                editNodeMutation.mutate({
-                  id: modalTask.id,
-                  details: e.target.value,
-                });
-                setModalTask({ ...modalTask, details: e.target.value });
-              }}
-            />
-
-            <button
-              className="mt-6 bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700"
-              onClick={() => {
-                deleteNodeMutation.mutate(modalTask.id);
-                setModalTask(null);
-              }}
-            >
-              Delete Task
-            </button>
-          </div>
-        </div>
-      )}
+      <TaskDetailsModal task={modalTask} onClose={() => setModalTask(null)} />
     </div>
   );
 }

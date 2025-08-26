@@ -1,21 +1,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/db/supabaseClient";
 import type { OrgNodeRow } from "../types/orgChart";
+import type { TimeReportData, ImportanceFilter } from "../lib/timeReportUtils";
 
-interface TimeReportData {
-  totalRequiredTime: number;
-  totalAvailableTime: number;
-  taskCount: number;
-  ratio: number;
-  tasks: TaskWithDeadlineInfo[];
-}
-
-interface TaskWithDeadlineInfo extends OrgNodeRow {
-  daysUntilDeadline: number;
-  isOverdue: boolean;
-}
-
-type ImportanceFilter = "1" | "2-4" | "5-6" | "7-9" | "10" | "All levels";
+import {
+  getDateRange,
+  matchesImportanceFilter,
+  calculateAvailableTime,
+  getRatioColor,
+  getRatioStatus,
+  formatDateForInput,
+  calculateRequiredTime,
+  processTasksWithPartialInfo,
+} from "../lib/timeReportUtils";
+import CompleteTaskListModal from "./CompleteTaskListModal";
 
 export default function TimeAvailabilityReport() {
   const [reportData, setReportData] = useState<TimeReportData>({
@@ -29,6 +27,7 @@ export default function TimeAvailabilityReport() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showCompleteTaskList, setShowCompleteTaskList] = useState(false);
 
   // Filter states
   const [dateFilter, setDateFilter] = useState<string>("28-days");
@@ -36,127 +35,52 @@ export default function TimeAvailabilityReport() {
   const [importanceFilter, setImportanceFilter] =
     useState<ImportanceFilter>("All levels");
 
-  // Utility functions
-  const utils = {
-    getDateRange: () => {
-      const today = new Date();
-      const endDate =
-        dateFilter === "28-days"
-          ? new Date(today.getTime() + 28 * 24 * 60 * 60 * 1000)
-          : customEndDate
-          ? new Date(customEndDate)
-          : new Date(today.getTime() + 28 * 24 * 60 * 60 * 1000);
-
-      return { startDate: today, endDate };
-    },
-
-    matchesImportanceFilter: (importance: number | undefined): boolean => {
-      if (importanceFilter === "All levels") return true;
-      const imp = importance || 1;
-
-      const filterMap: Record<ImportanceFilter, (imp: number) => boolean> = {
-        "1": (imp) => imp === 1,
-        "2-4": (imp) => imp >= 2 && imp <= 4,
-        "5-6": (imp) => imp >= 5 && imp <= 6,
-        "7-9": (imp) => imp >= 7 && imp <= 9,
-        "10": (imp) => imp === 10,
-        "All levels": () => true,
-      };
-
-      return filterMap[importanceFilter](imp);
-    },
-
-    calculateAvailableTime: (startDate: Date, endDate: Date): number => {
-      const timeDiff = endDate.getTime() - startDate.getTime();
-      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-      const weeksDiff = daysDiff / 7;
-      return weeksDiff * 25; // 25 hours per week baseline
-    },
-
-    getDaysUntilDeadline: (deadline: string): number => {
-      const today = new Date();
-      const deadlineDate = new Date(deadline);
-      const timeDiff = deadlineDate.getTime() - today.getTime();
-      return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-    },
-
-    getRatioColor: (ratio: number): string => {
-      if (ratio <= 0.5) return "text-green-600";
-      if (ratio <= 0.8) return "text-yellow-600";
-      if (ratio <= 1.0) return "text-orange-600";
-      return "text-red-600";
-    },
-
-    getRatioStatus: (ratio: number): string => {
-      if (ratio <= 0.5) return "Light load";
-      if (ratio <= 0.8) return "Moderate load";
-      if (ratio <= 1.0) return "Heavy load";
-      return "Overloaded";
-    },
-
-    formatDateForInput: (date: Date): string => {
-      return date.toISOString().split("T")[0];
-    },
-
-    enrichTasksWithDeadlineInfo: (
-      tasks: OrgNodeRow[]
-    ): TaskWithDeadlineInfo[] => {
-      return tasks
-        .map((task) => ({
-          ...task,
-          daysUntilDeadline: task.deadline
-            ? utils.getDaysUntilDeadline(task.deadline)
-            : 0,
-          isOverdue: task.deadline
-            ? utils.getDaysUntilDeadline(task.deadline) < 0
-            : false,
-        }))
-        .sort((a, b) => a.daysUntilDeadline - b.daysUntilDeadline);
-    },
-  };
-
   // Fetch and calculate report data
   const fetchReportData = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const { startDate, endDate } = utils.getDateRange();
+      const { startDate, endDate } = getDateRange(dateFilter, customEndDate);
+      const timeWindowDays = Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-      const { data: tasks, error: fetchError } = await supabase
+      // Fetch ALL tasks with deadlines (not just within the time window)
+      const { data: allTasks, error: fetchError } = await supabase
         .from("org_nodes")
         .select("*")
         .eq("type", "task")
         .gte("deadline", startDate.toISOString().split("T")[0])
-        .lte("deadline", endDate.toISOString().split("T")[0])
         .not("deadline", "is", null)
         .not("completion_time", "is", null);
 
       if (fetchError) throw fetchError;
 
-      const typedTasks = (tasks as OrgNodeRow[]).filter((task) =>
-        utils.matchesImportanceFilter(task.importance)
+      const filteredTasks = (allTasks as OrgNodeRow[]).filter((task) =>
+        matchesImportanceFilter(task.importance, importanceFilter)
       );
 
-      const totalRequiredTime = typedTasks.reduce(
-        (sum, task) => sum + (task.completion_time || 0),
-        0
-      );
+      // Calculate required time with partial allocation for long-term tasks
+      const { totalRequiredTime, tasksInWindow, tasksWithPartialTime } =
+        calculateRequiredTime(filteredTasks, timeWindowDays, endDate);
 
-      const totalAvailableTime = utils.calculateAvailableTime(
-        startDate,
-        endDate
-      );
+      const totalAvailableTime = calculateAvailableTime(startDate, endDate);
       const ratio =
         totalAvailableTime > 0 ? totalRequiredTime / totalAvailableTime : 0;
-      const enrichedTasks = utils.enrichTasksWithDeadlineInfo(typedTasks);
+
+      // Process tasks with partial time information for display
+      const processedTasks = processTasksWithPartialInfo(
+        tasksInWindow,
+        tasksWithPartialTime
+      );
 
       setReportData({
         totalRequiredTime,
         totalAvailableTime,
-        taskCount: typedTasks.length,
+        taskCount: filteredTasks.length,
         ratio,
-        tasks: enrichedTasks,
+        tasks: processedTasks,
       });
     } catch (err) {
       console.error("Error fetching time report data:", err);
@@ -185,7 +109,7 @@ export default function TimeAvailabilityReport() {
     return <div className="text-red-400 text-sm">Error: {error}</div>;
   }
 
-  // Render components
+  // Component renders
   const DateFilter = () => (
     <div className="flex flex-col space-y-1">
       <label className="text-xs text-gray-300">Time Window:</label>
@@ -203,7 +127,7 @@ export default function TimeAvailabilityReport() {
           className="bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600 mt-1"
           value={customEndDate}
           onChange={(e) => setCustomEndDate(e.target.value)}
-          min={utils.formatDateForInput(new Date())}
+          min={formatDateForInput(new Date())}
         />
       )}
     </div>
@@ -236,7 +160,7 @@ export default function TimeAvailabilityReport() {
     >
       <div className="text-xs text-gray-300">Time Analysis:</div>
       <div className="flex items-center space-x-2">
-        <div className={`font-bold ${utils.getRatioColor(reportData.ratio)}`}>
+        <div className={`font-bold ${getRatioColor(reportData.ratio)}`}>
           {(reportData.ratio * 100).toFixed(1)}%
         </div>
         <div className="text-xs text-gray-400">
@@ -245,8 +169,30 @@ export default function TimeAvailabilityReport() {
         </div>
       </div>
       <div className="text-xs text-gray-400">
-        {reportData.taskCount} tasks • {utils.getRatioStatus(reportData.ratio)}
+        {reportData.taskCount} tasks • {getRatioStatus(reportData.ratio)}
       </div>
+    </button>
+  );
+
+  const TaskListButton = () => (
+    <button
+      onClick={() => setShowCompleteTaskList(true)}
+      className="text-gray-400 hover:text-white transition-colors"
+      title="View all tasks"
+    >
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+        />
+      </svg>
     </button>
   );
 
@@ -287,7 +233,7 @@ export default function TimeAvailabilityReport() {
       {
         label: "Utilization",
         value: `${(reportData.ratio * 100).toFixed(1)}%`,
-        color: utils.getRatioColor(reportData.ratio).replace("text-", "text-"),
+        color: getRatioColor(reportData.ratio).replace("text-", "text-"),
       },
       {
         label: "Task Count",
@@ -320,6 +266,7 @@ export default function TimeAvailabilityReport() {
               "Deadline",
               "Days Left",
               "Time Required",
+              "Effective Time",
               "Importance",
               "Category",
             ].map((header) => (
@@ -338,7 +285,14 @@ export default function TimeAvailabilityReport() {
               key={task.id}
               className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}
             >
-              <td className="px-4 py-2 text-sm text-gray-800">{task.name}</td>
+              <td className="px-4 py-2 text-sm text-gray-800">
+                {task.name}
+                {task.isPartialTime && (
+                  <span className="ml-2 text-xs text-blue-600 font-medium">
+                    (Partial)
+                  </span>
+                )}
+              </td>
               <td className="px-4 py-2 text-sm text-gray-600">
                 {task.deadline
                   ? new Date(task.deadline).toLocaleDateString()
@@ -361,6 +315,29 @@ export default function TimeAvailabilityReport() {
                 {task.completion_time?.toFixed(1) || 0}h
               </td>
               <td className="px-4 py-2 text-sm text-gray-600">
+                <span
+                  className={
+                    task.isPartialTime ? "text-blue-600 font-medium" : ""
+                  }
+                >
+                  {task.effectiveRequiredTime?.toFixed(1) ||
+                    task.completion_time?.toFixed(1) ||
+                    0}
+                  h
+                </span>
+                {task.isPartialTime && (
+                  <div className="text-xs text-gray-500">
+                    (
+                    {(
+                      ((task.partialRequiredTime || 0) /
+                        (task.completion_time || 1)) *
+                      100
+                    ).toFixed(1)}
+                    % of total)
+                  </div>
+                )}
+              </td>
+              <td className="px-4 py-2 text-sm text-gray-600">
                 Level {task.importance || 1}
               </td>
               <td className="px-4 py-2 text-sm text-gray-600">
@@ -374,8 +351,8 @@ export default function TimeAvailabilityReport() {
   );
 
   const DetailModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20">
+      <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl w-full mx-4 max-h-[calc(80vh-5rem)] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-800">
             Time Availability Report
@@ -406,9 +383,14 @@ export default function TimeAvailabilityReport() {
         <DateFilter />
         <ImportanceFilter />
         <QuickStats />
+        <TaskListButton />
         <RefreshButton />
       </div>
       {showDetailModal && <DetailModal />}
+      <CompleteTaskListModal
+        isOpen={showCompleteTaskList}
+        onClose={() => setShowCompleteTaskList(false)}
+      />
     </>
   );
 }
