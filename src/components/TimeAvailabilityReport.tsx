@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/db/supabaseClient";
 import type { OrgNodeRow } from "../types/orgChart";
 import type { TimeReportData, ImportanceFilter } from "../lib/timeReportUtils";
-
 import {
   getDateRange,
   matchesImportanceFilter,
