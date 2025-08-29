@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/db/supabaseClient";
 import type { OrgNodeRow } from "../types/orgChart";
+import { useAddOrgNode } from "../hooks/useAddOrgNode";
 
 import TaskDetailsModal from "./TaskDetailsModal";
 import AddNodeForm from "../AddNodeForm";
@@ -40,6 +41,16 @@ export default function QuickAddEditModal({
   // Edit mode state
   const [selectedTask, setSelectedTask] = useState<number | "new" | "">("");
   const [taskForEditing, setTaskForEditing] = useState<any>(null);
+
+  // Get selected parent node for add form
+  const selectedParentNode = selectedParent
+    ? allNodes.find((n) => n.id === selectedParent)
+    : null;
+
+  // Get the mutation hook for adding nodes
+  const addNodeMutation = useAddOrgNode(
+    selectedParentNode?.root_category || ""
+  );
 
   // Helper to build node path for display
   const buildNodePath = (node: OrgNodeRow, allNodes: OrgNodeRow[]): string => {
@@ -158,10 +169,31 @@ export default function QuickAddEditModal({
   };
 
   // Handle successful add
-  const handleAddSuccess = () => {
-    setShowAddForm(false);
-    setSelectedParent("");
-    fetchData(); // Refresh data
+  const handleAddSuccess = (newNode: {
+    name: string;
+    type: "category" | "task";
+    details?: string;
+    importance?: number;
+    deadline?: string;
+    completion_time?: number;
+    unique_days_required?: number;
+  }) => {
+    if (!selectedParentNode) return;
+
+    const mutationData = {
+      ...newNode,
+      parent_id: selectedParent as number,
+      tab_name: selectedParentNode.root_category,
+      root_category: selectedParentNode.root_category,
+    };
+
+    addNodeMutation.mutate(mutationData, {
+      onSuccess: () => {
+        setShowAddForm(false);
+        setSelectedParent("");
+        fetchData(); // Refresh data
+      },
+    });
   };
 
   // Handle successful edit
@@ -185,11 +217,6 @@ export default function QuickAddEditModal({
   }
 
   console.log("QuickAddEditModal rendering modal content");
-
-  // Get selected parent node for add form
-  const selectedParentNode = selectedParent
-    ? allNodes.find((n) => n.id === selectedParent)
-    : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] overflow-y-auto">
