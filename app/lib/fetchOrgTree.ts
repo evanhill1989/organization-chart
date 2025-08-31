@@ -10,8 +10,6 @@ export async function fetchOrgTree(tabName: string) {
     .not("is_completed", "is", true);
   const typedData = data as OrgNodeRow[];
 
-  console.log(typedData);
-
   if (error) throw error;
 
   const tree = buildOrgTree(typedData ?? []);

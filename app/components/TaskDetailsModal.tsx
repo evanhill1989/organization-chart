@@ -79,7 +79,6 @@ export default function TaskDetailsModal({
     }
   }, [task]);
 
-  // Debounced save effect
   useEffect(() => {
     if (!task) return;
 
@@ -90,8 +89,7 @@ export default function TaskDetailsModal({
         deadline !== (task.deadline ?? "") ||
         completionTime !== (task.completion_time ?? 1) ||
         uniqueDaysRequired !== (task.unique_days_required ?? 1) ||
-        isCompleted !== (task.is_completed ?? false) ||
-        completionComment !== (task.completion_comment ?? "");
+        isCompleted !== (task.is_completed ?? false);
 
       if (hasChanges) {
         const updateData: Partial<OrgNode> = {
@@ -103,21 +101,20 @@ export default function TaskDetailsModal({
           unique_days_required:
             task.type === "task" ? uniqueDaysRequired : undefined,
           is_completed: task.type === "task" ? isCompleted : undefined,
-          completion_comment:
-            task.type === "task" && isCompleted ? completionComment : undefined,
         };
 
         // Only set completed_at when task is being marked as complete for the first time
         if (task.type === "task" && isCompleted && !task.is_completed) {
           updateData.completed_at = new Date().toISOString();
+          updateData.completion_comment = completionComment; // Save comment when completing
         } else if (task.type === "task" && !isCompleted && task.is_completed) {
-          // Clear completed_at when unchecking
           updateData.completed_at = undefined;
+          updateData.completion_comment = undefined;
         }
 
         editNodeMutation.mutate(updateData);
       }
-    }, 500); // 500ms debounce
+    }, 1000); // Increased to 1 second
 
     return () => clearTimeout(timeout);
   }, [
@@ -127,11 +124,25 @@ export default function TaskDetailsModal({
     completionTime,
     uniqueDaysRequired,
     isCompleted,
-    completionComment,
     task,
     editNodeMutation,
+    // Removed completionComment from dependencies
   ]);
 
+  useEffect(() => {
+    if (!task || !isCompleted) return;
+
+    const timeout = setTimeout(() => {
+      if (completionComment !== (task.completion_comment ?? "")) {
+        editNodeMutation.mutate({
+          id: task.id,
+          completion_comment: completionComment,
+        });
+      }
+    }, 2000); // 2 second debounce for comments
+
+    return () => clearTimeout(timeout);
+  }, [completionComment, task, editNodeMutation, isCompleted]);
   // Don't render if no task
   if (!task) return null;
 

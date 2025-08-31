@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Register the MotionPathPlugin
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { gsap } from "gsap";
+
 gsap.registerPlugin(MotionPathPlugin);
 
 const queryClient = new QueryClient();

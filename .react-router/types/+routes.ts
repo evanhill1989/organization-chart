@@ -45,7 +45,7 @@ type RouteFiles = {
   };
   "./routes/journal/_index.tsx": {
     id: "routes/journal/_index";
-    page: "/journal" | "/journal/new" | "/journal/entry/:entryId";
+    page: "/journal";
   };
   "./routes/journal/new.tsx": {
     id: "routes/journal/new";
