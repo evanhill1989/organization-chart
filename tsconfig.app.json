@@ -23,5 +23,19 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": [
+    "app/components/OrgChartTab.tsx",
+    "app/components/AddNodeForm.tsx",
+    "app/lib/buildOrgTree.ts",
+    "app/lib/deleteOrgNode.ts",
+    "app/lib/editOrgNode.ts",
+    "app/lib/fetchOrgTree.ts",
+    "app/lib/importanceUtils.ts",
+    "app/lib/timeReportUtils.ts",
+    "app/lib/urgencyUtils.ts",
+    "app/lib/data/supabaseClient.ts",
+    "app/components/JournalPage.tsx",
+    "app/vite-env.d.ts",
+    "app/contexts"
+  ]
 }
