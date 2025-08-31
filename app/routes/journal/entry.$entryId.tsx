@@ -7,8 +7,18 @@ import {
 } from "@tanstack/react-query";
 import { fetchJournalEntry } from "../../lib/journal";
 import type { JournalEntryWithTasks } from "../../types/journal";
+import { useEffect, useState } from "react";
+import { useEditJournal } from "../../hooks/useEditJournal";
 
 const queryClient = new QueryClient();
+
+export default function JournalEntry() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <JournalEntryContent />
+    </QueryClientProvider>
+  );
+}
 
 function JournalEntryContent() {
   const { entryId } = useParams();
@@ -22,6 +32,32 @@ function JournalEntryContent() {
     queryFn: () => fetchJournalEntry(Number(entryId)),
     enabled: !!entryId && !isNaN(Number(entryId)),
   });
+
+  const [editorialText, setEditorialText] = useState("");
+  const editJournalMutation = useEditJournal();
+
+  // Initialize text from entry when it loads
+  useEffect(() => {
+    if (entry) {
+      setEditorialText(entry.editorial_text ?? "");
+    }
+  }, [entry]);
+
+  // Debounced save on text change
+  useEffect(() => {
+    if (!entry) return;
+
+    const timeout = setTimeout(() => {
+      if (editorialText !== (entry.editorial_text ?? "")) {
+        editJournalMutation.mutate({
+          id: entry.id,
+          editorial_text: editorialText,
+        });
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeout);
+  }, [editorialText, entry, editJournalMutation]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -134,17 +170,15 @@ function JournalEntryContent() {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Journal Entry
               </h2>
-              {entry.editorial_text ? (
-                <div className="prose dark:prose-invert max-w-none">
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                    {entry.editorial_text}
-                  </p>
-                </div>
-              ) : (
-                <div className="text-gray-500 dark:text-gray-400 italic">
-                  No editorial text for this entry
-                </div>
-              )}
+              <label className="block mb-2 font-semibold text-gray-700">
+                Details:
+              </label>
+              <textarea
+                className="w-full  p-2 border rounded mb-4"
+                rows={4}
+                value={editorialText}
+                onChange={(e) => setEditorialText(e.target.value)}
+              />
             </div>
 
             {/* Tasks */}
@@ -204,13 +238,5 @@ function JournalEntryContent() {
         )}
       </main>
     </div>
-  );
-}
-
-export default function JournalEntry() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <JournalEntryContent />
-    </QueryClientProvider>
   );
 }
