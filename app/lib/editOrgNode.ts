@@ -38,7 +38,8 @@ export async function editOrgNode({
     updateData.unique_days_required = unique_days_required;
   // Completion tracking fields
   if (is_completed !== undefined) updateData.is_completed = is_completed;
-  if (completed_at !== undefined) updateData.completed_at = completed_at;
+  if (completed_at !== undefined)
+    updateData.completed_at = completed_at ?? undefined;
   if (completion_comment !== undefined)
     updateData.completion_comment = completion_comment;
 

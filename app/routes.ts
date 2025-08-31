@@ -1,10 +1,5 @@
 // app/routes.ts
-import {
-  type RouteConfig,
-  route,
-  index,
-  layout,
-} from "@react-router/dev/routes";
+import { type RouteConfig, route, index } from "@react-router/dev/routes";
 
 export default [
   index("./routes/_index.tsx"),

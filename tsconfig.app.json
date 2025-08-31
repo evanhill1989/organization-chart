@@ -21,21 +21,26 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Path mapping for generated types */
+    "baseUrl": ".",
+    "paths": {
+      "../root.js": ["app/root.tsx"], // resolves the main root route
+      "../*.js": ["app/*.tsx", "app/*.ts"], // resolves top-level route modules
+      "../routes/*.js": ["app/routes/*.tsx", "app/routes/*.ts"], // resolves route subfolders
+      ".react-router/types/app/+types/*.js": ["app/+types/*.ts"], // generated type files
+      ".react-router/types/app/*.js": ["app/*.tsx"] // generated app-level modules
+    }
   },
   "include": [
-    "app/components/OrgChartTab.tsx",
-    "app/components/AddNodeForm.tsx",
-    "app/lib/buildOrgTree.ts",
-    "app/lib/deleteOrgNode.ts",
-    "app/lib/editOrgNode.ts",
-    "app/lib/fetchOrgTree.ts",
-    "app/lib/importanceUtils.ts",
-    "app/lib/timeReportUtils.ts",
-    "app/lib/urgencyUtils.ts",
-    "app/lib/data/supabaseClient.ts",
-    "app/components/JournalPage.tsx",
+    "app/components/**/*.{ts,tsx}",
+    "app/lib/**/*.{ts,tsx}",
+    "app/lib/data/**/*.ts",
+    "app/contexts/**/*.{ts,tsx}",
     "app/vite-env.d.ts",
-    "app/contexts"
+    "app/**/*.d.ts", // ensures global.d.ts is loaded
+    "app/+types/**/*.ts", // include generated types
+    ".react-router/types/app/+types/**/*.ts" // include the generated folder for TS
   ]
 }

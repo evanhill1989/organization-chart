@@ -110,7 +110,10 @@ export function useEditOrgNode(root_category: string) {
               is_completed: updates.is_completed,
             }),
             ...(updates.completed_at !== undefined && {
-              completed_at: updates.completed_at,
+              completed_at:
+                updates.completed_at === null
+                  ? undefined
+                  : updates.completed_at,
             }),
             ...(updates.completion_comment !== undefined && {
               completion_comment: updates.completion_comment,

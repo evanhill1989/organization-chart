@@ -126,7 +126,7 @@ export default function TaskDetailsModal({
     isCompleted,
     task,
     editNodeMutation,
-    // Removed completionComment from dependencies
+    completionComment,
   ]);
 
   useEffect(() => {

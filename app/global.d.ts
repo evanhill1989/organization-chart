@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 declare module "../root.js" {
   export * from "../root";
   export { default } from "../root";
