@@ -4,4 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [reactRouter(), tailwindcss()],
+  build: {
+    outDir: "dist", // ensures Vite outputs here
+    emptyOutDir: true, // clears previous builds
+  },
 });
