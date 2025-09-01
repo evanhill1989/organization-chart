@@ -24,6 +24,7 @@ type OrgChartNodeProps = {
   openMap: Record<string, boolean>;
   toggleOpen: (path: string) => void;
   path: string;
+  disableExpand?: boolean;
 };
 
 export default function OrgChartNode({
@@ -33,6 +34,7 @@ export default function OrgChartNode({
   openMap,
   toggleOpen,
   path,
+  disableExpand,
 }: OrgChartNodeProps) {
   const isTask = node.type === "task";
   const isOpen = openMap[path] || false;
@@ -108,19 +110,23 @@ export default function OrgChartNode({
         ) : (
           <button
             className="text-lg text-white font-semibold w-full text-center focus:outline-none bg-gray-800 p-2 rounded-lg"
-            onClick={() => toggleOpen(path)}
+            onClick={() => !disableExpand && toggleOpen(path)} // 👈 guard
             type="button"
+            disabled={disableExpand} // 👈 optional visual disable
           >
             <span className="flex items-center justify-center gap-2">
               {node.name}
-              <span className="ml-1 text-gray-400">{isOpen ? "▼" : "▶"}</span>
+              {!disableExpand && (
+                <span className="ml-1 text-gray-400">
+                  {isOpen ? "▼" : "▶"}
+                </span>
+              )}
             </span>
           </button>
         )}
       </div>
 
-      {/* Always render the children grid when expanded, even if empty */}
-      {!isTask && isOpen && (
+      {!isTask && isOpen && !disableExpand && (
         <div className="grid gap-4 mt-4 w-full auto-cols-min grid-flow-col">
           {node.children?.map((child) => (
             <OrgChartNode
@@ -131,10 +137,11 @@ export default function OrgChartNode({
               openMap={openMap}
               toggleOpen={toggleOpen}
               path={`${path}/${child.name}`}
+              disableExpand={disableExpand} // 👈 pass down
             />
           ))}
 
-          {/* "+" button as a sibling to children */}
+          {/* "+" button */}
           <button
             className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
             onClick={() => setShowAddModal(true)}

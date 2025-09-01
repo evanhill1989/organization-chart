@@ -38,7 +38,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({
     [`/${tabName}`]: true,
   });
-  const isMobile = useIsMobile();
+  const isMobile = true;
   const addNodeMutation = useAddOrgNode(tabName);
 
   const handleAddNode = (newNode: {
