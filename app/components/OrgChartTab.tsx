@@ -6,9 +6,16 @@ import type { OrgNode } from "../types/orgChart";
 import AddNodeForm from "./AddNodeForm";
 import OrgChartNode from "./OrgChartNode";
 import TaskDetailsModal from "./TaskDetailsModal";
+import MobileOrgChart from "./MobileOrgChart";
 import { useAddOrgNode } from "../hooks/useAddOrgNode";
+import { useToggleOpen } from "../hooks/useToggleOpen"; // <-- new import
+import { useIsMobile } from "../hooks/useIsMobile";
+
 import {
-  getEffectiveUrgency,
+  findAllUrgencyAnimationTargets,
+  findDeepestImportanceAnimationTarget,
+} from "../lib/animationTargets";
+import {
   shouldShowUrgencyBall,
   createUrgencyOrbitalPath,
   getUrgencyMotionConfig,
@@ -25,72 +32,13 @@ type OrgChartTabProps = {
   tabName: string;
 };
 
-function findDeepestImportanceAnimationTarget(
-  node: OrgNode,
-  openMap: Record<string, boolean>,
-  basePath: string
-): string | null {
-  const currentPath = basePath ? `${basePath}/${node.name}` : `/${node.name}`;
-  const effectiveImportance = getEffectiveImportance(node);
-
-  if (effectiveImportance !== 10) return null;
-
-  if (node.type === "task") return currentPath;
-
-  const isOpen = openMap[currentPath];
-  if (!isOpen) return currentPath;
-
-  if (node.children) {
-    for (const child of node.children) {
-      const childTarget = findDeepestImportanceAnimationTarget(
-        child,
-        openMap,
-        currentPath
-      );
-      if (childTarget) return childTarget;
-    }
-  }
-
-  return null;
-}
-
-function findAllUrgencyAnimationTargets(
-  node: OrgNode,
-  openMap: Record<string, boolean>,
-  basePath: string
-): string[] {
-  const currentPath = basePath ? `${basePath}/${node.name}` : `/${node.name}`;
-  const effectiveUrgency = getEffectiveUrgency(node);
-
-  if (effectiveUrgency <= 1) return [];
-
-  if (node.type === "task") return [currentPath];
-
-  const isOpen = openMap[currentPath];
-  if (!isOpen) return [currentPath];
-
-  const allChildTargets: string[] = [];
-  if (node.children) {
-    for (const child of node.children) {
-      const childTargets = findAllUrgencyAnimationTargets(
-        child,
-        openMap,
-        currentPath
-      );
-      allChildTargets.push(...childTargets);
-    }
-  }
-
-  return allChildTargets;
-}
-
 export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   const [modalTask, setModalTask] = useState<OrgNode | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({
     [`/${tabName}`]: true,
   });
-
+  const isMobile = useIsMobile();
   const addNodeMutation = useAddOrgNode(tabName);
 
   const handleAddNode = (newNode: {
@@ -112,9 +60,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
     addNodeMutation.mutate(mutationData);
   };
 
-  const toggleOpen = (path: string) => {
-    setOpenMap((prev) => ({ ...prev, [path]: !prev[path] }));
-  };
+  const toggleOpen = useToggleOpen(tree, tabName, setOpenMap); // <-- now from hook
 
   useGSAP(() => {
     gsap.killTweensOf("*");
@@ -221,40 +167,53 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   }, [openMap, tree, tabName]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-8">
-      <h2 className="text-3xl font-bold text-center mb-8">{tabName}</h2>
-      <div className="grid gap-4 w-full auto-cols-min grid-flow-col">
-        {tree.children?.map((child) => (
-          <OrgChartNode
-            key={child.name}
-            node={child}
-            onTaskClick={setModalTask}
-            openMap={openMap}
-            toggleOpen={toggleOpen}
-            path={`/${tabName}/${child.name}`}
-          />
-        ))}
-
-        <button
-          className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
-          onClick={() => setShowAddModal(true)}
-          title="Add Node"
-          type="button"
-        >
-          +
-        </button>
-      </div>
-
-      {showAddModal && (
-        <AddNodeForm
-          parent_id={tree.id}
-          tab_name={tabName}
-          onAdd={handleAddNode}
-          onClose={() => setShowAddModal(false)}
+    <>
+      {isMobile ? (
+        <MobileOrgChart
+          root={tree}
+          tabName={tabName}
+          onTaskClick={setModalTask}
+          openMap={openMap}
+          toggleOpen={toggleOpen}
         />
+      ) : (
+        <div className="w-full max-w-4xl mx-auto p-8">
+          <h2 className="text-3xl font-bold text-center mb-8">{tabName}</h2>
+
+          <div className="grid gap-4 w-full auto-cols-min grid-flow-col">
+            {tree.children?.map((child) => (
+              <OrgChartNode
+                key={child.name}
+                node={child}
+                onTaskClick={setModalTask}
+                openMap={openMap}
+                toggleOpen={toggleOpen}
+                path={`/${tabName}/${child.name}`}
+              />
+            ))}
+
+            <button
+              className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
+              onClick={() => setShowAddModal(true)}
+              title="Add Node"
+              type="button"
+            >
+              +
+            </button>
+          </div>
+
+          {showAddModal && (
+            <AddNodeForm
+              parent_id={tree.id}
+              tab_name={tabName}
+              onAdd={handleAddNode}
+              onClose={() => setShowAddModal(false)}
+            />
+          )}
+        </div>
       )}
 
       <TaskDetailsModal task={modalTask} onClose={() => setModalTask(null)} />
-    </div>
+    </>
   );
 }
