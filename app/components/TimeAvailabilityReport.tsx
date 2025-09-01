@@ -380,7 +380,7 @@ export default function TimeAvailabilityReport() {
 
   return (
     <>
-      <div className="flex items-center space-x-4 text-white text-sm">
+      <div className="flex flex-col md:flex-row items-center gap-2 space-x-4 text-white text-sm">
         <DateFilter />
         <ImportanceFilter />
         <QuickStats />
