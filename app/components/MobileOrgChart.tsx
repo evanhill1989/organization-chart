@@ -1,5 +1,5 @@
 // app/components/MobileOrgChart.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { OrgNode } from "../types/orgChart";
 import OrgChartNode from "./OrgChartNode";
 
@@ -8,7 +8,7 @@ type MobileOrgChartProps = {
   tabName: string;
   onTaskClick: (node: OrgNode) => void;
   openMap: Record<string, boolean>;
-  toggleOpen: (path: string) => void; // required by OrgChartNode but unused in mobile
+  toggleOpen: (path: string) => void;
 };
 
 export default function MobileOrgChart({
@@ -37,22 +37,68 @@ export default function MobileOrgChart({
 
   const currentNode = getNodeByPath(root, activePath) || root;
 
+  // Instead of calling toggleOpen multiple times, directly update the parent's openMap
+  // We need to inform the parent component about what paths should be "open" for animations
+  useEffect(() => {
+    console.log(`Mobile: activePath changed to ${activePath}`);
+
+    // Build all visible paths for current mobile view
+    const visiblePaths: string[] = [];
+
+    // Add the active path itself
+    visiblePaths.push(activePath);
+
+    // Add all direct children of current node
+    if (currentNode.children) {
+      currentNode.children.forEach((child) => {
+        const childPath = `${activePath}/${child.name}`;
+        visiblePaths.push(childPath);
+      });
+    }
+
+    console.log(`Mobile: visible paths:`, visiblePaths);
+
+    // Use a custom event or callback to inform parent about visible paths
+    // For now, we'll mark these as open by calling toggleOpen only if not already open
+    visiblePaths.forEach((path) => {
+      if (!openMap[path]) {
+        console.log(`Mobile: marking ${path} as open`);
+        toggleOpen(path);
+      }
+    });
+  }, [activePath, currentNode, toggleOpen]); // Removed openMap from deps to avoid loops
+
   // Determine parent path for back navigation
   const parentPath =
     activePath.split("/").slice(0, -1).join("/") || `/${tabName}`;
-  const goForward = (child: OrgNode) =>
-    setActivePath(`${activePath}/${child.name}`);
-  const goBack = () => setActivePath(parentPath);
+
+  const goForward = (child: OrgNode) => {
+    const newPath = `${activePath}/${child.name}`;
+    console.log(`Mobile: navigating forward to ${newPath}`);
+    setActivePath(newPath);
+  };
+
+  const goBack = () => {
+    console.log(`Mobile: navigating back to ${parentPath}`);
+    setActivePath(parentPath);
+  };
 
   return (
     <div className="w-full max-w-md mx-auto p-4 flex flex-col">
-      <h2 className="text-2xl font-bold text-center mb-4">{tabName}</h2>
+      <h2 className="text-2xl font-bold text-center mb-4 text-gray-900 dark:text-gray-100">
+        {tabName}
+      </h2>
+
+      {/* Current path breadcrumb */}
+      <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+        {activePath.replace(`/${tabName}`, tabName).replace(/\//g, " → ")}
+      </div>
 
       {/* Back button if not at root */}
       {activePath !== `/${tabName}` && (
         <button
           onClick={goBack}
-          className="mb-2 text-blue-600 font-semibold text-left"
+          className="mb-4 text-blue-600 dark:text-blue-400 font-semibold text-left hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
         >
           ← Back
         </button>
@@ -64,28 +110,40 @@ export default function MobileOrgChart({
           const childPath = `${activePath}/${child.name}`;
 
           return (
-            <div key={childPath} className="flex items-center justify-between">
-              <OrgChartNode
-                node={child}
-                onTaskClick={onTaskClick}
-                openMap={openMap}
-                toggleOpen={toggleOpen}
-                path={childPath} // ✅ full path for GSAP animations
-                disableExpand={true} // disable desktop expand buttons
-              />
+            <div
+              key={childPath}
+              className="flex items-center justify-between gap-3"
+            >
+              <div className="flex-1">
+                <OrgChartNode
+                  node={child}
+                  onTaskClick={onTaskClick}
+                  openMap={openMap}
+                  toggleOpen={toggleOpen}
+                  path={childPath} // ✅ full path for GSAP animations
+                  disableExpand={true} // disable desktop expand buttons
+                />
+              </div>
 
               {/* Forward button for drill-down */}
               {!child.is_completed && child.children?.length ? (
                 <button
                   onClick={() => goForward(child)}
-                  className="ml-2 text-sm text-blue-600"
+                  className="flex-shrink-0 px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 border border-blue-600 dark:border-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                 >
-                  →
+                  Enter →
                 </button>
               ) : null}
             </div>
           );
         })}
+
+        {/* Empty state */}
+        {!currentNode.children?.length && (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No items in this category
+          </div>
+        )}
       </div>
     </div>
   );
