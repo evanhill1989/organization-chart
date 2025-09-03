@@ -13,6 +13,7 @@ import QuickAddEditModal from "../../components/QuickAddEditModal";
 import TimeAvailabilityReport from "../../components/TimeAvailabilityReport";
 import type { OrgNode } from "../../types/orgChart";
 import { fetchOrgTree } from "../../lib/fetchOrgTree";
+import TasksDueToday from "../../components/TasksDueToday";
 
 const queryClient = new QueryClient();
 
@@ -136,6 +137,7 @@ function OrgChartContent() {
     }
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+  const [showTasksDueToday, setShowTasksDueToday] = useState(false);
 
   // Mobile menu states
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
@@ -258,7 +260,7 @@ function OrgChartContent() {
                 )}
               </button>
 
-              {/* Time Report */}
+              {/* TimeAvailabilityReport */}
               <button
                 onClick={() => setShowMobileTimeReport(true)}
                 className="text-gray-300 hover:text-white p-2 rounded transition-colors"
@@ -364,7 +366,26 @@ function OrgChartContent() {
                   </svg>
                 )}
               </button>
-
+              <button
+                onClick={() => setShowTasksDueToday(true)}
+                className="text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
+                title="Tasks Due Today"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span className="hidden sm:inline text-sm">Today</span>
+              </button>
               <button
                 onClick={() => setShowQuickAddEdit(true)}
                 className="text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
@@ -393,7 +414,7 @@ function OrgChartContent() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex  p-4">
         {isLoading && (
           <div className="text-gray-900 dark:text-gray-100">
             Loading {activeTab} tree...
@@ -423,6 +444,11 @@ function OrgChartContent() {
       <QuickAddEditModal
         isOpen={showQuickAddEdit}
         onClose={() => setShowQuickAddEdit(false)}
+      />
+
+      <TasksDueToday
+        isOpen={showTasksDueToday}
+        onClose={() => setShowTasksDueToday(false)}
       />
     </div>
   );

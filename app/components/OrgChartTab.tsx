@@ -225,7 +225,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
           toggleOpen={toggleOpen}
         />
       ) : (
-        <div className="w-full max-w-4xl mx-auto p-8">
+        <div className="w-full max-w-4xl  p-8">
           <h2 className="text-3xl font-bold text-center mb-8">{tabName}</h2>
 
           <div className="grid gap-4 w-full auto-cols-min grid-flow-col">
