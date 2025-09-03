@@ -31,36 +31,71 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
   const queryCache = queryClient.getQueryCache();
   const orgTreeQueries = queryCache.findAll({ queryKey: ["orgTree"] });
 
-  console.log(orgTreeQueries, "orgTreeQueries in TasksDueToday");
+  console.log("Found queries:", orgTreeQueries.length);
 
   // Loop through all cached org trees
-  orgTreeQueries.forEach((query) => {
+  orgTreeQueries.forEach((query, index) => {
+    console.log(
+      `Processing query ${index}:`,
+      query.queryKey,
+      query.state.status
+    );
+
+    // Access the data correctly from the query
     const treeData = query.state.data as OrgNode;
+
     if (treeData && query.state.status === "success") {
+      console.log(
+        `Tree data for ${query.queryKey[1]}:`,
+        treeData.name,
+        "Children:",
+        treeData.children?.length
+      );
+
       // Recursive function to find all tasks in this tree
       const findTasksInNode = (node: OrgNode): void => {
-        // If this is a task due today and not completed, add it
-        if (
-          node.type === "task" &&
-          node.deadline === today &&
-          !node.is_completed
-        ) {
-          rawTasks.push(node as OrgNodeRow);
+        // If this is a task that's due today OR overdue, and not completed, add it
+        if (node.type === "task" && node.deadline && !node.is_completed) {
+          const taskDeadline = new Date(node.deadline);
+          const todayDate = new Date(today);
+
+          // Include tasks due today or overdue (deadline <= today)
+          if (taskDeadline <= todayDate) {
+            const isOverdue = taskDeadline < todayDate;
+            console.log(
+              `Found task ${isOverdue ? "overdue" : "due today"}: ${node.name} (deadline: ${node.deadline})`
+            );
+
+            rawTasks.push({
+              id: node.id,
+              name: node.name,
+              type: node.type,
+              root_category: node.root_category,
+              details: node.details,
+              importance: node.importance,
+              deadline: node.deadline,
+              completion_time: node.completion_time,
+              unique_days_required: node.unique_days_required,
+              is_completed: node.is_completed,
+              completed_at: node.completed_at,
+              completion_comment: node.completion_comment,
+              parent_id: node.parent_id,
+              tab_name: node.tab_name,
+            } as OrgNodeRow);
+          }
         }
 
         // Check all children recursively
-        if (node.children) {
+        if (node.children && node.children.length > 0) {
           node.children.forEach(findTasksInNode);
         }
       };
-
       // Start the search from the root of this tree
       findTasksInNode(treeData);
     }
   });
 
   // Transform the raw tasks with urgency calculations and sort them
-  console.log(rawTasks, "rawTasks in TasksDueToday");
   const todayTasks = enrichTasksWithUrgencyData(rawTasks).sort(
     TaskSorters.byUrgencyThenImportance
   );
@@ -118,7 +153,7 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
             {/* List of tasks */}
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Today's Tasks
+                Today's Tasks & Overdue Items
                 <span className="text-sm font-normal text-gray-600 ml-2">
                   (Click any task to edit)
                 </span>
