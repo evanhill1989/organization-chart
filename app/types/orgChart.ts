@@ -44,3 +44,19 @@ export type OrgChartTabProps = {
   tree: OrgNode;
   tab_name: string;
 };
+
+export type Task = {
+  id: string;
+  title: string;
+  description?: string;
+  due_date?: string;
+  completed?: boolean;
+  parentNodeId?: string;
+};
+
+export type OrgNodeWithTasks = {
+  id: string;
+  name: string;
+  tasks?: Task[];
+  children?: OrgNodeWithTasks[];
+};

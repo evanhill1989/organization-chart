@@ -1,108 +1,99 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQueries } from "@tanstack/react-query";
 
-import type { OrgNode, OrgNodeRow } from "../types/orgChart";
 import TaskDetailsModal from "./TaskDetailsModal";
 import EmptyState from "./ui/EmptyState";
 import TaskSummaryCards from "./tasks/TaskSummaryCards";
 import TaskListItem from "./tasks/TaskListItem";
+
+import { collectTasksDueToday } from "../lib/collectTasksDueToday";
 import {
   enrichTasksWithUrgencyData,
   TaskSorters,
   type EnrichedTask,
 } from "../lib/taskEnrichmentUtils";
+import type { OrgNode } from "../types/orgChart";
+import { fetchOrgTree } from "../lib/fetchOrgTree";
 
 interface TasksDueTodayProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const ALL_TABS = [
+  "Household",
+  "Finances",
+  "Cleo",
+  "Job",
+  "Social",
+  "Personal",
+  "Orphans",
+] as const;
+
 export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
   const [selectedTask, setSelectedTask] = useState<EnrichedTask | null>(null);
   const queryClient = useQueryClient();
 
-  if (!isOpen) return null;
-
-  // Get today's date for filtering
-  const today = new Date().toISOString().split("T")[0];
-  const rawTasks: OrgNodeRow[] = [];
-
-  // Extract tasks from ALL cached org tree data - NO database calls
-  const queryCache = queryClient.getQueryCache();
-  const orgTreeQueries = queryCache.findAll({ queryKey: ["orgTree"] });
-
-  console.log("Found queries:", orgTreeQueries.length);
-
-  // Loop through all cached org trees
-  orgTreeQueries.forEach((query, index) => {
-    console.log(
-      `Processing query ${index}:`,
-      query.queryKey,
-      query.state.status
-    );
-
-    // Access the data correctly from the query
-    const treeData = query.state.data as OrgNode;
-
-    if (treeData && query.state.status === "success") {
-      console.log(
-        `Tree data for ${query.queryKey[1]}:`,
-        treeData.name,
-        "Children:",
-        treeData.children?.length
-      );
-
-      // Recursive function to find all tasks in this tree
-      const findTasksInNode = (node: OrgNode): void => {
-        // If this is a task that's due today OR overdue, and not completed, add it
-        if (node.type === "task" && node.deadline && !node.is_completed) {
-          const taskDeadline = new Date(node.deadline);
-          const todayDate = new Date(today);
-
-          // Include tasks due today or overdue (deadline <= today)
-          if (taskDeadline <= todayDate) {
-            const isOverdue = taskDeadline < todayDate;
-            console.log(
-              `Found task ${isOverdue ? "overdue" : "due today"}: ${node.name} (deadline: ${node.deadline})`
-            );
-
-            rawTasks.push({
-              id: node.id,
-              name: node.name,
-              type: node.type,
-              root_category: node.root_category,
-              details: node.details,
-              importance: node.importance,
-              deadline: node.deadline,
-              completion_time: node.completion_time,
-              unique_days_required: node.unique_days_required,
-              is_completed: node.is_completed,
-              completed_at: node.completed_at,
-              completion_comment: node.completion_comment,
-              parent_id: node.parent_id,
-              tab_name: node.tab_name,
-            } as OrgNodeRow);
-          }
-        }
-
-        // Check all children recursively
-        if (node.children && node.children.length > 0) {
-          node.children.forEach(findTasksInNode);
-        }
-      };
-      // Start the search from the root of this tree
-      findTasksInNode(treeData);
-    }
+  // 🔹 Fetch ALL tabs when modal is open
+  const allTabQueries = useQueries({
+    queries: ALL_TABS.map((tab) => ({
+      queryKey: ["orgTree", tab],
+      queryFn: () => fetchOrgTree(tab),
+      enabled: isOpen, // Only fetch when modal is open
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    })),
   });
 
-  // Transform the raw tasks with urgency calculations and sort them
-  const todayTasks = enrichTasksWithUrgencyData(rawTasks).sort(
-    TaskSorters.byUrgencyThenImportance
+  if (!isOpen) return null;
+
+  // Wait for all queries to complete
+  const isLoading = allTabQueries.some((query) => query.isLoading);
+  const hasError = allTabQueries.some((query) => query.error);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8">
+          <div className="flex items-center space-x-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span>Loading tasks from all categories...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8">
+          <div className="text-red-600">
+            Error loading tasks. Please try again.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔹 Get all successfully loaded org trees
+  const orgTreeRoots: OrgNode[] = allTabQueries
+    .filter((query) => query.data && query.isSuccess)
+    .map((query) => query.data as OrgNode);
+
+  console.log(`Found ${orgTreeRoots.length} org tree roots from all tabs`);
+
+  // 🔹 Collect & sort all due-today/overdue tasks
+  const todayTasks = enrichTasksWithUrgencyData(
+    collectTasksDueToday(orgTreeRoots)
+  ).sort(TaskSorters.byUrgencyThenImportance);
+
+  console.log(
+    `Found ${todayTasks.length} tasks due today/overdue across all tabs`
   );
 
   const handleTaskDetailsClose = () => {
     setSelectedTask(null);
-    // Invalidate org tree cache so it refreshes and we get updated data
+    // Invalidate so next open is fresh
     queryClient.invalidateQueries({ queryKey: ["orgTree"] });
   };
 
@@ -120,11 +111,12 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">
-              Tasks Due Today
+              Tasks Due Today & Overdue
             </h2>
             <p className="text-sm text-gray-600">
               {todayFormatted} • {todayTasks.length} task
-              {todayTasks.length !== 1 ? "s" : ""} due
+              {todayTasks.length !== 1 ? "s" : ""} due or overdue across all
+              categories
             </p>
           </div>
           <button
@@ -136,7 +128,7 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
           </button>
         </div>
 
-        {/* Show empty state if no tasks */}
+        {/* Empty state */}
         {todayTasks.length === 0 && (
           <EmptyState
             title="No tasks due today!"
@@ -144,13 +136,10 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
           />
         )}
 
-        {/* Show content if we have tasks */}
+        {/* Task content */}
         {todayTasks.length > 0 && (
           <>
-            {/* Summary statistics */}
             <TaskSummaryCards tasks={todayTasks} />
-
-            {/* List of tasks */}
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Today's Tasks & Overdue Items
