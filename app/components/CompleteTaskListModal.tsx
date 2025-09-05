@@ -1,16 +1,14 @@
+// app/components/CompleteTaskListModal.tsx
 import { useState } from "react";
-import type { OrgNodeRow } from "../types/orgChart";
+
 import TaskDetailsModal from "./TaskDetailsModal";
 import EmptyState from "./ui/EmptyState";
-import { useAllTasks } from "../hooks/useAllTasks";
 import TaskSummaryCards from "./tasks/TaskSummaryCards";
-
-interface CompleteTaskData extends OrgNodeRow {
-  type: "top_category" | "category" | "task";
-  daysUntilDeadline: number;
-  isOverdue: boolean;
-  urgencyLevel: number;
-}
+import { useAllTasks } from "../hooks/useAllTasks";
+import type { CompleteTaskData } from "../lib/tasks/fetchAllTasks";
+import TaskTable from "./tasks/TaskTable";
+import LoadingState from "./ui/LoadingState";
+import ErrorState from "./ui/ErrorState";
 
 interface CompleteTaskListModalProps {
   isOpen: boolean;
@@ -21,167 +19,37 @@ export default function CompleteTaskListModal({
   isOpen,
   onClose,
 }: CompleteTaskListModalProps) {
-  // ✅ The hook handles fetching, caching, and refetching
+  // ✅ Use the hook with proper typing
   const {
     tasks: allTasks = [],
     isLoading,
     error,
-    refetch, // React Query’s refetch
+    reload, // Use reload instead of refetch for consistency with your hook
   } = useAllTasks(isOpen);
 
   const [selectedTask, setSelectedTask] = useState<CompleteTaskData | null>(
     null
   );
 
-  // ✅ Close details + refresh tasks
+  // ✅ Handle task details close and refresh
   const handleTaskDetailsClose = () => {
     setSelectedTask(null);
-    refetch();
+    reload(); // Use reload from your hook
   };
 
   if (!isOpen) return null;
 
-  const TaskTable = () => (
-    <div className="overflow-x-auto">
-      <table className="min-w-full border border-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            {[
-              "Task",
-              "Category",
-              "Deadline",
-              "Days Left",
-              "Time Required",
-              "Unique Days",
-              "Urgency",
-              "Importance",
-            ].map((header) => (
-              <th
-                key={header}
-                className="px-3 py-2 text-left text-sm font-medium text-gray-700"
-              >
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {allTasks.map((task, index) => (
-            <tr
-              key={task.id}
-              className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} ${
-                task.isOverdue ? "bg-red-50" : ""
-              } hover:bg-blue-50 cursor-pointer transition-colors`}
-              onClick={() => setSelectedTask(task)}
-              title="Click to view/edit task details"
-            >
-              <td className="px-3 py-2 text-sm">
-                <div className="font-medium text-gray-800 hover:text-blue-600">
-                  {task.name}
-                </div>
-                {task.details && (
-                  <div
-                    className="text-xs text-gray-500 mt-1 max-w-xs truncate"
-                    title={task.details}
-                  >
-                    {task.details}
-                  </div>
-                )}
-              </td>
-              <td className="px-3 py-2 text-sm text-gray-600">
-                <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                  {task.root_category}
-                </span>
-              </td>
-              <td className="px-3 py-2 text-sm text-gray-600">
-                {task.deadline
-                  ? new Date(task.deadline).toLocaleDateString()
-                  : "No deadline"}
-              </td>
-              <td
-                className={`px-3 py-2 text-sm font-medium ${
-                  task.isOverdue
-                    ? "text-red-600"
-                    : task.daysUntilDeadline <= 7
-                      ? "text-orange-600"
-                      : task.daysUntilDeadline <= 30
-                        ? "text-yellow-600"
-                        : "text-gray-600"
-                }`}
-              >
-                {task.isOverdue
-                  ? `${Math.abs(task.daysUntilDeadline)} overdue`
-                  : `${task.daysUntilDeadline} days`}
-              </td>
-              <td className="px-3 py-2 text-sm text-gray-600">
-                {task.completion_time?.toFixed(1) || 0}h
-              </td>
-              <td className="px-3 py-2 text-sm text-gray-600">
-                {task.unique_days_required?.toFixed(1) || 0}
-              </td>
-              <td className="px-3 py-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <span
-                    className={`inline-block w-3 h-3 rounded-full ${
-                      task.urgencyLevel <= 3
-                        ? "bg-green-400"
-                        : task.urgencyLevel <= 6
-                          ? "bg-yellow-400"
-                          : task.urgencyLevel <= 8
-                            ? "bg-orange-400"
-                            : "bg-red-500"
-                    }`}
-                  />
-                  <span className="text-xs font-medium">
-                    Level {task.urgencyLevel}
-                  </span>
-                </div>
-              </td>
-              <td className="px-3 py-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <span
-                    className={`inline-block w-3 h-3 rounded-full ${
-                      (task.importance || 1) <= 3
-                        ? "bg-gray-300"
-                        : (task.importance || 1) <= 6
-                          ? "bg-blue-400"
-                          : (task.importance || 1) <= 8
-                            ? "bg-purple-400"
-                            : "bg-purple-600"
-                    }`}
-                  />
-                  <span className="text-xs font-medium">
-                    Level {task.importance || 1}
-                  </span>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  const LoadingState = () => (
-    <div className="text-center py-8">
-      <div className="inline-flex items-center space-x-2 text-gray-600">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-        <span>Loading tasks...</span>
-      </div>
-    </div>
-  );
-
-  const ErrorState = () => (
-    <div className="text-center py-8 text-red-600">
-      <p className="mt-2">Error: {error?.message}</p>
-      <button
-        onClick={() => refetch()}
-        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Try Again
-      </button>
-    </div>
-  );
+  // const ErrorState = () => (
+  //   <div className="text-center py-8 text-red-600">
+  //     <p className="mt-2">Error: {error}</p>
+  //     <button
+  //       onClick={() => reload()}
+  //       className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+  //     >
+  //       Try Again
+  //     </button>
+  //   </div>
+  // );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20">
@@ -204,7 +72,7 @@ export default function CompleteTaskListModal({
         </div>
 
         {isLoading && <LoadingState />}
-        {error && <ErrorState />}
+        {error && <ErrorState error={error} onClick={() => reload()} />}
         {!isLoading && !error && allTasks.length === 0 && (
           <EmptyState title="No tasks found with deadlines" />
         )}
@@ -218,7 +86,7 @@ export default function CompleteTaskListModal({
               <p className="text-sm text-gray-600 mb-3">
                 Click on any task to view or edit its details
               </p>
-              <TaskTable />
+              <TaskTable tasks={allTasks} onTaskSelect={setSelectedTask} />
             </div>
           </>
         )}
