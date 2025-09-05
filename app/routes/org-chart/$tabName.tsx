@@ -18,6 +18,7 @@ import MobileHamburgerMenu from "../../components/ui/MobileHamburgerMenu";
 import MobileTimeReportModal from "../../components/ui/MobileTimeReportModal";
 import DarkModeToggle from "../../components/ui/DarkModeToggle";
 import TasksDueTodayButton from "../../components/TasksDueTodayButton";
+import QuickAddButton from "../../components/QuickAddButton";
 
 const queryClient = new QueryClient();
 
@@ -159,26 +160,7 @@ function OrgChartContent() {
                 </svg>
               </button>
 
-              {/* Quick Add */}
-              <button
-                onClick={() => setShowQuickAddEdit(true)}
-                className="text-gray-300 hover:text-white p-2 rounded transition-colors"
-                title="Quick Add Task"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-              </button>
+              <QuickAddButton onClick={() => setShowQuickAddEdit(true)} />
             </div>
           </div>
         ) : (
@@ -209,46 +191,12 @@ function OrgChartContent() {
             <div className="flex items-center space-x-4">
               <DarkModeToggle />
               <TasksDueTodayButton onClick={() => setShowTasksDueToday(true)} />
-              {/* <button
-                onClick={() => setShowTasksDueToday(true)}
-                className="text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
-                title="Tasks Due Today"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <span className="hidden sm:inline text-sm">Today</span>
-              </button> */}
-              <button
+
+              <QuickAddButton
                 onClick={() => setShowQuickAddEdit(true)}
-                className="text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
-                title="Quick Add/Edit Task"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                <span className="hidden sm:inline text-sm">Quick Add</span>
-              </button>
+                showLabel
+                className="bg-gray-800 hover:bg-gray-700"
+              />
 
               <TimeAvailabilityReport />
             </div>

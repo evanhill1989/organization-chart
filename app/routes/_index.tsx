@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Register the MotionPathPlugin
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { gsap } from "gsap";
+import DarkModeToggle from "../components/ui/DarkModeToggle";
 
 gsap.registerPlugin(MotionPathPlugin);
 
@@ -19,23 +20,13 @@ export default function Dashboard() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    localStorage.setItem("darkMode", JSON.stringify(newMode));
-
-    if (newMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  };
-
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
+      setIsDarkMode(true);
     } else {
       document.documentElement.classList.remove("dark");
+      setIsDarkMode(false);
     }
   }, [isDarkMode]);
 
@@ -58,13 +49,7 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <button
-            onClick={toggleDarkMode}
-            className="text-gray-300 hover:text-white transition-colors"
-            title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {isDarkMode ? "☀️" : "🌙"}
-          </button>
+          <DarkModeToggle />
         </nav>
 
         <main className="flex-1 flex items-center justify-center p-4">
