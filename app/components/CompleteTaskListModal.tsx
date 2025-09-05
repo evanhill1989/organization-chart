@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/data/supabaseClient";
+import { useState } from "react";
 import type { OrgNodeRow } from "../types/orgChart";
-import { enrichTasksWithDeadlineInfo } from "../lib/timeReportUtils";
-import { calculateUrgencyLevel } from "../lib/urgencyUtils";
 import TaskDetailsModal from "./TaskDetailsModal";
+import EmptyState from "./ui/EmptyState";
+import { useAllTasks } from "../hooks/useAllTasks";
+import TaskSummaryCards from "./tasks/TaskSummaryCards";
 
 interface CompleteTaskData extends OrgNodeRow {
   type: "top_category" | "category" | "task";
@@ -21,118 +21,25 @@ export default function CompleteTaskListModal({
   isOpen,
   onClose,
 }: CompleteTaskListModalProps) {
-  const [allTasks, setAllTasks] = useState<CompleteTaskData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // ✅ The hook handles fetching, caching, and refetching
+  const {
+    tasks: allTasks = [],
+    isLoading,
+    error,
+    refetch, // React Query’s refetch
+  } = useAllTasks(isOpen);
+
   const [selectedTask, setSelectedTask] = useState<CompleteTaskData | null>(
     null
   );
 
-  // Fetch all tasks in the system
-  const fetchAllTasks = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const { data: tasks, error: fetchError } = await supabase
-        .from("org_nodes")
-        .select("*")
-        .eq("type", "task")
-        .not("deadline", "is", null)
-        .not("is_completed", "is", true);
-
-      if (fetchError) throw fetchError;
-
-      const typedTasks = tasks as OrgNodeRow[];
-
-      // Enrich with deadline info and urgency levels
-      const enrichedTasks = enrichTasksWithDeadlineInfo(typedTasks).map(
-        (task) => ({
-          ...task,
-          urgencyLevel: calculateUrgencyLevel(
-            task.deadline,
-            task.completion_time,
-            task.unique_days_required
-          ),
-        })
-      ) as CompleteTaskData[];
-
-      // Sort by deadline (overdue first, then by proximity)
-      const sortedTasks = enrichedTasks.sort((a, b) => {
-        if (a.isOverdue && !b.isOverdue) return -1;
-        if (!a.isOverdue && b.isOverdue) return 1;
-        if (a.isOverdue && b.isOverdue) {
-          return b.daysUntilDeadline - a.daysUntilDeadline; // Most overdue first
-        }
-        return a.daysUntilDeadline - b.daysUntilDeadline; // Closest deadline first
-      });
-
-      setAllTasks(sortedTasks);
-    } catch (err) {
-      console.error("Error fetching all tasks:", err);
-      setError(err instanceof Error ? err.message : "Failed to load tasks");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch tasks when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      fetchAllTasks();
-    }
-  }, [isOpen]);
-
-  // Refresh tasks when task details modal closes (in case task was edited)
+  // ✅ Close details + refresh tasks
   const handleTaskDetailsClose = () => {
     setSelectedTask(null);
-    fetchAllTasks(); // Refresh the list to show any changes
+    refetch();
   };
 
-  // Don't render if modal is closed
   if (!isOpen) return null;
-
-  const SummaryCards = () => (
-    <div className="grid grid-cols-4 gap-4 mb-6">
-      <div className="bg-red-50 p-4 rounded border-l-4 border-red-500">
-        <div className="text-sm text-red-700">Overdue Tasks</div>
-        <div className="text-2xl font-bold text-red-800">
-          {allTasks.filter((t) => t.isOverdue).length}
-        </div>
-      </div>
-      <div className="bg-orange-50 p-4 rounded border-l-4 border-orange-500">
-        <div className="text-sm text-orange-700">Due This Week</div>
-        <div className="text-2xl font-bold text-orange-800">
-          {
-            allTasks.filter((t) => !t.isOverdue && t.daysUntilDeadline <= 7)
-              .length
-          }
-        </div>
-      </div>
-      <div className="bg-yellow-50 p-4 rounded border-l-4 border-yellow-500">
-        <div className="text-sm text-yellow-700">Due This Month</div>
-        <div className="text-2xl font-bold text-yellow-800">
-          {
-            allTasks.filter(
-              (t) =>
-                !t.isOverdue &&
-                t.daysUntilDeadline > 7 &&
-                t.daysUntilDeadline <= 30
-            ).length
-          }
-        </div>
-      </div>
-      <div className="bg-gray-50 p-4 rounded border-l-4 border-gray-500">
-        <div className="text-sm text-gray-700">Total Time Required</div>
-        <div className="text-2xl font-bold text-gray-800">
-          {allTasks
-            .reduce((sum, t) => sum + (t.completion_time || 0), 0)
-            .toFixed(1)}
-          h
-        </div>
-      </div>
-    </div>
-  );
 
   const TaskTable = () => (
     <div className="overflow-x-auto">
@@ -255,25 +162,6 @@ export default function CompleteTaskListModal({
     </div>
   );
 
-  const EmptyState = () => (
-    <div className="text-center py-8 text-gray-500">
-      <svg
-        className="mx-auto h-12 w-12 text-gray-400"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 4h.01M9 12h.01M9 16h.01"
-        />
-      </svg>
-      <p className="mt-2">No tasks found with deadlines</p>
-    </div>
-  );
-
   const LoadingState = () => (
     <div className="text-center py-8">
       <div className="inline-flex items-center space-x-2 text-gray-600">
@@ -285,22 +173,9 @@ export default function CompleteTaskListModal({
 
   const ErrorState = () => (
     <div className="text-center py-8 text-red-600">
-      <svg
-        className="mx-auto h-12 w-12 text-red-400"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"
-        />
-      </svg>
-      <p className="mt-2">Error: {error}</p>
+      <p className="mt-2">Error: {error?.message}</p>
       <button
-        onClick={fetchAllTasks}
+        onClick={() => refetch()}
         className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
       >
         Try Again
@@ -330,10 +205,12 @@ export default function CompleteTaskListModal({
 
         {isLoading && <LoadingState />}
         {error && <ErrorState />}
-        {!isLoading && !error && allTasks.length === 0 && <EmptyState />}
+        {!isLoading && !error && allTasks.length === 0 && (
+          <EmptyState title="No tasks found with deadlines" />
+        )}
         {!isLoading && !error && allTasks.length > 0 && (
           <>
-            <SummaryCards />
+            <TaskSummaryCards tasks={allTasks} />
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-3">
                 Task Details
@@ -346,7 +223,7 @@ export default function CompleteTaskListModal({
           </>
         )}
 
-        {/* Task Details Modal - nested within the complete task list modal */}
+        {/* Task Details Modal */}
         <TaskDetailsModal
           task={selectedTask}
           onClose={handleTaskDetailsClose}

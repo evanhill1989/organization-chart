@@ -1,5 +1,5 @@
 // app/routes/_index.tsx
-import { useState, useEffect } from "react";
+
 import { Link } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Register the MotionPathPlugin
@@ -12,24 +12,6 @@ gsap.registerPlugin(MotionPathPlugin);
 const queryClient = new QueryClient();
 
 export default function Dashboard() {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const stored = localStorage.getItem("darkMode");
-    if (stored !== null) {
-      return JSON.parse(stored);
-    }
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-  }, [isDarkMode]);
-
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen w-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
