@@ -1,6 +1,6 @@
 // Updated app/routes/org-chart/$tabName.tsx with mobile-friendly nav
-import { useState, useEffect } from "react";
-import { Link, useParams, Navigate } from "react-router";
+import { useState } from "react";
+import { useParams, Navigate } from "react-router";
 import {
   useQuery,
   keepPreviousData,
@@ -10,15 +10,16 @@ import {
 
 import OrgChartTab from "../../components/OrgChartTab";
 import QuickAddEditModal from "../../components/QuickAddEditModal";
-import TimeAvailabilityReport from "../../components/TimeAvailabilityReport";
+
 import type { OrgNode } from "../../types/orgChart";
 import { fetchOrgTree } from "../../lib/fetchOrgTree";
 import TasksDueToday from "../../components/TasksDueToday";
 import MobileHamburgerMenu from "../../components/ui/MobileHamburgerMenu";
 import MobileTimeReportModal from "../../components/ui/MobileTimeReportModal";
-import DarkModeToggle from "../../components/ui/DarkModeToggle";
-import TasksDueTodayButton from "../../components/TasksDueTodayButton";
-import QuickAddButton from "../../components/QuickAddButton";
+
+import { useIsMobile } from "../../hooks/useIsMobile";
+import MobileNav from "../../components/MobileNav";
+import DesktopNav from "../../components/DesktopNav";
 
 const queryClient = new QueryClient();
 
@@ -36,41 +37,14 @@ function OrgChartContent() {
   const { tabName } = useParams();
   const activeTab = tabName || "Household";
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const stored = localStorage.getItem("darkMode");
-    if (stored !== null) {
-      return JSON.parse(stored);
-    }
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
   const [showTasksDueToday, setShowTasksDueToday] = useState(false);
 
   // Mobile menu states
-  const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
+
   const [showQuickAddEdit, setShowQuickAddEdit] = useState(false);
-  const [showMobileTimeReport, setShowMobileTimeReport] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile screen size
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024); // lg breakpoint
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-  }, [isDarkMode]);
+  const [showTimeReport, setShowTimeReport] = useState(false);
+  const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
+  const isMobile = useIsMobile();
 
   const {
     data: tree,
@@ -93,114 +67,19 @@ function OrgChartContent() {
       <nav className="bg-gray-900 dark:bg-gray-800 sticky top-0 z-40">
         {isMobile ? (
           // Mobile Navigation
-          <div className="flex items-center justify-between px-4 py-3">
-            {/* Left: Hamburger Menu */}
-            <button
-              onClick={() => setShowHamburgerMenu(true)}
-              className="text-gray-300 hover:text-white p-2 rounded transition-colors"
-              aria-label="Open navigation menu"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-
-            {/* Right: Action buttons */}
-            <div className="flex items-center space-x-2">
-              <DarkModeToggle />
-
-              <button
-                onClick={() => setShowTasksDueToday(true)}
-                className="text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
-                title="Tasks Due Today"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <span className="hidden sm:inline text-sm">Today</span>
-              </button>
-              {/* TimeAvailabilityReport */}
-              <button
-                onClick={() => setShowMobileTimeReport(true)}
-                className="text-gray-300 hover:text-white p-2 rounded transition-colors"
-                title="Time Report"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-
-              <QuickAddButton onClick={() => setShowQuickAddEdit(true)} />
-            </div>
-          </div>
+          <MobileNav
+            onOpenTasksDueToday={() => setShowTasksDueToday(true)}
+            onOpenQuickAdd={() => setShowQuickAddEdit(true)}
+            onOpenTimeReport={() => setShowTimeReport(true)}
+            onOpenHamburger={() => setShowHamburgerMenu(true)}
+          />
         ) : (
           // Desktop Navigation (unchanged)
-          <div className="flex justify-between items-center px-4">
-            <div className="flex justify-center items-center">
-              <Link
-                to="/"
-                className="px-4 py-3 text-lg font-medium text-gray-300 hover:text-white hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors mr-4"
-              >
-                ← Home
-              </Link>
-              {TABS.map((tab) => (
-                <Link
-                  key={tab}
-                  to={`/org-chart/${tab}`}
-                  className={`px-6 py-3 text-lg font-medium border-b-2 transition-colors duration-200 ${
-                    activeTab === tab
-                      ? "border-white text-white bg-gray-800 dark:bg-gray-700"
-                      : "border-transparent text-gray-300 hover:text-white hover:bg-gray-800 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {tab}
-                </Link>
-              ))}
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <DarkModeToggle />
-              <TasksDueTodayButton onClick={() => setShowTasksDueToday(true)} />
-
-              <QuickAddButton
-                onClick={() => setShowQuickAddEdit(true)}
-                showLabel
-                className="bg-gray-800 hover:bg-gray-700"
-              />
-
-              <TimeAvailabilityReport />
-            </div>
-          </div>
+          <DesktopNav
+            onOpenTasksDueToday={() => setShowTasksDueToday(true)}
+            onOpenQuickAdd={() => setShowQuickAddEdit(true)}
+            activeTab={activeTab}
+          />
         )}
       </nav>
 
@@ -220,27 +99,34 @@ function OrgChartContent() {
       </main>
 
       {/* Mobile Modals */}
-      <MobileHamburgerMenu
-        isOpen={showHamburgerMenu}
-        onClose={() => setShowHamburgerMenu(false)}
-        activeTab={activeTab}
-      />
+      {showTasksDueToday && (
+        <TasksDueToday
+          isOpen={showTasksDueToday}
+          onClose={() => setShowTasksDueToday(false)}
+        />
+      )}
 
-      <MobileTimeReportModal
-        isOpen={showMobileTimeReport}
-        onClose={() => setShowMobileTimeReport(false)}
-      />
+      {showQuickAddEdit && (
+        <QuickAddEditModal
+          isOpen={showQuickAddEdit}
+          onClose={() => setShowQuickAddEdit(false)}
+        />
+      )}
 
-      {/* Shared Modals */}
-      <QuickAddEditModal
-        isOpen={showQuickAddEdit}
-        onClose={() => setShowQuickAddEdit(false)}
-      />
+      {showTimeReport && (
+        <MobileTimeReportModal
+          isOpen={showTimeReport}
+          onClose={() => setShowTimeReport(false)}
+        />
+      )}
 
-      <TasksDueToday
-        isOpen={showTasksDueToday}
-        onClose={() => setShowTasksDueToday(false)}
-      />
+      {showHamburgerMenu && (
+        <MobileHamburgerMenu
+          isOpen={showHamburgerMenu}
+          onClose={() => setShowHamburgerMenu(false)}
+          activeTab={activeTab}
+        />
+      )}
     </div>
   );
 }
