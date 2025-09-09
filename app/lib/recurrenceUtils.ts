@@ -20,6 +20,10 @@ export function calculateNextDeadline(
   const nextDate = new Date(prevDate);
 
   switch (config.type) {
+    case "minutely":
+      nextDate.setMinutes(nextDate.getMinutes() + config.interval);
+      break;
+
     case "daily":
       nextDate.setDate(nextDate.getDate() + config.interval);
       break;
@@ -100,6 +104,9 @@ export function getRecurrenceDescription(config: RecurrenceConfig): string {
   ];
 
   switch (type) {
+    case "minutely":
+      return interval === 1 ? "Every minute" : `Every ${interval} minutes`;
+
     case "daily":
       return interval === 1 ? "Daily" : `Every ${interval} days`;
 

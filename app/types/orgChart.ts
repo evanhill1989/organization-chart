@@ -1,5 +1,11 @@
 // src/types/orgChart.ts
-export type RecurrenceType = "none" | "daily" | "weekly" | "monthly" | "yearly";
+export type RecurrenceType =
+  | "none"
+  | "minutely"
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly";
 
 export type OrgNode = {
   id: number;

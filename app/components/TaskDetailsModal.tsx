@@ -6,6 +6,7 @@ import { useEditOrgNode } from "../hooks/useEditOrgNode";
 import { useDeleteOrgNode } from "../hooks/useDeleteOrgNode";
 import { calculateUrgencyLevel } from "../lib/urgencyUtils";
 import RecurrenceDisplay from "./RecurrenceDisplay";
+import { createRecurringInstance } from "../lib/createRecurringInstance";
 
 interface TaskDetailsModalProps {
   task: OrgNodeRow | null;
@@ -116,6 +117,69 @@ export default function TaskDetailsModal({
         editNodeMutation.mutate(updateData);
       }
     }, 1000); // Increased to 1 second
+
+    return () => clearTimeout(timeout);
+  }, [
+    details,
+    importance,
+    deadline,
+    completionTime,
+    uniqueDaysRequired,
+    isCompleted,
+    task,
+    editNodeMutation,
+    completionComment,
+  ]);
+
+  useEffect(() => {
+    if (!task || task.type !== "task") return;
+
+    const timeout = setTimeout(async () => {
+      const hasChanges =
+        details !== (task.details ?? "") ||
+        importance !== (task.importance ?? 1) ||
+        deadline !== (task.deadline ?? "") ||
+        completionTime !== (task.completion_time ?? 1) ||
+        uniqueDaysRequired !== (task.unique_days_required ?? 1) ||
+        isCompleted !== (task.is_completed ?? false);
+
+      if (hasChanges) {
+        const updateData: Partial<OrgNode> = {
+          id: task.id,
+          details,
+          importance: task.type === "task" ? importance : undefined,
+          deadline: task.type === "task" ? deadline : undefined,
+          completion_time: task.type === "task" ? completionTime : undefined,
+          unique_days_required:
+            task.type === "task" ? uniqueDaysRequired : undefined,
+          is_completed: task.type === "task" ? isCompleted : undefined,
+        };
+
+        // Only set completed_at when task is being marked as complete for the first time
+        if (task.type === "task" && isCompleted && !task.is_completed) {
+          updateData.completed_at = new Date().toISOString();
+          updateData.completion_comment = completionComment;
+
+          // 🔄 CREATE NEXT RECURRING INSTANCE
+          try {
+            const nextInstance = await createRecurringInstance(task);
+            if (nextInstance) {
+              console.log(
+                "✅ Created next recurring instance:",
+                nextInstance.name
+              );
+            }
+          } catch (error) {
+            console.error("❌ Failed to create recurring instance:", error);
+          }
+        } else if (task.type === "task" && !isCompleted && task.is_completed) {
+          updateData.completed_at = undefined;
+          updateData.completion_comment = undefined;
+        }
+
+        editNodeMutation.mutate(updateData);
+      }
+    }, 1000);
 
     return () => clearTimeout(timeout);
   }, [

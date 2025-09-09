@@ -107,6 +107,7 @@ export default function RecurrenceConfig({
           disabled={disabled}
         >
           <option value="none">No repeat</option>
+          <option value="minutely">Every minute (testing)</option>
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
@@ -133,6 +134,8 @@ export default function RecurrenceConfig({
                 disabled={disabled}
               />
               <span className="text-sm text-gray-600 dark:text-gray-400">
+                {recurrenceType === "minutely" &&
+                  (recurrenceInterval === 1 ? "minute" : "minutes")}
                 {recurrenceType === "daily" &&
                   (recurrenceInterval === 1 ? "day" : "days")}
                 {recurrenceType === "weekly" &&

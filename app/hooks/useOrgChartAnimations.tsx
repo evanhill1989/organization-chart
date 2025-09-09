@@ -1,5 +1,6 @@
+// app/hooks/useOrgChartAnimations.tsx
 import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
+import { gsap } from "gsap"; // Changed from default import
 import {
   shouldShowUrgencyBall,
   createUrgencyOrbitalPath,
@@ -13,10 +14,11 @@ import {
   getEffectiveImportance,
   getImportanceShadowColor,
 } from "../lib/importanceUtils";
+import type { OrgNode } from "../types/orgChart";
 
 interface UseOrgChartAnimationsProps {
-  containerRef: React.RefObject<HTMLDivElement>;
-  tree: any;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  tree: OrgNode;
   openMap: Record<string, boolean>;
   tabName: string;
   isMobile: boolean;
@@ -31,8 +33,11 @@ export function useOrgChartAnimations({
 }: UseOrgChartAnimationsProps) {
   useGSAP(
     () => {
-      const container = containerRef.current;
+      const container = containerRef?.current;
       if (!container) return;
+
+      // Clear any existing animations
+      gsap.killTweensOf("*");
 
       // --- Urgency Ball Animation ---
       const animateUrgencyBalls = () => {
@@ -104,6 +109,9 @@ export function useOrgChartAnimations({
       const animateImportance = () => {
         if (!tree.children) return;
 
+        // Clear previous importance animations
+        gsap.killTweensOf(container.querySelectorAll("[data-node-path]"));
+
         for (const child of tree.children) {
           const importanceTargetPath = findDeepestImportanceAnimationTarget(
             child,
@@ -136,13 +144,24 @@ export function useOrgChartAnimations({
       };
 
       // Run animations after DOM/layout is ready
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          animateUrgencyBalls();
+      const animationTimeout = setTimeout(() => {
+        animateUrgencyBalls();
+        if (!isMobile) {
+          // Only animate importance highlights on desktop
           animateImportance();
-        });
-      });
+        }
+      }, 100);
+
+      // Cleanup function
+      return () => {
+        clearTimeout(animationTimeout);
+        gsap.killTweensOf("*");
+      };
     },
-    { scope: containerRef, dependencies: [tree, openMap, tabName, isMobile] }
+    {
+      scope: containerRef,
+      dependencies: [tree, openMap, tabName, isMobile],
+      revertOnUpdate: true, // This will clean up animations when dependencies change
+    }
   );
 }

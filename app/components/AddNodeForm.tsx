@@ -34,14 +34,26 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
   const [completionTime, setCompletionTime] = useState<number | "">(1);
   const [uniqueDaysRequired, setUniqueDaysRequired] = useState<number | "">(1);
 
-  const [recurrenceConfig, setRecurrenceConfig] = useState({
-    recurrence_type: "none" as const,
-    recurrence_interval: undefined as number | undefined,
-    recurrence_day_of_week: undefined as number | undefined,
-    recurrence_day_of_month: undefined as number | undefined,
-    recurrence_end_date: undefined as string | undefined,
-    is_recurring_template: false,
-  });
+  // Import RecurrenceType from RecurrenceConfig if needed, or define it here to match RecurrenceConfig's expected type
+  type RecurrenceType = "none" | "daily" | "weekly" | "monthly" | "yearly";
+  type RecurrenceConfigType = {
+    recurrence_type: RecurrenceType;
+    recurrence_interval?: number;
+    recurrence_day_of_week?: number;
+    recurrence_day_of_month?: number;
+    recurrence_end_date?: string;
+    is_recurring_template?: boolean;
+  };
+
+  const [recurrenceConfig, setRecurrenceConfig] =
+    useState<RecurrenceConfigType>({
+      recurrence_type: "none",
+      recurrence_interval: undefined,
+      recurrence_day_of_week: undefined,
+      recurrence_day_of_month: undefined,
+      recurrence_end_date: undefined,
+      is_recurring_template: false,
+    });
 
   // Helper to format date for input[type="date"]
   const formatDateForInput = (date?: string) => {
