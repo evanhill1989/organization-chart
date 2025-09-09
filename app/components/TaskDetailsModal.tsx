@@ -5,6 +5,7 @@ import type { OrgNode, OrgNodeRow } from "../types/orgChart";
 import { useEditOrgNode } from "../hooks/useEditOrgNode";
 import { useDeleteOrgNode } from "../hooks/useDeleteOrgNode";
 import { calculateUrgencyLevel } from "../lib/urgencyUtils";
+import RecurrenceDisplay from "./RecurrenceDisplay";
 
 interface TaskDetailsModalProps {
   task: OrgNodeRow | null;
@@ -319,6 +320,10 @@ export default function TaskDetailsModal({
           onChange={(e) => setDetails(e.target.value)}
           disabled={task.type === "task" && isCompleted}
         />
+
+        {task.type === "task" && (
+          <RecurrenceDisplay task={task} className="mb-4" />
+        )}
 
         {!isCompleted && (
           <button

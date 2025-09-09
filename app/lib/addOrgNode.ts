@@ -1,4 +1,5 @@
-import type { OrgNode, OrgNodeRow } from "../types/orgChart";
+// app/lib/addOrgNode.ts
+import type { OrgNode, OrgNodeRow, RecurrenceType } from "../types/orgChart";
 import { buildOrgTree } from "./buildOrgTree";
 import { supabase } from "./data/supabaseClient";
 
@@ -14,6 +15,13 @@ export async function addOrgNode({
   parent_id,
   tab_name,
   root_category,
+  // Add recurrence fields
+  recurrence_type = "none",
+  recurrence_interval,
+  recurrence_day_of_week,
+  recurrence_day_of_month,
+  recurrence_end_date,
+  is_recurring_template = false,
 }: {
   name: string;
   type: "category" | "task";
@@ -25,32 +33,60 @@ export async function addOrgNode({
   parent_id?: number;
   tab_name: string;
   root_category: string;
+  // Add recurrence field types
+  recurrence_type?: RecurrenceType;
+  recurrence_interval?: number;
+  recurrence_day_of_week?: number;
+  recurrence_day_of_month?: number;
+  recurrence_end_date?: string;
+  is_recurring_template?: boolean;
 }): Promise<OrgNode> {
+  console.log("🔥 addOrgNode: Received data:", {
+    name,
+    type,
+    recurrence_type,
+    recurrence_interval,
+    recurrence_day_of_week,
+    recurrence_day_of_month,
+    recurrence_end_date,
+    is_recurring_template,
+  });
+
   // Insert the new node
+  const insertData = {
+    name,
+    type,
+    details,
+    importance: type === "task" ? (importance ?? 1) : undefined,
+    deadline: type === "task" ? deadline : undefined,
+    completion_time: type === "task" ? completion_time : undefined,
+    unique_days_required: type === "task" ? unique_days_required : undefined,
+    parent_id,
+    tab_name,
+    root_category,
+    // Add recurrence fields
+    recurrence_type,
+    recurrence_interval,
+    recurrence_day_of_week,
+    recurrence_day_of_month,
+    recurrence_end_date,
+    is_recurring_template,
+  };
+
+  console.log("🔥 addOrgNode: Inserting to DB:", insertData);
+
   const { data: insertedNode, error: insertError } = await supabase
     .from("org_nodes")
-    .insert([
-      {
-        name,
-        type,
-        details,
-        // Removed urgency as it's now calculated
-        importance: type === "task" ? (importance ?? 1) : undefined,
-        // New deadline-related fields (only for tasks)
-        deadline: type === "task" ? deadline : undefined,
-        completion_time: type === "task" ? completion_time : undefined,
-        unique_days_required:
-          type === "task" ? unique_days_required : undefined,
-        parent_id,
-        tab_name,
-        root_category,
-      },
-    ])
+    .insert([insertData])
     .select()
     .single();
 
-  console.log(insertedNode);
-  if (insertError) throw insertError;
+  console.log("🔥 addOrgNode: Insert result:", { insertedNode, insertError });
+
+  if (insertError) {
+    console.error("🚨 addOrgNode: Insert failed:", insertError);
+    throw insertError;
+  }
 
   // Fetch all nodes for this root_category to rebuild the complete tree
   const { data: allNodes, error: fetchError } = await supabase

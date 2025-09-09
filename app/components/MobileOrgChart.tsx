@@ -17,7 +17,8 @@ export default function MobileOrgChart({
   onTaskClick,
   openMap,
   toggleOpen,
-}: MobileOrgChartProps) {
+  ref,
+}: MobileOrgChartProps & { ref?: React.Ref<HTMLDivElement> }) {
   // Currently active parent path whose children we are showing
   const [activePath, setActivePath] = useState<string>(`/${tabName}`);
 
@@ -40,8 +41,6 @@ export default function MobileOrgChart({
   // Instead of calling toggleOpen multiple times, directly update the parent's openMap
   // We need to inform the parent component about what paths should be "open" for animations
   useEffect(() => {
-    console.log(`Mobile: activePath changed to ${activePath}`);
-
     // Build all visible paths for current mobile view
     const visiblePaths: string[] = [];
 
@@ -55,8 +54,6 @@ export default function MobileOrgChart({
         visiblePaths.push(childPath);
       });
     }
-
-    console.log(`Mobile: visible paths:`, visiblePaths);
 
     // Use a custom event or callback to inform parent about visible paths
     // For now, we'll mark these as open by calling toggleOpen only if not already open
@@ -84,7 +81,7 @@ export default function MobileOrgChart({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-4 flex flex-col">
+    <div ref={ref} className="w-full max-w-md mx-auto p-4 flex flex-col">
       <h2 className="text-2xl font-bold text-center mb-4 text-gray-900 dark:text-gray-100">
         {tabName}
       </h2>

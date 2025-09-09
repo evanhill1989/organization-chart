@@ -1,4 +1,6 @@
 // src/types/orgChart.ts
+export type RecurrenceType = "none" | "daily" | "weekly" | "monthly" | "yearly";
+
 export type OrgNode = {
   id: number;
   name: string;
@@ -18,6 +20,15 @@ export type OrgNode = {
   completion_comment?: string;
   parent_id?: number;
   tab_name?: string;
+
+  // Recurring task fields
+  recurrence_type?: RecurrenceType;
+  recurrence_interval?: number; // every X intervals
+  recurrence_day_of_week?: number; // 0-6, Sunday=0
+  recurrence_day_of_month?: number; // 1-31
+  recurrence_end_date?: string; // ISO date string
+  is_recurring_template?: boolean;
+  recurring_template_id?: number;
 };
 
 export interface OrgNodeRow {
@@ -38,6 +49,15 @@ export interface OrgNodeRow {
   completion_comment?: string;
   parent_id?: number;
   tab_name?: string;
+
+  //recurring tasks
+  recurrence_type?: RecurrenceType;
+  recurrence_interval?: number;
+  recurrence_day_of_week?: number;
+  recurrence_day_of_month?: number;
+  recurrence_end_date?: string;
+  is_recurring_template?: boolean;
+  recurring_template_id?: number;
 }
 
 export type OrgChartTabProps = {

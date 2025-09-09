@@ -1,4 +1,5 @@
 import { useState } from "react";
+import RecurrenceConfig from "./RecurrenceConfig";
 
 type AddNodeFormProps = {
   parent_id?: number;
@@ -12,6 +13,12 @@ type AddNodeFormProps = {
     deadline?: string;
     completion_time?: number;
     unique_days_required?: number;
+    recurrence_type?: "none" | "daily" | "weekly" | "monthly" | "yearly";
+    recurrence_interval?: number;
+    recurrence_day_of_week?: number;
+    recurrence_day_of_month?: number;
+    recurrence_end_date?: string;
+    is_recurring_template?: boolean;
   }) => void;
   onClose: () => void;
 };
@@ -27,6 +34,15 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
   const [completionTime, setCompletionTime] = useState<number | "">(1);
   const [uniqueDaysRequired, setUniqueDaysRequired] = useState<number | "">(1);
 
+  const [recurrenceConfig, setRecurrenceConfig] = useState({
+    recurrence_type: "none" as const,
+    recurrence_interval: undefined as number | undefined,
+    recurrence_day_of_week: undefined as number | undefined,
+    recurrence_day_of_month: undefined as number | undefined,
+    recurrence_end_date: undefined as string | undefined,
+    is_recurring_template: false,
+  });
+
   // Helper to format date for input[type="date"]
   const formatDateForInput = (date?: string) => {
     if (!date) return "";
@@ -40,6 +56,12 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
         onSubmit={(e) => {
           e.preventDefault();
           if (name.trim()) {
+            console.log("🚀 AddNodeForm: Submitting with recurrence config:", {
+              name: name.trim(),
+              type,
+              ...recurrenceConfig,
+            });
+
             onAdd({
               name: name.trim(),
               type,
@@ -55,6 +77,7 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
                 type === "task" && uniqueDaysRequired
                   ? Number(uniqueDaysRequired)
                   : undefined,
+              ...recurrenceConfig,
             });
             setName("");
             setDetails("");
@@ -176,6 +199,9 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
               </p>
             </div>
           </>
+        )}
+        {type === "task" && (
+          <RecurrenceConfig onChange={setRecurrenceConfig} className="mb-4" />
         )}
 
         <button
