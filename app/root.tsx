@@ -1,6 +1,10 @@
 // app/root.tsx
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { LinksFunction } from "react-router";
+import { gsap } from "gsap";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+
+gsap.registerPlugin(MotionPathPlugin);
 
 import "./styles/index.css";
 // eslint-disable-next-line react-refresh/only-export-components
