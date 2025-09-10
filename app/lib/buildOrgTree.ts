@@ -21,6 +21,7 @@ export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
       children: [],
       tab_name: row.tab_name,
       root_category: row.root_category,
+      parent_id: row.parent_id, // 🔥 THE MISSING LINE!
 
       // Add recurrence fields
       recurrence_type: row.recurrence_type ?? undefined,

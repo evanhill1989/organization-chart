@@ -80,11 +80,7 @@ export function useOrgChartAnimations({
           try {
             const borderPath = createUrgencyOrbitalPath(nodeContainer);
             const motionConfig = getUrgencyMotionConfig(urgencyLevel);
-            console.log(
-              borderPath,
-              motionConfig,
-              "borderPath motionConfig inside useOrgChartAnimations GSAP hook"
-            );
+
             gsap.set(ball, {
               position: "absolute",
               left: 0,

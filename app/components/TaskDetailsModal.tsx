@@ -28,6 +28,9 @@ export default function TaskDetailsModal({
   const [completionComment, setCompletionComment] = useState("");
   const [completedAt, setCompletedAt] = useState<string | null>(null);
 
+  // 🔥 ADD THIS: Track if we've already created a recurring instance
+  const hasCreatedRecurringInstanceRef = useRef(false);
+
   const editNodeMutation = useEditOrgNode(task?.root_category || "");
   const deleteNodeMutation = useDeleteOrgNode(task?.root_category || "");
 
@@ -51,7 +54,7 @@ export default function TaskDetailsModal({
     if (
       task?.type === "task" &&
       (currentUrgencyLevel === 10 || importance === 10) &&
-      !isCompleted // Don't animate if task is completed
+      !isCompleted
     ) {
       gsap.to(modalRef.current, {
         scale: 1.02,
@@ -61,7 +64,6 @@ export default function TaskDetailsModal({
         repeat: -1,
       });
     } else {
-      // Clear animation if conditions are not met
       gsap.killTweensOf(modalRef.current);
       gsap.set(modalRef.current, { scale: 1 });
     }
@@ -78,22 +80,134 @@ export default function TaskDetailsModal({
       setIsCompleted(task.is_completed ?? false);
       setCompletionComment(task.completion_comment ?? "");
       setCompletedAt(task.completed_at ?? null);
+
+      // 🔥 RESET THE FLAG when a new task is loaded
+      hasCreatedRecurringInstanceRef.current = false;
     }
   }, [task]);
+
+  // Add a ref to track if we're currently processing
+  const isProcessingCompletionRef = useRef(false);
+
+  // Replace the completion useEffect with this:
+  useEffect(() => {
+    if (!task || task.type !== "task") return;
+
+    // Prevent multiple simultaneous executions
+    if (isProcessingCompletionRef.current) {
+      console.log("🔄 Already processing completion, skipping...");
+      return;
+    }
+
+    const handleCompletionChange = async () => {
+      // Only process if completion status actually changed
+      if (isCompleted === (task.is_completed ?? false)) {
+        return;
+      }
+
+      // Prevent duplicate processing
+      isProcessingCompletionRef.current = true;
+
+      console.log("🔄 Completion status changed:", {
+        from: task.is_completed ?? false,
+        to: isCompleted,
+        taskName: task.name,
+      });
+
+      try {
+        // Prepare the update data
+        const updateData: Partial<OrgNode> = {
+          id: task.id,
+          is_completed: isCompleted,
+        };
+
+        // If marking as complete for the first time
+        if (isCompleted && !task.is_completed) {
+          updateData.completed_at = new Date().toISOString();
+          updateData.completion_comment = completionComment;
+
+          console.log(
+            "🔄 Marking task as completed, will create recurring instance if applicable"
+          );
+
+          // First, update the task completion status and WAIT for it to complete
+          await editNodeMutation.mutateAsync(updateData);
+          console.log("✅ Task completion update finished");
+
+          // Then create the recurring instance if needed
+          if (
+            !hasCreatedRecurringInstanceRef.current &&
+            task.recurrence_type !== "none" &&
+            task.recurrence_type
+          ) {
+            console.log("🔄 Task has recurrence, creating next instance...");
+            hasCreatedRecurringInstanceRef.current = true;
+
+            try {
+              // Create the updated task object for the recurrence function
+              const updatedTask = {
+                ...task,
+                is_completed: true,
+                completed_at: updateData.completed_at,
+                completion_comment: updateData.completion_comment,
+              };
+
+              console.log("🔍 PARENT ID DEBUG:", {
+                originalTaskParentId: task.parent_id,
+                updatedTaskParentId: updatedTask.parent_id,
+                originalTask: task,
+                updatedTask: updatedTask,
+              });
+
+              const nextInstance = await createRecurringInstance(updatedTask);
+              if (nextInstance) {
+                console.log(
+                  "✅ Successfully created recurring instance:",
+                  nextInstance.name
+                );
+              }
+            } catch (error) {
+              console.error("❌ Failed to create recurring instance:", error);
+              hasCreatedRecurringInstanceRef.current = false;
+            }
+          }
+        }
+        // If unmarking as complete
+        else if (!isCompleted && task.is_completed) {
+          updateData.completed_at = undefined;
+          updateData.completion_comment = undefined;
+          console.log("🔄 Unmarking task as completed");
+
+          await editNodeMutation.mutateAsync(updateData);
+        }
+      } catch (error) {
+        console.error("❌ Error updating task completion:", error);
+      } finally {
+        // Always reset the processing flag
+        isProcessingCompletionRef.current = false;
+      }
+    };
+
+    const timeout = setTimeout(handleCompletionChange, 1000);
+    return () => {
+      clearTimeout(timeout);
+      // Reset processing flag if component unmounts
+      isProcessingCompletionRef.current = false;
+    };
+  }, [isCompleted, task?.id, task?.is_completed]); // 🔥 More specific dependencies
 
   useEffect(() => {
     if (!task) return;
 
     const timeout = setTimeout(() => {
-      const hasChanges =
+      const hasNonCompletionChanges =
         details !== (task.details ?? "") ||
         importance !== (task.importance ?? 1) ||
         deadline !== (task.deadline ?? "") ||
         completionTime !== (task.completion_time ?? 1) ||
-        uniqueDaysRequired !== (task.unique_days_required ?? 1) ||
-        isCompleted !== (task.is_completed ?? false);
+        uniqueDaysRequired !== (task.unique_days_required ?? 1);
 
-      if (hasChanges) {
+      if (hasNonCompletionChanges) {
         const updateData: Partial<OrgNode> = {
           id: task.id,
           details,
@@ -102,81 +216,9 @@ export default function TaskDetailsModal({
           completion_time: task.type === "task" ? completionTime : undefined,
           unique_days_required:
             task.type === "task" ? uniqueDaysRequired : undefined,
-          is_completed: task.type === "task" ? isCompleted : undefined,
         };
 
-        // Only set completed_at when task is being marked as complete for the first time
-        if (task.type === "task" && isCompleted && !task.is_completed) {
-          updateData.completed_at = new Date().toISOString();
-          updateData.completion_comment = completionComment; // Save comment when completing
-        } else if (task.type === "task" && !isCompleted && task.is_completed) {
-          updateData.completed_at = undefined;
-          updateData.completion_comment = undefined;
-        }
-
-        editNodeMutation.mutate(updateData);
-      }
-    }, 1000); // Increased to 1 second
-
-    return () => clearTimeout(timeout);
-  }, [
-    details,
-    importance,
-    deadline,
-    completionTime,
-    uniqueDaysRequired,
-    isCompleted,
-    task,
-    editNodeMutation,
-    completionComment,
-  ]);
-
-  useEffect(() => {
-    if (!task || task.type !== "task") return;
-
-    const timeout = setTimeout(async () => {
-      const hasChanges =
-        details !== (task.details ?? "") ||
-        importance !== (task.importance ?? 1) ||
-        deadline !== (task.deadline ?? "") ||
-        completionTime !== (task.completion_time ?? 1) ||
-        uniqueDaysRequired !== (task.unique_days_required ?? 1) ||
-        isCompleted !== (task.is_completed ?? false);
-
-      if (hasChanges) {
-        const updateData: Partial<OrgNode> = {
-          id: task.id,
-          details,
-          importance: task.type === "task" ? importance : undefined,
-          deadline: task.type === "task" ? deadline : undefined,
-          completion_time: task.type === "task" ? completionTime : undefined,
-          unique_days_required:
-            task.type === "task" ? uniqueDaysRequired : undefined,
-          is_completed: task.type === "task" ? isCompleted : undefined,
-        };
-
-        // Only set completed_at when task is being marked as complete for the first time
-        if (task.type === "task" && isCompleted && !task.is_completed) {
-          updateData.completed_at = new Date().toISOString();
-          updateData.completion_comment = completionComment;
-
-          // 🔄 CREATE NEXT RECURRING INSTANCE
-          try {
-            const nextInstance = await createRecurringInstance(task);
-            if (nextInstance) {
-              console.log(
-                "✅ Created next recurring instance:",
-                nextInstance.name
-              );
-            }
-          } catch (error) {
-            console.error("❌ Failed to create recurring instance:", error);
-          }
-        } else if (task.type === "task" && !isCompleted && task.is_completed) {
-          updateData.completed_at = undefined;
-          updateData.completion_comment = undefined;
-        }
-
+        console.log("🔄 Updating task fields (non-completion):", updateData);
         editNodeMutation.mutate(updateData);
       }
     }, 1000);
@@ -188,27 +230,11 @@ export default function TaskDetailsModal({
     deadline,
     completionTime,
     uniqueDaysRequired,
-    isCompleted,
     task,
     editNodeMutation,
-    completionComment,
-  ]);
+  ]); // Removed isCompleted from dependencies
 
-  useEffect(() => {
-    if (!task || !isCompleted) return;
-
-    const timeout = setTimeout(() => {
-      if (completionComment !== (task.completion_comment ?? "")) {
-        editNodeMutation.mutate({
-          id: task.id,
-          completion_comment: completionComment,
-        });
-      }
-    }, 2000); // 2 second debounce for comments
-
-    return () => clearTimeout(timeout);
-  }, [completionComment, task, editNodeMutation, isCompleted]);
-  // Don't render if no task
+  // Rest of your component remains the same...
   if (!task) return null;
 
   const handleDelete = () => {
@@ -234,7 +260,7 @@ export default function TaskDetailsModal({
 
         {task.type === "task" && (
           <>
-            {/* Completion Section - Prominently displayed at top */}
+            {/* Completion Section */}
             <div
               className={`mb-6 p-4 rounded-lg border ${
                 isCompleted

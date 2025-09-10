@@ -22,7 +22,8 @@ export function calculateNextDeadline(
   switch (config.type) {
     case "minutely":
       nextDate.setMinutes(nextDate.getMinutes() + config.interval);
-      break;
+      // For minutely recurrence, we need to return a full datetime, not just date
+      return nextDate.toISOString();
 
     case "daily":
       nextDate.setDate(nextDate.getDate() + config.interval);
@@ -60,7 +61,12 @@ export function calculateNextDeadline(
       throw new Error(`Unsupported recurrence type: ${config.type}`);
   }
 
-  return nextDate.toISOString().split("T")[0];
+  // For non-minutely recurrence, return just the date part
+  if (config.type === "minutely") {
+    return nextDate.toISOString();
+  } else {
+    return nextDate.toISOString().split("T")[0];
+  }
 }
 
 /**
