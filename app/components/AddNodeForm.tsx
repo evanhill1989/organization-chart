@@ -62,9 +62,9 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-black">
       <form
-        className="bg-gray-800 rounded-lg shadow-lg min-w-[320px] max-w-[400px] p-6 flex flex-col items-center relative max-h-[90vh] overflow-y-auto"
+        className="relative flex max-h-[90vh] max-w-[400px] min-w-[320px] flex-col items-center gap-2 overflow-y-auto rounded-lg bg-gray-800 p-6 shadow-lg"
         onSubmit={(e) => {
           e.preventDefault();
           if (name.trim()) {
@@ -103,17 +103,17 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
       >
         <button
           type="button"
-          className="absolute top-2 right-2 text-gray-400 hover:text-white text-2xl font-bold"
+          className="absolute top-2 right-2 text-2xl font-bold text-gray-400 hover:text-white"
           onClick={onClose}
           aria-label="Close"
         >
           &times;
         </button>
 
-        <h3 className="text-xl font-bold mb-4 text-white">Add New Node</h3>
+        <h3 className="mb-4 text-xl font-bold text-white">Add New Node</h3>
 
         <input
-          className="mb-2 px-2 py-1 rounded w-full text-black"
+          className="mb-2 w-full rounded bg-white px-2 py-1 text-black"
           type="text"
           placeholder="Name"
           value={name}
@@ -122,7 +122,7 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
         />
 
         <select
-          className="mb-2 px-2 py-1 rounded w-full"
+          className="mb-2 w-full rounded bg-white px-2 py-1 text-black"
           value={type}
           onChange={(e) => setType(e.target.value as "category" | "task")}
         >
@@ -131,7 +131,7 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
         </select>
 
         <input
-          className="mb-2 px-2 py-1 rounded w-full text-black"
+          className="mb-2 w-full rounded bg-white px-2 py-1 text-black"
           type="text"
           placeholder="Details (optional)"
           value={details}
@@ -140,12 +140,12 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
 
         {type === "task" && (
           <>
-            <div className="w-full mb-2">
-              <label className="block text-white text-sm font-medium mb-1">
+            <div className="mb-2 w-full">
+              <label className="mb-1 block text-sm font-medium text-white">
                 Importance (1-10):
               </label>
               <select
-                className="px-2 py-1 rounded w-full text-black"
+                className="w-full rounded bg-white px-2 py-1 text-black"
                 value={importance}
                 onChange={(e) => setImportance(Number(e.target.value))}
               >
@@ -157,12 +157,12 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
               </select>
             </div>
 
-            <div className="w-full mb-2">
-              <label className="block text-white text-sm font-medium mb-1">
+            <div className="mb-2 w-full">
+              <label className="mb-1 block text-sm font-medium text-white">
                 Deadline:
               </label>
               <input
-                className="px-2 py-1 rounded w-full text-black"
+                className="w-full rounded bg-white px-2 py-1 text-black"
                 type="date"
                 value={formatDateForInput(deadline)}
                 onChange={(e) => setDeadline(e.target.value)}
@@ -170,43 +170,43 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
               />
             </div>
 
-            <div className="w-full mb-2">
-              <label className="block text-white text-sm font-medium mb-1">
+            <div className="mb-2 w-full">
+              <label className="mb-1 block text-sm font-medium text-white">
                 Estimated Completion Time (hours):
               </label>
               <input
-                className="px-2 py-1 rounded w-full text-black"
+                className="w-full rounded bg-white px-2 py-1 text-black"
                 type="number"
                 min="0.5"
                 step="0.5"
                 value={completionTime}
                 onChange={(e) =>
                   setCompletionTime(
-                    e.target.value === "" ? "" : Number(e.target.value)
+                    e.target.value === "" ? "" : Number(e.target.value),
                   )
                 }
                 placeholder="e.g. 8.5"
               />
             </div>
 
-            <div className="w-full mb-2">
-              <label className="block text-white text-sm font-medium mb-1">
+            <div className="mb-2 w-full">
+              <label className="mb-1 block text-sm font-medium text-white">
                 Unique Days Required:
               </label>
               <input
-                className="px-2 py-1 rounded w-full text-black"
+                className="w-full rounded bg-white px-2 py-1 text-black"
                 type="number"
                 min="0.5"
                 step="0.5"
                 value={uniqueDaysRequired}
                 onChange={(e) =>
                   setUniqueDaysRequired(
-                    e.target.value === "" ? "" : Number(e.target.value)
+                    e.target.value === "" ? "" : Number(e.target.value),
                   )
                 }
                 placeholder="e.g. 3"
               />
-              <p className="text-xs text-gray-300 mt-1">
+              <p className="mt-1 text-xs text-gray-300">
                 Number of separate days needed to complete this task
               </p>
             </div>
@@ -217,7 +217,7 @@ export default function AddNodeForm({ onAdd, onClose }: AddNodeFormProps) {
         )}
 
         <button
-          className="bg-blue-600 text-white px-4 py-1 rounded font-semibold hover:bg-blue-700 mt-2"
+          className="mt-2 rounded bg-blue-600 px-4 py-1 font-semibold text-white hover:bg-blue-700"
           type="submit"
         >
           Add

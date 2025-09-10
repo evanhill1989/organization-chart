@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import type { OrgNode, OrgNodeRow } from "../types/orgChart";
@@ -28,14 +28,15 @@ export default function TaskDetailsModal({
   const [completionComment, setCompletionComment] = useState("");
   const [completedAt, setCompletedAt] = useState<string | null>(null);
 
-  // 🔥 ADD THIS: Track if we've already created a recurring instance
-  const hasCreatedRecurringInstanceRef = useRef(false);
-
   const editNodeMutation = useEditOrgNode(task?.root_category || "");
   const deleteNodeMutation = useDeleteOrgNode(task?.root_category || "");
 
   // Ref for modal GSAP animation
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Track if we've created a recurring instance
+  const hasCreatedRecurringInstanceRef = useRef(false);
+  const isProcessingCompletionRef = useRef(false);
 
   // Helper to format date for input[type="date"]
   const formatDateForInput = (date?: string) => {
@@ -81,160 +82,135 @@ export default function TaskDetailsModal({
       setCompletionComment(task.completion_comment ?? "");
       setCompletedAt(task.completed_at ?? null);
 
-      // 🔥 RESET THE FLAG when a new task is loaded
+      // Reset recurring instance flag when new task loads
       hasCreatedRecurringInstanceRef.current = false;
     }
   }, [task]);
 
-  // Add a ref to track if we're currently processing
-  const isProcessingCompletionRef = useRef(false);
+  // Single, unified save function
+  const forceSaveChanges = useCallback(async () => {
+    if (!task) return;
 
-  // Replace the completion useEffect with this:
-  useEffect(() => {
-    if (!task || task.type !== "task") return;
+    // Check if ANY field has changed
+    const hasChanges =
+      details !== (task.details ?? "") ||
+      importance !== (task.importance ?? 1) ||
+      deadline !== (task.deadline ?? "") ||
+      completionTime !== (task.completion_time ?? 1) ||
+      uniqueDaysRequired !== (task.unique_days_required ?? 1) ||
+      isCompleted !== (task.is_completed ?? false) ||
+      completionComment !== (task.completion_comment ?? "");
+
+    if (!hasChanges) return; // Nothing to save
 
     // Prevent multiple simultaneous executions
     if (isProcessingCompletionRef.current) {
-      console.log("🔄 Already processing completion, skipping...");
+      console.log("🔄 Already processing save, skipping...");
       return;
     }
 
-    const handleCompletionChange = async () => {
-      // Only process if completion status actually changed
-      if (isCompleted === (task.is_completed ?? false)) {
-        return;
+    isProcessingCompletionRef.current = true;
+
+    try {
+      // Build complete update object with ALL current values
+      const updateData: Partial<OrgNode> = {
+        id: task.id,
+        details,
+        importance: task.type === "task" ? importance : undefined,
+        deadline: task.type === "task" ? deadline : undefined,
+        completion_time: task.type === "task" ? completionTime : undefined,
+        unique_days_required:
+          task.type === "task" ? uniqueDaysRequired : undefined,
+        is_completed: isCompleted,
+        completion_comment: completionComment,
+      };
+
+      // Handle completed_at timestamp
+      if (isCompleted && !task.is_completed) {
+        updateData.completed_at = new Date().toISOString();
+      } else if (!isCompleted && task.is_completed) {
+        updateData.completed_at = undefined;
       }
 
-      // Prevent duplicate processing
-      isProcessingCompletionRef.current = true;
+      console.log("🔄 Saving all task changes:", updateData);
 
-      console.log("🔄 Completion status changed:", {
-        from: task.is_completed ?? false,
-        to: isCompleted,
-        taskName: task.name,
-      });
+      // Save the changes
+      await editNodeMutation.mutateAsync(updateData);
 
-      try {
-        // Prepare the update data
-        const updateData: Partial<OrgNode> = {
-          id: task.id,
-          is_completed: isCompleted,
-        };
+      // Handle recurring task creation if completion status changed to true
+      if (
+        isCompleted &&
+        !task.is_completed &&
+        !hasCreatedRecurringInstanceRef.current &&
+        task.recurrence_type !== "none" &&
+        task.recurrence_type
+      ) {
+        console.log(
+          "🔄 Task completed with recurrence, creating next instance...",
+        );
+        hasCreatedRecurringInstanceRef.current = true;
 
-        // If marking as complete for the first time
-        if (isCompleted && !task.is_completed) {
-          updateData.completed_at = new Date().toISOString();
-          updateData.completion_comment = completionComment;
+        try {
+          const updatedTask = {
+            ...task,
+            ...updateData,
+            is_completed: true,
+            completed_at: updateData.completed_at,
+            completion_comment: updateData.completion_comment,
+          };
 
-          console.log(
-            "🔄 Marking task as completed, will create recurring instance if applicable"
-          );
-
-          // First, update the task completion status and WAIT for it to complete
-          await editNodeMutation.mutateAsync(updateData);
-          console.log("✅ Task completion update finished");
-
-          // Then create the recurring instance if needed
-          if (
-            !hasCreatedRecurringInstanceRef.current &&
-            task.recurrence_type !== "none" &&
-            task.recurrence_type
-          ) {
-            console.log("🔄 Task has recurrence, creating next instance...");
-            hasCreatedRecurringInstanceRef.current = true;
-
-            try {
-              // Create the updated task object for the recurrence function
-              const updatedTask = {
-                ...task,
-                is_completed: true,
-                completed_at: updateData.completed_at,
-                completion_comment: updateData.completion_comment,
-              };
-
-              console.log("🔍 PARENT ID DEBUG:", {
-                originalTaskParentId: task.parent_id,
-                updatedTaskParentId: updatedTask.parent_id,
-                originalTask: task,
-                updatedTask: updatedTask,
-              });
-
-              const nextInstance = await createRecurringInstance(updatedTask);
-              if (nextInstance) {
-                console.log(
-                  "✅ Successfully created recurring instance:",
-                  nextInstance.name
-                );
-              }
-            } catch (error) {
-              console.error("❌ Failed to create recurring instance:", error);
-              hasCreatedRecurringInstanceRef.current = false;
-            }
+          const nextInstance = await createRecurringInstance(updatedTask);
+          if (nextInstance) {
+            console.log(
+              "✅ Successfully created recurring instance:",
+              nextInstance.name,
+            );
           }
+        } catch (error) {
+          console.error("❌ Failed to create recurring instance:", error);
+          hasCreatedRecurringInstanceRef.current = false;
         }
-        // If unmarking as complete
-        else if (!isCompleted && task.is_completed) {
-          updateData.completed_at = undefined;
-          updateData.completion_comment = undefined;
-          console.log("🔄 Unmarking task as completed");
-
-          await editNodeMutation.mutateAsync(updateData);
-        }
-      } catch (error) {
-        console.error("❌ Error updating task completion:", error);
-      } finally {
-        // Always reset the processing flag
-        isProcessingCompletionRef.current = false;
       }
-    };
-
-    const timeout = setTimeout(handleCompletionChange, 1000);
-    return () => {
-      clearTimeout(timeout);
-      // Reset processing flag if component unmounts
+    } catch (error) {
+      console.error("❌ Error saving task changes:", error);
+    } finally {
       isProcessingCompletionRef.current = false;
-    };
-  }, [isCompleted, task?.id, task?.is_completed]); // 🔥 More specific dependencies
-
-  useEffect(() => {
-    if (!task) return;
-
-    const timeout = setTimeout(() => {
-      const hasNonCompletionChanges =
-        details !== (task.details ?? "") ||
-        importance !== (task.importance ?? 1) ||
-        deadline !== (task.deadline ?? "") ||
-        completionTime !== (task.completion_time ?? 1) ||
-        uniqueDaysRequired !== (task.unique_days_required ?? 1);
-
-      if (hasNonCompletionChanges) {
-        const updateData: Partial<OrgNode> = {
-          id: task.id,
-          details,
-          importance: task.type === "task" ? importance : undefined,
-          deadline: task.type === "task" ? deadline : undefined,
-          completion_time: task.type === "task" ? completionTime : undefined,
-          unique_days_required:
-            task.type === "task" ? uniqueDaysRequired : undefined,
-        };
-
-        console.log("🔄 Updating task fields (non-completion):", updateData);
-        editNodeMutation.mutate(updateData);
-      }
-    }, 1000);
-
-    return () => clearTimeout(timeout);
+    }
   }, [
+    task,
     details,
     importance,
     deadline,
     completionTime,
     uniqueDaysRequired,
-    task,
+    isCompleted,
+    completionComment,
     editNodeMutation,
-  ]); // Removed isCompleted from dependencies
+  ]);
 
-  // Rest of your component remains the same...
+  // Single debounced save effect for ALL changes
+  useEffect(() => {
+    if (!task) return;
+
+    const timeout = setTimeout(forceSaveChanges, 1000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Enhanced close handler
+  const handleClose = useCallback(() => {
+    forceSaveChanges();
+    onClose();
+  }, [onClose]);
+
+  // Force save on unmount (backup)
+  useEffect(() => {
+    return () => {
+      forceSaveChanges();
+      // Reset processing flag if component unmounts
+      isProcessingCompletionRef.current = false;
+    };
+  }, []);
+
   if (!task) return null;
 
   const handleDelete = () => {
@@ -243,38 +219,38 @@ export default function TaskDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-start justify-center z-50 pt-20">
+    <div className="bg-opacity-40 fixed inset-0 z-50 flex items-start justify-center bg-black pt-20">
       <div
         ref={modalRef}
-        className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full relative max-h-[calc(90vh-5rem)] overflow-y-auto"
+        className="relative max-h-[calc(90vh-5rem)] w-full max-w-md overflow-y-auto rounded-lg bg-white p-8 shadow-lg"
       >
         <button
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold"
-          onClick={onClose}
+          className="absolute top-2 right-2 text-2xl font-bold text-gray-500 hover:text-gray-800"
+          onClick={handleClose}
           aria-label="Close"
         >
           &times;
         </button>
 
-        <h3 className="text-2xl font-bold mb-4">{task.name}</h3>
+        <h3 className="mb-4 text-2xl font-bold">{task.name}</h3>
 
         {task.type === "task" && (
           <>
             {/* Completion Section */}
             <div
-              className={`mb-6 p-4 rounded-lg border ${
+              className={`mb-6 rounded-lg border p-4 ${
                 isCompleted
-                  ? "bg-green-50 border-green-300"
-                  : "bg-gray-50 border-gray-200"
+                  ? "border-green-300 bg-green-50"
+                  : "border-gray-200 bg-gray-50"
               }`}
             >
-              <div className="flex items-center justify-between mb-3">
-                <label className="font-semibold text-gray-700 flex items-center cursor-pointer">
+              <div className="mb-3 flex items-center justify-between">
+                <label className="flex cursor-pointer items-center font-semibold text-gray-700">
                   <input
                     type="checkbox"
                     checked={isCompleted}
                     onChange={(e) => setIsCompleted(e.target.checked)}
-                    className="mr-2 w-5 h-5 text-green-600 rounded focus:ring-green-500 cursor-pointer"
+                    className="mr-2 h-5 w-5 cursor-pointer rounded text-green-600 focus:ring-green-500"
                   />
                   <span className={isCompleted ? "text-green-700" : ""}>
                     {isCompleted ? "Task Completed" : "Mark as Completed"}
@@ -289,18 +265,18 @@ export default function TaskDetailsModal({
 
               {isCompleted && (
                 <div className="mt-3">
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Completion Notes (optional):
                   </label>
                   <textarea
-                    className="w-full text-sm text-black p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full rounded border p-2 text-sm text-black focus:border-green-500 focus:ring-2 focus:ring-green-500"
                     rows={3}
                     placeholder="Add any notes about completing this task..."
                     value={completionComment}
                     onChange={(e) => setCompletionComment(e.target.value)}
                   />
                   {completedAt && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="mt-1 text-xs text-gray-500">
                       Completed on {new Date(completedAt).toLocaleString()}
                     </p>
                   )}
@@ -309,16 +285,13 @@ export default function TaskDetailsModal({
             </div>
 
             <div className="mb-4">
-              <label className="block mb-2 font-semibold text-gray-700">
+              <label className="mb-2 block font-semibold text-gray-700">
                 Importance (1-10):
               </label>
               <select
-                className="w-full text-black p-2 border rounded"
+                className="w-full rounded border p-2 text-black"
                 value={importance}
-                onChange={(e) => {
-                  const newImportance = Number(e.target.value);
-                  setImportance(newImportance);
-                }}
+                onChange={(e) => setImportance(Number(e.target.value))}
                 disabled={isCompleted}
               >
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
@@ -330,11 +303,11 @@ export default function TaskDetailsModal({
             </div>
 
             <div className="mb-4">
-              <label className="block mb-2 font-semibold text-gray-700">
+              <label className="mb-2 block font-semibold text-gray-700">
                 Deadline:
               </label>
               <input
-                className="w-full text-black p-2 border rounded"
+                className="w-full rounded border p-2 text-black"
                 type="date"
                 value={formatDateForInput(deadline)}
                 onChange={(e) => setDeadline(e.target.value)}
@@ -343,55 +316,49 @@ export default function TaskDetailsModal({
             </div>
 
             <div className="mb-4">
-              <label className="block mb-2 font-semibold text-gray-700">
+              <label className="mb-2 block font-semibold text-gray-700">
                 Estimated Completion Time (hours):
               </label>
               <input
-                className="w-full text-black p-2 border rounded"
+                className="w-full rounded border p-2 text-black"
                 type="number"
                 min="0.5"
                 step="0.5"
                 value={completionTime}
-                onChange={(e) => {
-                  const newCompletionTime = Number(e.target.value);
-                  setCompletionTime(newCompletionTime);
-                }}
+                onChange={(e) => setCompletionTime(Number(e.target.value))}
                 disabled={isCompleted}
               />
             </div>
 
             <div className="mb-4">
-              <label className="block mb-2 font-semibold text-gray-700">
+              <label className="mb-2 block font-semibold text-gray-700">
                 Unique Days Required:
               </label>
               <input
-                className="w-full text-black p-2 border rounded"
+                className="w-full rounded border p-2 text-black"
                 type="number"
                 min="0.5"
                 step="0.5"
                 value={uniqueDaysRequired}
-                onChange={(e) => {
-                  const newUniqueDaysRequired = Number(e.target.value);
-                  setUniqueDaysRequired(newUniqueDaysRequired);
-                }}
+                onChange={(e) => setUniqueDaysRequired(Number(e.target.value))}
                 disabled={isCompleted}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-gray-500">
                 Number of separate days needed to complete this task
               </p>
             </div>
 
             {/* Show calculated urgency level */}
             {!isCompleted && (
-              <div className="mb-4 p-3 bg-gray-100 rounded">
-                <label className="block mb-1 font-semibold text-gray-700">
+              <div className="mb-4 rounded bg-gray-100 p-3">
+                <label className="mb-1 block font-semibold text-gray-700">
                   Calculated Urgency Level:
                 </label>
                 <div className="text-lg font-bold text-blue-600">
                   Level {currentUrgencyLevel}
                 </div>
                 {deadline && completionTime && uniqueDaysRequired && (
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="mt-1 text-xs text-gray-600">
                     Based on deadline, completion time, and unique days required
                   </p>
                 )}
@@ -400,11 +367,11 @@ export default function TaskDetailsModal({
           </>
         )}
 
-        <label className="block mb-2 font-semibold text-gray-700">
+        <label className="mb-2 block font-semibold text-gray-700">
           Details:
         </label>
         <textarea
-          className="w-full text-black p-2 border rounded mb-4"
+          className="mb-4 w-full rounded border p-2 text-black"
           rows={4}
           value={details}
           onChange={(e) => setDetails(e.target.value)}
@@ -417,7 +384,7 @@ export default function TaskDetailsModal({
 
         {!isCompleted && (
           <button
-            className="mt-6 bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700"
+            className="mt-6 rounded bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
             onClick={handleDelete}
           >
             Delete {task.type === "task" ? "Task" : "Category"}
