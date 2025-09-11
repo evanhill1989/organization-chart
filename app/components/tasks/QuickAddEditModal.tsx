@@ -196,13 +196,12 @@ export default function QuickAddEditModal({
     });
   };
 
-  // Handle successful edit
   const handleEditSuccess = () => {
     setTaskForEditing(null);
     setSelectedTask("");
     fetchData(); // Refresh data
+    onClose(); // ✅ Close the main modal too
   };
-
   // Fetch data when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -388,17 +387,21 @@ export default function QuickAddEditModal({
 
       {/* Add Form Modal - Reuse existing AddNodeForm */}
       {showAddForm && selectedParentNode && (
-        <AddNodeForm
-          parent_id={selectedParent as number}
-          tab_name={selectedParentNode.root_category}
-          onAdd={handleAddSuccess}
-          onClose={() => setShowAddForm(false)}
+        <TaskForm
+          parentId={selectedParent as number}
+          parentName={selectedParentNode.name}
+          rootCategory={selectedParentNode.root_category}
+          tabName={selectedParentNode.root_category}
+          onCancel={() => {
+            setShowAddForm(false);
+            setSelectedParent("");
+          }}
         />
       )}
 
       {/* Edit Form Modal - Reuse existing TaskDetailsModal */}
       {taskForEditing && (
-        <TaskForm task={taskForEditing} onClose={handleEditSuccess} />
+        <TaskForm task={taskForEditing} onCancel={handleEditSuccess} />
       )}
     </div>
   );
