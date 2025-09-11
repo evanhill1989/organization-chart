@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 
-import type { OrgNodeRow } from "../types/orgChart";
-import { useAddOrgNode } from "../hooks/useAddOrgNode";
+import type { OrgNodeRow } from "../../types/orgChart";
+import { useAddOrgNode } from "../../hooks/useAddOrgNode";
 
-import TaskDetailsModal from "./TaskDetailsModal";
-import AddNodeForm from "./AddNodeForm";
-import { supabase } from "../lib/data/supabaseClient";
+// import TaskDetailsModal from "./TaskDetailsModal";
+import TaskForm from "./TaskForm";
+import AddNodeForm from "../AddNodeForm";
+import { supabase } from "../../lib/data/supabaseClient";
 
 interface QuickAddEditModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export default function QuickAddEditModal({
 
   // Get the mutation hook for adding nodes
   const addNodeMutation = useAddOrgNode(
-    selectedParentNode?.root_category || ""
+    selectedParentNode?.root_category || "",
   );
 
   // Helper to build node path for display
@@ -215,17 +216,17 @@ export default function QuickAddEditModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] overflow-y-auto">
-      <div className="min-h-screen px-4 py-6 flex items-start justify-center">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-auto">
+    <div className="bg-opacity-50 fixed inset-0 z-[60] overflow-y-auto bg-black">
+      <div className="flex min-h-screen items-start justify-center px-4 py-6">
+        <div className="mx-auto w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-gray-800">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-600">
+          <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-600">
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
               Quick Task Manager
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 text-2xl font-bold"
+              className="text-2xl font-bold text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
               aria-label="Close"
             >
               ×
@@ -233,15 +234,15 @@ export default function QuickAddEditModal({
           </div>
 
           {/* Mode Selection */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-600">
-            <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+          <div className="border-b border-gray-200 p-6 dark:border-gray-600">
+            <div className="flex space-x-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-700">
               <button
                 type="button"
                 onClick={() => handleActionModeChange("add")}
-                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   actionMode === "add"
-                    ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                    ? "bg-white text-blue-600 shadow-sm dark:bg-gray-600 dark:text-blue-400"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
                 }`}
               >
                 Add Task
@@ -249,10 +250,10 @@ export default function QuickAddEditModal({
               <button
                 type="button"
                 onClick={() => handleActionModeChange("edit")}
-                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   actionMode === "edit"
-                    ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                    ? "bg-white text-blue-600 shadow-sm dark:bg-gray-600 dark:text-blue-400"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
                 }`}
               >
                 Edit Task
@@ -263,37 +264,37 @@ export default function QuickAddEditModal({
           {/* Loading State */}
           {isLoading && (
             <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
               <p className="text-gray-600 dark:text-gray-300">Loading...</p>
             </div>
           )}
 
           {/* Error State */}
           {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 text-red-700 dark:text-red-300 text-sm">
+            <div className="border-l-4 border-red-400 bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
               {error}
             </div>
           )}
 
           {/* Content */}
           {!isLoading && (
-            <div className="p-6 space-y-4">
+            <div className="space-y-4 p-6">
               {/* ADD MODE */}
               {actionMode === "add" && (
                 <>
                   {/* Parent Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Add to Category *
                     </label>
                     <select
                       value={selectedParent}
                       onChange={(e) =>
                         handleParentSelection(
-                          e.target.value ? Number(e.target.value) : ""
+                          e.target.value ? Number(e.target.value) : "",
                         )
                       }
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                     >
                       <option value="">Select a category...</option>
                       {allNodes.map((node) => (
@@ -306,7 +307,7 @@ export default function QuickAddEditModal({
 
                   {/* Instructions */}
                   {!selectedParent && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                    <p className="text-sm text-gray-500 italic dark:text-gray-400">
                       Select a category above to add a new task
                     </p>
                   )}
@@ -318,7 +319,7 @@ export default function QuickAddEditModal({
                 <>
                   {/* Task Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Select Task *
                     </label>
                     <select
@@ -333,7 +334,7 @@ export default function QuickAddEditModal({
                           handleTaskSelection(Number(value));
                         }
                       }}
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                     >
                       <option value="">Choose an option...</option>
                       <option value="new">Create New Task</option>
@@ -350,17 +351,17 @@ export default function QuickAddEditModal({
                   {/* Parent Selection for new task in edit mode */}
                   {selectedTask === "new" && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Add to Category *
                       </label>
                       <select
                         value={selectedParent}
                         onChange={(e) =>
                           handleParentSelection(
-                            e.target.value ? Number(e.target.value) : ""
+                            e.target.value ? Number(e.target.value) : "",
                           )
                         }
-                        className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                       >
                         <option value="">Select a category...</option>
                         {allNodes.map((node) => (
@@ -374,7 +375,7 @@ export default function QuickAddEditModal({
 
                   {/* Instructions */}
                   {!selectedTask && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                    <p className="text-sm text-gray-500 italic dark:text-gray-400">
                       Select a task above to edit, or create a new one
                     </p>
                   )}
@@ -397,7 +398,7 @@ export default function QuickAddEditModal({
 
       {/* Edit Form Modal - Reuse existing TaskDetailsModal */}
       {taskForEditing && (
-        <TaskDetailsModal task={taskForEditing} onClose={handleEditSuccess} />
+        <TaskForm task={taskForEditing} onClose={handleEditSuccess} />
       )}
     </div>
   );

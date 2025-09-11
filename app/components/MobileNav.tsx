@@ -1,6 +1,6 @@
 import DarkModeToggle from "./ui/DarkModeToggle";
-import QuickAddButton from "./QuickAddButton";
-import TasksDueTodayButton from "./TasksDueTodayButton";
+import QuickAddButton from "./tasks/QuickAddButton";
+import TasksDueTodayButton from "./tasks/TasksDueTodayButton";
 
 export default function MobileNav({
   onOpenTasksDueToday,
@@ -14,11 +14,11 @@ export default function MobileNav({
         {/* Left: Hamburger Menu */}
         <button
           onClick={onOpenHamburger}
-          className="text-gray-300 hover:text-white p-2 rounded transition-colors"
+          className="rounded p-2 text-gray-300 transition-colors hover:text-white"
           aria-label="Open navigation menu"
         >
           <svg
-            className="w-6 h-6"
+            className="h-6 w-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

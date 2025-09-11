@@ -8,7 +8,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 
 import OrgChartNode from "./OrgChartNode";
 import MobileOrgChart from "./MobileOrgChart";
-import TaskDetailsModal from "./TaskDetailsModal";
+import TaskDetailsModal from "./tasks/TaskDetailsModal";
 
 interface OrgChartTabProps {
   tree: OrgNode;
@@ -51,7 +51,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
     <>
       <div
         ref={containerRef}
-        className="relative w-full h-full flex justify-center items-start p-4"
+        className="relative flex h-full w-full items-start justify-center p-4"
       >
         {isMobile ? (
           <MobileOrgChart
@@ -62,13 +62,13 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
             toggleOpen={toggleOpen}
           />
         ) : (
-          <div className="flex flex-col items-center w-full">
-            <h2 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-gray-100">
+          <div className="flex w-full flex-col items-center">
+            <h2 className="mb-8 text-center text-3xl font-bold text-gray-900 dark:text-gray-100">
               {tabName}
             </h2>
 
             {tree.children && tree.children.length > 0 ? (
-              <div className="grid gap-8 auto-cols-min grid-flow-col">
+              <div className="grid auto-cols-min grid-flow-col gap-8">
                 {tree.children.map((child) => (
                   <OrgChartNode
                     key={child.name}
@@ -82,7 +82,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
+              <div className="py-12 text-center">
                 <p className="text-gray-600 dark:text-gray-300">
                   No items in this category yet.
                 </p>

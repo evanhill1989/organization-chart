@@ -2,13 +2,13 @@
 import { useState } from "react";
 
 import TaskDetailsModal from "./TaskDetailsModal";
-import EmptyState from "./ui/EmptyState";
-import TaskSummaryCards from "./tasks/TaskSummaryCards";
-import { useAllTasks } from "../hooks/useAllTasks";
-import type { CompleteTaskData } from "../lib/tasks/fetchAllTasks";
-import TaskTable from "./tasks/TaskTable";
-import LoadingState from "./ui/LoadingState";
-import ErrorState from "./ui/ErrorState";
+import EmptyState from "../ui/EmptyState";
+import TaskSummaryCards from "./TaskSummaryCards";
+import { useAllTasks } from "../../hooks/useAllTasks";
+import type { CompleteTaskData } from "../../lib/tasks/fetchAllTasks";
+import TaskTable from "./TaskTable";
+import LoadingState from "../ui/LoadingState";
+import ErrorState from "../ui/ErrorState";
 
 interface CompleteTaskListModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ export default function CompleteTaskListModal({
   } = useAllTasks(isOpen);
 
   const [selectedTask, setSelectedTask] = useState<CompleteTaskData | null>(
-    null
+    null,
   );
 
   // ✅ Handle task details close and refresh
@@ -52,9 +52,9 @@ export default function CompleteTaskListModal({
   // );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20">
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-6xl w-full mx-4 max-h-[calc(90vh-5rem)] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-start justify-center bg-black pt-20">
+      <div className="mx-4 max-h-[calc(90vh-5rem)] w-full max-w-6xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
+        <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">
               Complete Task List
@@ -65,7 +65,7 @@ export default function CompleteTaskListModal({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-800 text-2xl font-bold"
+            className="text-2xl font-bold text-gray-500 hover:text-gray-800"
           >
             &times;
           </button>
@@ -80,10 +80,10 @@ export default function CompleteTaskListModal({
           <>
             <TaskSummaryCards tasks={allTasks} />
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              <h3 className="mb-3 text-lg font-semibold text-gray-800">
                 Task Details
               </h3>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="mb-3 text-sm text-gray-600">
                 Click on any task to view or edit its details
               </p>
               <TaskTable tasks={allTasks} onTaskSelect={setSelectedTask} />

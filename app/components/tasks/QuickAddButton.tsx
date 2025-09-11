@@ -1,7 +1,7 @@
 // components/QuickAddButton.tsx
 // if you have a className combiner, else just inline
 
-import { cn } from "../lib/utils";
+import { cn } from "../../lib/utils";
 
 interface QuickAddButtonProps {
   onClick: () => void;
@@ -18,14 +18,14 @@ export default function QuickAddButton({
     <button
       onClick={onClick}
       className={cn(
-        "text-gray-300 hover:text-white transition-colors flex items-center space-x-1 p-2 rounded",
+        "flex items-center space-x-1 rounded p-2 text-gray-300 transition-colors hover:text-white",
         !showLabel && "justify-center", // keeps it centered for icon-only
-        className
+        className,
       )}
       title="Quick Add Task"
     >
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -37,7 +37,7 @@ export default function QuickAddButton({
           d="M12 4v16m8-8H4"
         />
       </svg>
-      {showLabel && <span className="hidden sm:inline text-sm">Quick Add</span>}
+      {showLabel && <span className="hidden text-sm sm:inline">Quick Add</span>}
     </button>
   );
 }

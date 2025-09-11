@@ -9,11 +9,11 @@ import {
 } from "@tanstack/react-query";
 
 import OrgChartTab from "../../components/OrgChartTab";
-import QuickAddEditModal from "../../components/QuickAddEditModal";
+import QuickAddEditModal from "../../components/tasks/QuickAddEditModal";
 
 import type { OrgNode } from "../../types/orgChart";
 import { fetchOrgTree } from "../../lib/fetchOrgTree";
-import TasksDueToday from "../../components/TasksDueToday";
+import TasksDueToday from "../../components/tasks/TasksDueToday";
 import MobileHamburgerMenu from "../../components/ui/MobileHamburgerMenu";
 import MobileTimeReportModal from "../../components/ui/MobileTimeReportModal";
 
@@ -62,9 +62,9 @@ function OrgChartContent() {
   }
 
   return (
-    <div className="min-h-screen w-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
+    <div className="flex min-h-screen w-screen flex-col bg-white transition-colors dark:bg-gray-900">
       {/* Navigation */}
-      <nav className="bg-gray-900 dark:bg-gray-800 sticky top-0 z-40">
+      <nav className="sticky top-0 z-40 bg-gray-900 dark:bg-gray-800">
         {isMobile ? (
           // Mobile Navigation
           <MobileNav
@@ -84,7 +84,7 @@ function OrgChartContent() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 flex  p-4">
+      <main className="flex flex-1 p-4">
         {isLoading && (
           <div className="text-gray-900 dark:text-gray-100">
             Loading {activeTab} tree...

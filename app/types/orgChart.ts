@@ -71,14 +71,42 @@ export type OrgChartTabProps = {
   tab_name: string;
 };
 
-export type Task = {
-  id: string;
-  title: string;
-  description?: string;
-  due_date?: string;
-  completed?: boolean;
-  parentNodeId?: string;
-};
+// export type Task = {
+//   id: string;
+//   title: string;
+//   description?: string;
+//   due_date?: string;
+//   completed?: boolean;
+//   parentNodeId?: string;
+// };
+
+export interface Task {
+  id: number;
+  name: string;
+  details?: string;
+  type: "task"; // (category handled elsewhere)
+  importance: number;
+  deadline?: string; // ISO date
+  completion_time: number; // hours
+  unique_days_required: number;
+
+  // Completion fields
+  is_completed: boolean;
+  completed_at?: string;
+  completion_comment?: string;
+
+  // Recurrence
+  recurrence_type: "none" | "daily" | "weekly" | "monthly" | "yearly";
+  recurrence_interval?: number;
+  recurrence_day_of_week?: number;
+  recurrence_day_of_month?: number;
+  recurrence_end_date?: string;
+  is_recurring_template: boolean;
+
+  // Category linkage
+  root_category: string;
+  parent_id?: number;
+}
 
 export type OrgNodeWithTasks = {
   id: string;

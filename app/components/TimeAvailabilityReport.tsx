@@ -12,7 +12,7 @@ import {
   calculateRequiredTime,
   processTasksWithPartialInfo,
 } from "../lib/timeReportUtils";
-import CompleteTaskListModal from "./CompleteTaskListModal";
+import CompleteTaskListModal from "./tasks/CompleteTaskListModal";
 
 export default function TimeAvailabilityReport() {
   const [reportData, setReportData] = useState<TimeReportData>({
@@ -42,7 +42,7 @@ export default function TimeAvailabilityReport() {
 
       const { startDate, endDate } = getDateRange(dateFilter, customEndDate);
       const timeWindowDays = Math.ceil(
-        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
       );
 
       // Fetch ALL tasks with deadlines (not just within the time window)
@@ -59,7 +59,7 @@ export default function TimeAvailabilityReport() {
       if (fetchError) throw fetchError;
 
       const filteredTasks = (allTasks as OrgNodeRow[]).filter((task) =>
-        matchesImportanceFilter(task.importance, importanceFilter)
+        matchesImportanceFilter(task.importance, importanceFilter),
       );
 
       // Calculate required time with partial allocation for long-term tasks
@@ -73,7 +73,7 @@ export default function TimeAvailabilityReport() {
       // Process tasks with partial time information for display
       const processedTasks = processTasksWithPartialInfo(
         tasksInWindow,
-        tasksWithPartialTime
+        tasksWithPartialTime,
       );
 
       setReportData({
@@ -98,8 +98,8 @@ export default function TimeAvailabilityReport() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center space-x-2 text-white text-sm">
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+      <div className="flex items-center space-x-2 text-sm text-white">
+        <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
         <span>Loading...</span>
       </div>
     );
@@ -107,7 +107,7 @@ export default function TimeAvailabilityReport() {
 
   // Error state
   if (error) {
-    return <div className="text-red-400 text-sm">Error: {error}</div>;
+    return <div className="text-sm text-red-400">Error: {error}</div>;
   }
 
   // Component renders
@@ -115,7 +115,7 @@ export default function TimeAvailabilityReport() {
     <div className="flex flex-col space-y-1">
       <label className="text-xs text-gray-300">Time Window:</label>
       <select
-        className="bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600"
+        className="rounded border border-gray-600 bg-gray-700 px-2 py-1 text-xs text-white"
         value={dateFilter}
         onChange={(e) => setDateFilter(e.target.value)}
       >
@@ -125,7 +125,7 @@ export default function TimeAvailabilityReport() {
       {dateFilter === "custom" && (
         <input
           type="date"
-          className="bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600 mt-1"
+          className="mt-1 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-xs text-white"
           value={customEndDate}
           onChange={(e) => setCustomEndDate(e.target.value)}
           min={formatDateForInput(new Date())}
@@ -138,7 +138,7 @@ export default function TimeAvailabilityReport() {
     <div className="flex flex-col space-y-1">
       <label className="text-xs text-gray-300">Importance:</label>
       <select
-        className="bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600"
+        className="rounded border border-gray-600 bg-gray-700 px-2 py-1 text-xs text-white"
         value={importanceFilter}
         onChange={(e) =>
           setImportanceFilter(e.target.value as ImportanceFilter)
@@ -157,7 +157,7 @@ export default function TimeAvailabilityReport() {
   const QuickStats = () => (
     <button
       onClick={() => setShowDetailModal(true)}
-      className="flex flex-col space-y-1 border-l border-gray-600 pl-4 hover:bg-gray-800 p-2 rounded transition-colors"
+      className="flex flex-col space-y-1 rounded border-l border-gray-600 p-2 pl-4 transition-colors hover:bg-gray-800"
     >
       <div className="text-xs text-gray-300">Time Analysis:</div>
       <div className="flex items-center space-x-2">
@@ -178,11 +178,11 @@ export default function TimeAvailabilityReport() {
   const TaskListButton = () => (
     <button
       onClick={() => setShowCompleteTaskList(true)}
-      className="text-gray-400 hover:text-white transition-colors"
+      className="text-gray-400 transition-colors hover:text-white"
       title="View all tasks"
     >
       <svg
-        className="w-4 h-4"
+        className="h-4 w-4"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -200,11 +200,11 @@ export default function TimeAvailabilityReport() {
   const RefreshButton = () => (
     <button
       onClick={fetchReportData}
-      className="text-gray-400 hover:text-white transition-colors"
+      className="text-gray-400 transition-colors hover:text-white"
       title="Refresh report"
     >
       <svg
-        className="w-4 h-4"
+        className="h-4 w-4"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -244,9 +244,9 @@ export default function TimeAvailabilityReport() {
     ];
 
     return (
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-4 gap-4">
         {cards.map((card, index) => (
-          <div key={index} className="bg-gray-100 p-4 rounded">
+          <div key={index} className="rounded bg-gray-100 p-4">
             <div className="text-sm text-gray-600">{card.label}</div>
             <div className={`text-2xl font-bold ${card.color}`}>
               {card.value}
@@ -289,7 +289,7 @@ export default function TimeAvailabilityReport() {
               <td className="px-4 py-2 text-sm text-gray-800">
                 {task.name}
                 {task.isPartialTime && (
-                  <span className="ml-2 text-xs text-blue-600 font-medium">
+                  <span className="ml-2 text-xs font-medium text-blue-600">
                     (Partial)
                   </span>
                 )}
@@ -302,7 +302,7 @@ export default function TimeAvailabilityReport() {
               <td
                 className={`px-4 py-2 text-sm ${
                   task.isOverdue
-                    ? "text-red-600 font-bold"
+                    ? "font-bold text-red-600"
                     : task.daysUntilDeadline <= 7
                       ? "text-orange-600"
                       : "text-gray-600"
@@ -318,7 +318,7 @@ export default function TimeAvailabilityReport() {
               <td className="px-4 py-2 text-sm text-gray-600">
                 <span
                   className={
-                    task.isPartialTime ? "text-blue-600 font-medium" : ""
+                    task.isPartialTime ? "font-medium text-blue-600" : ""
                   }
                 >
                   {task.effectiveRequiredTime?.toFixed(1) ||
@@ -352,15 +352,15 @@ export default function TimeAvailabilityReport() {
   );
 
   const DetailModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20">
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl w-full mx-4 max-h-[calc(80vh-5rem)] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-start justify-center bg-black pt-20">
+      <div className="mx-4 max-h-[calc(80vh-5rem)] w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
+        <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-800">
             Time Availability Report
           </h2>
           <button
             onClick={() => setShowDetailModal(false)}
-            className="text-gray-500 hover:text-gray-800 text-2xl font-bold"
+            className="text-2xl font-bold text-gray-500 hover:text-gray-800"
           >
             &times;
           </button>
@@ -369,7 +369,7 @@ export default function TimeAvailabilityReport() {
         <SummaryCards />
 
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          <h3 className="mb-3 text-lg font-semibold text-gray-800">
             Task Breakdown
           </h3>
           <TaskTable />
@@ -380,7 +380,7 @@ export default function TimeAvailabilityReport() {
 
   return (
     <>
-      <div className="flex flex-col md:flex-row items-center gap-2 space-x-4 text-white text-sm">
+      <div className="flex flex-col items-center gap-2 space-x-4 text-sm text-white md:flex-row">
         <DateFilter />
         <ImportanceFilter />
         <QuickStats />

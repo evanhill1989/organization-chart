@@ -2,18 +2,18 @@ import { useState } from "react";
 import { useQueryClient, useQueries } from "@tanstack/react-query";
 
 import TaskDetailsModal from "./TaskDetailsModal";
-import EmptyState from "./ui/EmptyState";
-import TaskSummaryCards from "./tasks/TaskSummaryCards";
-import TaskListItem from "./tasks/TaskListItem";
+import EmptyState from "../ui/EmptyState";
+import TaskSummaryCards from "./TaskSummaryCards";
+import TaskListItem from "./TaskListItem";
 
-import { collectTasksDueToday } from "../lib/collectTasksDueToday";
+import { collectTasksDueToday } from "../../lib/collectTasksDueToday";
 import {
   enrichTasksWithUrgencyData,
   TaskSorters,
   type EnrichedTask,
-} from "../lib/taskEnrichmentUtils";
-import type { OrgNode } from "../types/orgChart";
-import { fetchOrgTree } from "../lib/fetchOrgTree";
+} from "../../lib/taskEnrichmentUtils";
+import type { OrgNode } from "../../types/orgChart";
+import { fetchOrgTree } from "../../lib/fetchOrgTree";
 
 interface TasksDueTodayProps {
   isOpen: boolean;
@@ -52,10 +52,10 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-8">
+      <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="rounded-lg bg-white p-8">
           <div className="flex items-center space-x-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
             <span>Loading tasks from all categories...</span>
           </div>
         </div>
@@ -65,8 +65,8 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
 
   if (hasError) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-8">
+      <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="rounded-lg bg-white p-8">
           <div className="text-red-600">
             Error loading tasks. Please try again.
           </div>
@@ -84,11 +84,11 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
 
   // 🔹 Collect & sort all due-today/overdue tasks
   const todayTasks = enrichTasksWithUrgencyData(
-    collectTasksDueToday(orgTreeRoots)
+    collectTasksDueToday(orgTreeRoots),
   ).sort(TaskSorters.byUrgencyThenImportance);
 
   console.log(
-    `Found ${todayTasks.length} tasks due today/overdue across all tabs`
+    `Found ${todayTasks.length} tasks due today/overdue across all tabs`,
   );
 
   const handleTaskDetailsClose = () => {
@@ -105,10 +105,10 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
   });
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-10">
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl w-full mx-4 max-h-[calc(90vh-2.5rem)] overflow-y-auto">
+    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-start justify-center bg-black pt-10">
+      <div className="mx-4 max-h-[calc(90vh-2.5rem)] w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">
               Tasks Due Today & Overdue
@@ -121,7 +121,7 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-800 text-2xl font-bold transition-colors"
+            className="text-2xl font-bold text-gray-500 transition-colors hover:text-gray-800"
             aria-label="Close"
           >
             &times;
@@ -141,9 +141,9 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
           <>
             <TaskSummaryCards tasks={todayTasks} />
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              <h3 className="mb-4 text-lg font-semibold text-gray-800">
                 Today's Tasks & Overdue Items
-                <span className="text-sm font-normal text-gray-600 ml-2">
+                <span className="ml-2 text-sm font-normal text-gray-600">
                   (Click any task to edit)
                 </span>
               </h3>
