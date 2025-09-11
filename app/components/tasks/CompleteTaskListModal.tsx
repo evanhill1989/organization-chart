@@ -1,7 +1,7 @@
-// app/components/CompleteTaskListModal.tsx
+// app/components/tasks/CompleteTaskListModal.tsx
 import { useState } from "react";
 
-import TaskDetailsModal from "./TaskDetailsModal";
+import TaskForm from "./TaskForm"; // ✅ Changed import
 import EmptyState from "../ui/EmptyState";
 import TaskSummaryCards from "./TaskSummaryCards";
 import { useAllTasks } from "../../hooks/useAllTasks";
@@ -31,25 +31,13 @@ export default function CompleteTaskListModal({
     null,
   );
 
-  // ✅ Handle task details close and refresh
-  const handleTaskDetailsClose = () => {
+  // ✅ Updated handler to use TaskForm
+  const handleTaskFormClose = () => {
     setSelectedTask(null);
     reload(); // Use reload from your hook
   };
 
   if (!isOpen) return null;
-
-  // const ErrorState = () => (
-  //   <div className="text-center py-8 text-red-600">
-  //     <p className="mt-2">Error: {error}</p>
-  //     <button
-  //       onClick={() => reload()}
-  //       className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-  //     >
-  //       Try Again
-  //     </button>
-  //   </div>
-  // );
 
   return (
     <div className="bg-opacity-50 fixed inset-0 z-50 flex items-start justify-center bg-black pt-20">
@@ -91,11 +79,10 @@ export default function CompleteTaskListModal({
           </>
         )}
 
-        {/* Task Details Modal */}
-        <TaskDetailsModal
-          task={selectedTask}
-          onClose={handleTaskDetailsClose}
-        />
+        {/* ✅ Updated to use TaskForm */}
+        {selectedTask && (
+          <TaskForm task={selectedTask} onCancel={handleTaskFormClose} />
+        )}
       </div>
     </div>
   );

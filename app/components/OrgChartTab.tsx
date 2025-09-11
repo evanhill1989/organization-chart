@@ -8,7 +8,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 
 import OrgChartNode from "./OrgChartNode";
 import MobileOrgChart from "./MobileOrgChart";
-import TaskDetailsModal from "./tasks/TaskDetailsModal";
+import TaskForm from "./tasks/TaskForm"; // ✅ Changed import
 
 interface OrgChartTabProps {
   tree: OrgNode;
@@ -22,7 +22,7 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
   // State for managing which nodes are expanded
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
 
-  // State for task details modal
+  // ✅ Updated state for TaskForm
   const [selectedTask, setSelectedTask] = useState<OrgNode | null>(null);
 
   // Custom hook for handling open/close logic
@@ -42,8 +42,8 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
     setSelectedTask(node);
   };
 
-  // Close task details modal
-  const handleCloseTaskModal = () => {
+  // ✅ Updated close handler
+  const handleCloseTaskForm = () => {
     setSelectedTask(null);
   };
 
@@ -92,8 +92,10 @@ export default function OrgChartTab({ tree, tabName }: OrgChartTabProps) {
         )}
       </div>
 
-      {/* Task Details Modal */}
-      <TaskDetailsModal task={selectedTask} onClose={handleCloseTaskModal} />
+      {/* ✅ Updated to use TaskForm */}
+      {selectedTask && (
+        <TaskForm task={selectedTask} onCancel={handleCloseTaskForm} />
+      )}
     </>
   );
 }

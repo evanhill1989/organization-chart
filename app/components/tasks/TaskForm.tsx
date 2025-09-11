@@ -314,7 +314,7 @@ export default function TaskForm({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400"
+              className="rounded bg-gray-300 px-4 py-2 text-white hover:bg-gray-400"
             >
               Cancel
             </button>

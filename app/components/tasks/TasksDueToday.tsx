@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQueryClient, useQueries } from "@tanstack/react-query";
 
-import TaskDetailsModal from "./TaskDetailsModal";
+import TaskForm from "./TaskForm"; // ✅ Changed import
 import EmptyState from "../ui/EmptyState";
 import TaskSummaryCards from "./TaskSummaryCards";
 import TaskListItem from "./TaskListItem";
@@ -91,7 +91,8 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
     `Found ${todayTasks.length} tasks due today/overdue across all tabs`,
   );
 
-  const handleTaskDetailsClose = () => {
+  // ✅ Updated handler to use TaskForm
+  const handleTaskFormClose = () => {
     setSelectedTask(null);
     // Invalidate so next open is fresh
     queryClient.invalidateQueries({ queryKey: ["orgTree"] });
@@ -160,11 +161,10 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
           </>
         )}
 
-        {/* Task editing modal */}
-        <TaskDetailsModal
-          task={selectedTask}
-          onClose={handleTaskDetailsClose}
-        />
+        {/* ✅ Updated to use TaskForm */}
+        {selectedTask && (
+          <TaskForm task={selectedTask} onCancel={handleTaskFormClose} />
+        )}
       </div>
     </div>
   );
