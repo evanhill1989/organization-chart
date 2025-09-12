@@ -12,7 +12,6 @@ type MobileOrgChartProps = {
 };
 
 export default function MobileOrgChart({
-  root,
   currentNode,
   activePath,
   setActivePath,

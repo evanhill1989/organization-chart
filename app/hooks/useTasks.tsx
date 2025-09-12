@@ -3,10 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/data/supabaseClient";
 import type { OrgNodeRow } from "../types/orgChart";
 
-export interface Task extends OrgNodeRow {
-  // This ensures Task is compatible with OrgNodeRow
-}
-
 export const useTask = (taskId?: number) => {
   return useQuery({
     queryKey: ["task", taskId],
@@ -18,7 +14,7 @@ export const useTask = (taskId?: number) => {
         .eq("id", taskId)
         .single();
       if (error) throw error;
-      return data as Task;
+      return data as OrgNodeRow;
     },
     enabled: !!taskId,
   });
@@ -28,7 +24,7 @@ export const useSaveTask = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (task: Partial<Task>) => {
+    mutationFn: async (task: Partial<OrgNodeRow>) => {
       if (task.id) {
         // Update existing task
         const { data, error } = await supabase
@@ -38,7 +34,7 @@ export const useSaveTask = () => {
           .select()
           .single();
         if (error) throw error;
-        return data as Task;
+        return data as OrgNodeRow;
       } else {
         // Create new task - need parent_id, tab_name, root_category
         const { data, error } = await supabase
@@ -50,7 +46,7 @@ export const useSaveTask = () => {
           .select()
           .single();
         if (error) throw error;
-        return data as Task;
+        return data as OrgNodeRow;
       }
     },
     onSuccess: (data) => {

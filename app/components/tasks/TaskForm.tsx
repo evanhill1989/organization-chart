@@ -136,7 +136,7 @@ export default function TaskForm({
       id: task.id,
       is_completed: isCompleted,
       completion_comment: completionComment || undefined,
-      completed_at: completedAt || undefined,
+      completed_at: completedAt || undefined, // ✅ This converts null to undefined
     };
 
     console.log("🚀 Saving task completion:", taskData);
@@ -163,7 +163,7 @@ export default function TaskForm({
             const completedTaskData = {
               ...task,
               is_completed: true,
-              completed_at: completedAt,
+              completed_at: completedAt || undefined, // ✅ Convert null to undefined
               completion_comment: completionComment,
               // Use current recurrence config
               recurrence_type: recurrenceConfig.recurrence_type,
@@ -202,7 +202,6 @@ export default function TaskForm({
       },
     });
   };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 

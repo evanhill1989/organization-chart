@@ -1,9 +1,5 @@
 import { useState, useEffect } from "react";
-
 import type { OrgNodeRow } from "../../types/orgChart";
-import { useAddOrgNode } from "../../hooks/useAddOrgNode";
-
-
 import TaskForm from "./TaskForm";
 
 import { supabase } from "../../lib/data/supabaseClient";
@@ -46,11 +42,6 @@ export default function QuickAddEditModal({
   const selectedParentNode = selectedParent
     ? allNodes.find((n) => n.id === selectedParent)
     : null;
-
-  // Get the mutation hook for adding nodes
-  const addNodeMutation = useAddOrgNode(
-    selectedParentNode?.root_category || "",
-  );
 
   // Helper to build node path for display
   const buildNodePath = (node: OrgNodeRow, allNodes: OrgNodeRow[]): string => {
@@ -169,32 +160,6 @@ export default function QuickAddEditModal({
   };
 
   // Handle successful add
-  const handleAddSuccess = (newNode: {
-    name: string;
-    type: "category" | "task";
-    details?: string;
-    importance?: number;
-    deadline?: string;
-    completion_time?: number;
-    unique_days_required?: number;
-  }) => {
-    if (!selectedParentNode) return;
-
-    const mutationData = {
-      ...newNode,
-      parent_id: selectedParent as number,
-      tab_name: selectedParentNode.root_category,
-      root_category: selectedParentNode.root_category,
-    };
-
-    addNodeMutation.mutate(mutationData, {
-      onSuccess: () => {
-        setShowAddForm(false);
-        setSelectedParent("");
-        fetchData(); // Refresh data
-      },
-    });
-  };
 
   const handleEditSuccess = () => {
     setTaskForEditing(null);

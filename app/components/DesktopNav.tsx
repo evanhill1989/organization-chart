@@ -1,11 +1,11 @@
+// app/components/DesktopNav.tsx
 import TasksDueTodayButton from "./tasks/TasksDueTodayButton";
 import QuickAddButton from "./tasks/QuickAddButton";
 import { Link } from "react-router";
-import { TABS } from "../lib/consts/TABS";
 import DarkModeToggle from "./ui/DarkModeToggle";
 import TimeAvailabilityReport from "./TimeAvailabilityReport";
+import TabNavigationList from "./ui/TabNavigationList";
 
-// DesktopNav.tsx
 export default function DesktopNav({
   onOpenTasksDueToday,
   onOpenQuickAdd,
@@ -20,31 +20,18 @@ export default function DesktopNav({
         >
           ← Home
         </Link>
-        {TABS.map((tab) => (
-          <Link
-            key={tab}
-            to={`/org-chart/${tab}`}
-            className={`border-b-2 px-6 py-3 text-lg font-medium transition-colors duration-200 ${
-              activeTab === tab
-                ? "border-white bg-gray-800 text-white dark:bg-gray-700"
-                : "border-transparent text-gray-300 hover:bg-gray-800 hover:text-white dark:hover:bg-gray-700"
-            }`}
-          >
-            {tab}
-          </Link>
-        ))}
+
+        <TabNavigationList activeTab={activeTab} variant="desktop" />
       </div>
 
       <div className="flex items-center space-x-4">
         <DarkModeToggle />
         <TasksDueTodayButton onClick={onOpenTasksDueToday} />
-
         <QuickAddButton
           onClick={onOpenQuickAdd}
           showLabel
           className="bg-gray-800 hover:bg-gray-700"
         />
-
         <TimeAvailabilityReport />
       </div>
     </div>
