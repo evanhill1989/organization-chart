@@ -70,6 +70,7 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
     openMap,
     tabName,
     isMobile,
+    activePath: isMobile ? activePath : undefined, // Only pass for mobile
   });
 
   // Event handlers
