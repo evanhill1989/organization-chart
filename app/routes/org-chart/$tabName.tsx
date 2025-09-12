@@ -8,7 +8,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 
-import OrgChartTab from "../../components/OrgChartTab";
+import OrgChartRoot from "../../components/OrgChartRoot";
 import QuickAddEditModal from "../../components/tasks/QuickAddEditModal";
 
 import type { OrgNode } from "../../types/orgChart";
@@ -95,7 +95,7 @@ function OrgChartContent() {
             Error loading {activeTab} tree
           </div>
         )}
-        {tree && <OrgChartTab tree={tree} tabName={activeTab} />}
+        {tree && <OrgChartRoot  tabName={activeTab} />}
       </main>
 
       {/* Mobile Modals */}

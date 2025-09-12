@@ -1,8 +1,7 @@
+// app/components/OrgChartNode.tsx (Updated with isRoot handling)
 import { useState } from "react";
-
-import { useAddOrgNode } from "../hooks/useAddOrgNode";
 import type { OrgNode } from "../types/orgChart";
-import AddNodeForm from "./AddNodeForm";
+import TaskForm from "./tasks/TaskForm";
 
 import {
   getEffectiveUrgency,
@@ -25,6 +24,7 @@ type OrgChartNodeProps = {
   toggleOpen: (path: string) => void;
   path: string;
   disableExpand?: boolean;
+  isRoot?: boolean; // ✅ New prop for root-level handling
 };
 
 export default function OrgChartNode({
@@ -35,33 +35,65 @@ export default function OrgChartNode({
   toggleOpen,
   path,
   disableExpand,
+  isRoot = false,
 }: OrgChartNodeProps) {
   const isTask = node.type === "task";
   const isOpen = openMap[path] || false;
-  const addNodeMutation = useAddOrgNode(node.root_category);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
 
   // Calculate the effective urgency and importance
   const effectiveUrgency = getEffectiveUrgency(node);
   const effectiveImportance = getEffectiveImportance(node);
 
-  const handleAddNode = (newNode: {
-    name: string;
-    type: "category" | "task";
-    details?: string;
-    urgency?: number;
-    importance?: number;
-  }) => {
-    const mutationData = {
-      ...newNode,
-      parent_id: node.id,
-      tab_name: node.tab_name ?? "",
-      root_category: node.root_category,
-    };
+  const handleTaskFormClose = () => setShowTaskForm(false);
 
-    addNodeMutation.mutate(mutationData);
-  };
+  // ✅ Handle root node differently (desktop only)
+  if (isRoot) {
+    return (
+      <div className="flex w-full flex-col items-center">
+        <h2 className="mb-8 text-center text-3xl font-bold text-gray-900 dark:text-gray-100">
+          {node.name}
+        </h2>
 
+        {node.children && node.children.length > 0 ? (
+          <div className="grid auto-cols-min grid-flow-col gap-8">
+            {node.children.map((child) => (
+              <OrgChartNode
+                key={child.name}
+                node={child}
+                level={level + 1}
+                onTaskClick={onTaskClick}
+                openMap={openMap}
+                toggleOpen={toggleOpen}
+                path={`${path}/${child.name}`}
+                disableExpand={disableExpand}
+                isRoot={false}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 text-center">
+            <p className="text-gray-600 dark:text-gray-300">
+              No items in this category yet.
+            </p>
+          </div>
+        )}
+
+        {/* Root level task form */}
+        {showTaskForm && (
+          <TaskForm
+            parentId={node.id}
+            parentName={node.name}
+            rootCategory={node.root_category}
+            tabName={node.root_category}
+            onCancel={handleTaskFormClose}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ✅ Regular node rendering (existing logic)
   return (
     <div
       className={`flex flex-col items-center w-full ${
@@ -77,7 +109,7 @@ export default function OrgChartNode({
           effectiveImportance
         )} ${getImportanceGlowClasses(effectiveImportance)}`}
       >
-        {/* Urgency Ball - positioned absolutely to orbit around the node */}
+        {/* Urgency Ball */}
         {!node.is_completed && shouldShowUrgencyBall(effectiveUrgency) && (
           <div
             className={`absolute rounded-full pointer-events-none z-10 ${getUrgencyBallColor(
@@ -87,7 +119,6 @@ export default function OrgChartNode({
             )}`}
             data-urgency-ball={path}
             style={{
-              // Initial position - will be animated by GSAP
               left: "50%",
               top: "50%",
               transform: "translate(-50%, -50%)",
@@ -110,9 +141,9 @@ export default function OrgChartNode({
         ) : (
           <button
             className="text-lg text-white font-semibold w-full text-center focus:outline-none bg-gray-800 p-2 rounded-lg"
-            onClick={() => !disableExpand && toggleOpen(path)} // 👈 guard
+            onClick={() => !disableExpand && toggleOpen(path)}
             type="button"
-            disabled={disableExpand} // 👈 optional visual disable
+            disabled={disableExpand}
           >
             <span className="flex items-center justify-center gap-2">
               {node.name}
@@ -126,6 +157,7 @@ export default function OrgChartNode({
         )}
       </div>
 
+      {/* Children and add button */}
       {!isTask && isOpen && !disableExpand && (
         <div className="grid gap-4 mt-4 w-full auto-cols-min grid-flow-col">
           {node.children?.map((child) => (
@@ -137,15 +169,15 @@ export default function OrgChartNode({
               openMap={openMap}
               toggleOpen={toggleOpen}
               path={`${path}/${child.name}`}
-              disableExpand={disableExpand} // 👈 pass down
+              disableExpand={disableExpand}
+              isRoot={false}
             />
           ))}
 
-          {/* "+" button */}
           <button
             className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
-            onClick={() => setShowAddModal(true)}
-            title="Add Node"
+            onClick={() => setShowTaskForm(true)}
+            title="Add Task"
             type="button"
           >
             +
@@ -153,13 +185,14 @@ export default function OrgChartNode({
         </div>
       )}
 
-      {/* Modal for AddNodeForm */}
-      {showAddModal && (
-        <AddNodeForm
-          parent_id={node.id}
-          tab_name={node.tab_name ?? ""}
-          onAdd={handleAddNode}
-          onClose={() => setShowAddModal(false)}
+      {/* Task form modal */}
+      {showTaskForm && (
+        <TaskForm
+          parentId={node.id}
+          parentName={node.name}
+          rootCategory={node.root_category}
+          tabName={node.root_category}
+          onCancel={handleTaskFormClose}
         />
       )}
     </div>

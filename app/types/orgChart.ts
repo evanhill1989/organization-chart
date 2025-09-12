@@ -66,7 +66,7 @@ export interface OrgNodeRow {
   recurring_template_id?: number;
 }
 
-export type OrgChartTabProps = {
+export type OrgChartRootProps = {
   tree: OrgNode;
   tab_name: string;
 };
