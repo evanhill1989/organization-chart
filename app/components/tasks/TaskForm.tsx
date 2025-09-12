@@ -92,10 +92,10 @@ export default function TaskForm({
       setCompletionComment(task.completion_comment ?? "");
       setCompletedAt(task.completed_at ?? null);
 
-      // Initialize recurrence configuration for existing tasks
+      // ✅ FIX: Initialize recurrence configuration with actual task values
       setRecurrenceConfig({
         recurrence_type: task.recurrence_type || "none",
-        recurrence_interval: task.recurrence_interval,
+        recurrence_interval: task.recurrence_interval || 1,
         recurrence_day_of_week: task.recurrence_day_of_week,
         recurrence_day_of_month: task.recurrence_day_of_month,
         recurrence_end_date: task.recurrence_end_date,
@@ -107,7 +107,6 @@ export default function TaskForm({
       setCompletionChanged(false);
     }
   }, [task]);
-
   // ✅ Handle completion checkbox change (no automatic saving)
   const handleCompletionChange = (newCompletedState: boolean) => {
     setIsCompleted(newCompletedState);
@@ -376,24 +375,24 @@ export default function TaskForm({
                 )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* ✅ Dynamic "Save Completed Task" button */}
-        {isEditing && completionChanged && isCompleted && (
-          <div className="mb-4 rounded-lg border-2 border-green-500 bg-green-50 p-4">
-            <button
-              type="button"
-              onClick={handleSaveCompletion}
-              disabled={saveTask.isPending}
-              className="w-full rounded bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-            >
-              {saveTask.isPending ? "Saving..." : "Save Completed Task"}
-            </button>
-            <p className="mt-2 text-xs text-green-700">
-              Click to save task completion and create next recurring instance
-              (if applicable)
-            </p>
+            {/* ✅ Dynamic "Save Completed Task" button */}
+            {isEditing && completionChanged && isCompleted && (
+              <div className="mb-4 p-4">
+                <button
+                  type="button"
+                  onClick={handleSaveCompletion}
+                  disabled={saveTask.isPending}
+                  className="w-full rounded bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                >
+                  {saveTask.isPending ? "Saving..." : "Save Completed Task"}
+                </button>
+                <p className="mt-2 text-xs text-green-700">
+                  Click to save task completion and create next recurring
+                  instance (if applicable)
+                </p>
+              </div>
+            )}
           </div>
         )}
 

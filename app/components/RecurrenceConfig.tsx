@@ -30,24 +30,39 @@ export default function RecurrenceConfig({
   className = "",
 }: RecurrenceConfigProps) {
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(
-    initialConfig?.type || "none"
+    initialConfig?.type || "none",
   );
   const [recurrenceInterval, setRecurrenceInterval] = useState(
-    initialConfig?.interval || 1
+    initialConfig?.interval || 1,
   );
   const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number | "">(
-    initialConfig?.dayOfWeek ?? ""
+    initialConfig?.dayOfWeek ?? "",
   );
   const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | "">(
-    initialConfig?.dayOfMonth ?? ""
+    initialConfig?.dayOfMonth ?? "",
   );
   const [recurrenceEndDate, setRecurrenceEndDate] = useState(
-    initialConfig?.endDate || ""
+    initialConfig?.endDate || "",
   );
+
+  // ✅ FIX: Update state when initialConfig changes
+  useEffect(() => {
+    if (initialConfig) {
+      console.log(
+        "🔄 RecurrenceConfig: Updating from initialConfig:",
+        initialConfig,
+      );
+      setRecurrenceType(initialConfig.type || "none");
+      setRecurrenceInterval(initialConfig.interval || 1);
+      setRecurrenceDayOfWeek(initialConfig.dayOfWeek ?? "");
+      setRecurrenceDayOfMonth(initialConfig.dayOfMonth ?? "");
+      setRecurrenceEndDate(initialConfig.endDate || "");
+    }
+  }, [initialConfig]);
 
   // Emit changes to parent
   useEffect(() => {
-    onChange({
+    const config = {
       recurrence_type: recurrenceType,
       recurrence_interval:
         recurrenceType !== "none" ? recurrenceInterval : undefined,
@@ -64,7 +79,10 @@ export default function RecurrenceConfig({
           ? recurrenceEndDate
           : undefined,
       is_recurring_template: recurrenceType !== "none",
-    });
+    };
+
+    console.log("🔄 RecurrenceConfig: Emitting config change:", config);
+    onChange(config);
   }, [
     recurrenceType,
     recurrenceInterval,
@@ -76,11 +94,11 @@ export default function RecurrenceConfig({
 
   return (
     <div
-      className={`p-4 border rounded bg-gray-50 dark:bg-gray-800 ${className}`}
+      className={`rounded border bg-gray-50 p-4 dark:bg-gray-800 ${className}`}
     >
-      <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+      <h4 className="mb-3 flex items-center font-medium text-gray-700 dark:text-gray-300">
         <svg
-          className="w-4 h-4 mr-2"
+          className="mr-2 h-4 w-4"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -97,13 +115,19 @@ export default function RecurrenceConfig({
 
       {/* Recurrence Type Selector */}
       <div className="mb-3">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Repeat:
         </label>
         <select
-          className="px-3 py-2 rounded w-full text-black dark:text-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded border border-gray-300 px-3 py-2 text-black focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           value={recurrenceType}
-          onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
+          onChange={(e) => {
+            console.log(
+              "🔄 RecurrenceConfig: Type changed to:",
+              e.target.value,
+            );
+            setRecurrenceType(e.target.value as RecurrenceType);
+          }}
           disabled={disabled}
         >
           <option value="none">No repeat</option>
@@ -120,7 +144,7 @@ export default function RecurrenceConfig({
         <>
           {/* Interval Input */}
           <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Every:
             </label>
             <div className="flex items-center space-x-2">
@@ -128,7 +152,7 @@ export default function RecurrenceConfig({
                 type="number"
                 min="1"
                 max="365"
-                className="px-3 py-2 rounded w-20 text-black dark:text-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+                className="w-20 rounded border border-gray-300 px-3 py-2 text-black focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 value={recurrenceInterval}
                 onChange={(e) => setRecurrenceInterval(Number(e.target.value))}
                 disabled={disabled}
@@ -151,15 +175,15 @@ export default function RecurrenceConfig({
           {/* Weekly: Day of Week Selector */}
           {recurrenceType === "weekly" && (
             <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 On day:
               </label>
               <select
-                className="px-3 py-2 rounded w-full text-black dark:text-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded border border-gray-300 px-3 py-2 text-black focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 value={recurrenceDayOfWeek}
                 onChange={(e) =>
                   setRecurrenceDayOfWeek(
-                    e.target.value ? Number(e.target.value) : ""
+                    e.target.value ? Number(e.target.value) : "",
                   )
                 }
                 disabled={disabled}
@@ -179,15 +203,15 @@ export default function RecurrenceConfig({
           {/* Monthly: Day of Month Selector */}
           {recurrenceType === "monthly" && (
             <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 On day of month:
               </label>
               <select
-                className="px-3 py-2 rounded w-full text-black dark:text-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded border border-gray-300 px-3 py-2 text-black focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 value={recurrenceDayOfMonth}
                 onChange={(e) =>
                   setRecurrenceDayOfMonth(
-                    e.target.value ? Number(e.target.value) : ""
+                    e.target.value ? Number(e.target.value) : "",
                   )
                 }
                 disabled={disabled}
@@ -204,12 +228,12 @@ export default function RecurrenceConfig({
 
           {/* End Date */}
           <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               End repeat (optional):
             </label>
             <input
               type="date"
-              className="px-3 py-2 rounded w-full text-black dark:text-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-black focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               value={recurrenceEndDate}
               onChange={(e) => setRecurrenceEndDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
@@ -218,7 +242,7 @@ export default function RecurrenceConfig({
           </div>
 
           {/* Preview */}
-          <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-4 border-blue-400">
+          <div className="mt-3 rounded border-l-4 border-blue-400 bg-blue-50 p-2 dark:bg-blue-900/20">
             <p className="text-sm text-blue-700 dark:text-blue-300">
               <strong>Pattern:</strong>{" "}
               {getRecurrenceDescription({
@@ -235,7 +259,7 @@ export default function RecurrenceConfig({
               })}
             </p>
             {recurrenceEndDate && (
-              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+              <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
                 <strong>Ends:</strong>{" "}
                 {new Date(recurrenceEndDate).toLocaleDateString()}
               </p>
