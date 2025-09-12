@@ -1,3 +1,4 @@
+// app/lib/fetchOrgTree.ts
 import type { OrgNodeRow } from "../types/orgChart";
 import { buildOrgTree } from "./buildOrgTree";
 import { supabase } from "./data/supabaseClient";
@@ -7,7 +8,8 @@ export async function fetchOrgTree(tabName: string) {
     .from("org_nodes")
     .select("*")
     .eq("root_category", tabName)
-    .not("is_completed", "is", true);
+    .not("is_completed", "is", true); // ✅ Already filtering out completed tasks
+
   const typedData = data as OrgNodeRow[];
 
   if (error) throw error;

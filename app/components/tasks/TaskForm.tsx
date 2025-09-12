@@ -1,14 +1,15 @@
-// src/components/TaskForm.tsx
-import { useState, useEffect } from "react";
+// app/components/tasks/TaskForm.tsx
+import { useState, useEffect, useRef } from "react";
 import { useDeleteTask, useSaveTask } from "../../hooks/useTasks";
 import type { OrgNodeRow } from "../../types/orgChart";
 import RecurrenceConfig from "../RecurrenceConfig";
 import type { RecurrenceType } from "../../types/orgChart";
+import { createRecurringInstance } from "../../lib/createRecurringInstance";
 
 interface TaskFormProps {
   task?: OrgNodeRow; // undefined = creating new
   onCancel: () => void;
-  // ✅ New props for task creation
+  // New props for task creation
   parentId?: number;
   parentName?: string;
   rootCategory?: string;
@@ -43,7 +44,16 @@ export default function TaskForm({
     task?.unique_days_required ?? 1,
   );
 
-  // ✅ Recurrence configuration state
+  // Completion tracking states
+  const [isCompleted, setIsCompleted] = useState(task?.is_completed ?? false);
+  const [completionComment, setCompletionComment] = useState(
+    task?.completion_comment ?? "",
+  );
+  const [completedAt, setCompletedAt] = useState<string | null>(
+    task?.completed_at ?? null,
+  );
+
+  // Recurrence configuration state
   const [recurrenceConfig, setRecurrenceConfig] =
     useState<RecurrenceConfigType>({
       recurrence_type: "none",
@@ -60,6 +70,13 @@ export default function TaskForm({
   const isCreating = !task;
   const isEditing = !!task;
 
+  // Track if we've created a recurring instance
+  const hasCreatedRecurringInstanceRef = useRef(false);
+  const isProcessingCompletionRef = useRef(false);
+
+  // ✅ Track if completion status has changed
+  const [completionChanged, setCompletionChanged] = useState(false);
+
   // Sync when editing task changes
   useEffect(() => {
     if (task) {
@@ -70,7 +87,12 @@ export default function TaskForm({
       setCompletionTime(task.completion_time ?? 1);
       setUniqueDaysRequired(task.unique_days_required ?? 1);
 
-      // ✅ Initialize recurrence configuration for existing tasks
+      // Initialize completion states
+      setIsCompleted(task.is_completed ?? false);
+      setCompletionComment(task.completion_comment ?? "");
+      setCompletedAt(task.completed_at ?? null);
+
+      // Initialize recurrence configuration for existing tasks
       setRecurrenceConfig({
         recurrence_type: task.recurrence_type || "none",
         recurrence_interval: task.recurrence_interval,
@@ -79,18 +101,118 @@ export default function TaskForm({
         recurrence_end_date: task.recurrence_end_date,
         is_recurring_template: task.is_recurring_template || false,
       });
+
+      // Reset flags
+      hasCreatedRecurringInstanceRef.current = false;
+      setCompletionChanged(false);
     }
   }, [task]);
+
+  // ✅ Handle completion checkbox change (no automatic saving)
+  const handleCompletionChange = (newCompletedState: boolean) => {
+    setIsCompleted(newCompletedState);
+    setCompletionChanged(true);
+
+    // Set completed_at timestamp if marking as completed
+    if (newCompletedState && !task?.is_completed) {
+      setCompletedAt(new Date().toISOString());
+    } else if (!newCompletedState && task?.is_completed) {
+      setCompletedAt(null);
+    }
+  };
+
+  // ✅ Handle saving task completion
+  const handleSaveCompletion = async () => {
+    if (!task) return;
+
+    // Prevent multiple simultaneous executions
+    if (isProcessingCompletionRef.current) {
+      console.log("🔄 Already processing completion, skipping...");
+      return;
+    }
+
+    isProcessingCompletionRef.current = true;
+
+    const taskData = {
+      id: task.id,
+      is_completed: isCompleted,
+      completion_comment: completionComment || undefined,
+      completed_at: completedAt || undefined,
+    };
+
+    console.log("🚀 Saving task completion:", taskData);
+
+    saveTask.mutate(taskData, {
+      onSuccess: async (savedTask) => {
+        console.log("✅ Task completion saved successfully:", savedTask);
+        setCompletionChanged(false);
+
+        // Handle recurring task creation if marking as completed
+        if (
+          isCompleted &&
+          !task.is_completed &&
+          !hasCreatedRecurringInstanceRef.current &&
+          recurrenceConfig.recurrence_type !== "none" &&
+          recurrenceConfig.recurrence_type
+        ) {
+          console.log(
+            "🔄 Task completed with recurrence, creating next instance...",
+          );
+          hasCreatedRecurringInstanceRef.current = true;
+
+          try {
+            const completedTaskData = {
+              ...task,
+              is_completed: true,
+              completed_at: completedAt,
+              completion_comment: completionComment,
+              // Use current recurrence config
+              recurrence_type: recurrenceConfig.recurrence_type,
+              recurrence_interval: recurrenceConfig.recurrence_interval,
+              recurrence_day_of_week: recurrenceConfig.recurrence_day_of_week,
+              recurrence_day_of_month: recurrenceConfig.recurrence_day_of_month,
+              recurrence_end_date: recurrenceConfig.recurrence_end_date,
+              is_recurring_template: recurrenceConfig.is_recurring_template,
+            };
+
+            const nextInstance =
+              await createRecurringInstance(completedTaskData);
+            if (nextInstance) {
+              console.log(
+                "✅ Successfully created recurring instance:",
+                nextInstance.name,
+              );
+            }
+          } catch (error) {
+            console.error("❌ Failed to create recurring instance:", error);
+            hasCreatedRecurringInstanceRef.current = false;
+          }
+        }
+
+        // Close modal if task was marked as completed
+        if (isCompleted) {
+          onCancel();
+        }
+      },
+      onError: (error) => {
+        console.error("❌ Failed to save task completion:", error);
+        alert(`Failed to save completion: ${error.message}`);
+      },
+      onSettled: () => {
+        isProcessingCompletionRef.current = false;
+      },
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ✅ Determine parent context - use props for new tasks, existing data for edits
+    // Determine parent context - use props for new tasks, existing data for edits
     const effectiveParentId = task?.parent_id ?? parentId;
     const effectiveRootCategory = task?.root_category ?? rootCategory;
     const effectiveTabName = task?.tab_name ?? tabName;
 
-    // ✅ Validation for new tasks
+    // Validation for new tasks
     if (
       isCreating &&
       (!effectiveParentId || !effectiveRootCategory || !effectiveTabName)
@@ -116,7 +238,17 @@ export default function TaskForm({
       root_category: effectiveRootCategory,
       tab_name: effectiveTabName,
       type: "task" as const,
-      // ✅ Include recurrence configuration
+
+      // ✅ Only include completion fields if we're updating an existing task
+      // and completion hasn't been separately saved
+      ...(isEditing &&
+        !completionChanged && {
+          is_completed: isCompleted,
+          completion_comment: completionComment || undefined,
+          completed_at: completedAt || undefined,
+        }),
+
+      // Include recurrence configuration
       ...recurrenceConfig,
     };
 
@@ -160,7 +292,7 @@ export default function TaskForm({
     return new Date(date).toISOString().split("T")[0];
   };
 
-  // ✅ Display parent context for user clarity
+  // Display parent context for user clarity
   const displayParentPath = () => {
     if (isEditing && task?.root_category) {
       return task.root_category;
@@ -197,6 +329,74 @@ export default function TaskForm({
           </button>
         </div>
 
+        {/* ✅ Completion Section - Only show for existing tasks */}
+        {isEditing && (
+          <div
+            className={`mb-6 rounded-lg border p-4 ${
+              isCompleted
+                ? "border-green-300 bg-green-50"
+                : "border-gray-200 bg-gray-50"
+            }`}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <label className="flex cursor-pointer items-center font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={isCompleted}
+                  onChange={(e) => handleCompletionChange(e.target.checked)}
+                  className="mr-2 h-5 w-5 cursor-pointer rounded text-green-600 focus:ring-green-500"
+                />
+                <span className={isCompleted ? "text-green-700" : ""}>
+                  {isCompleted ? "Task Completed" : "Mark as Completed"}
+                </span>
+              </label>
+              {completedAt && (
+                <span className="text-sm text-gray-500">
+                  {new Date(completedAt).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+
+            {isCompleted && (
+              <div className="mt-3">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Completion Notes (optional):
+                </label>
+                <textarea
+                  className="w-full rounded border p-2 text-sm text-black focus:border-green-500 focus:ring-2 focus:ring-green-500"
+                  rows={3}
+                  placeholder="Add any notes about completing this task..."
+                  value={completionComment}
+                  onChange={(e) => setCompletionComment(e.target.value)}
+                />
+                {completedAt && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Completed on {new Date(completedAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ✅ Dynamic "Save Completed Task" button */}
+        {isEditing && completionChanged && isCompleted && (
+          <div className="mb-4 rounded-lg border-2 border-green-500 bg-green-50 p-4">
+            <button
+              type="button"
+              onClick={handleSaveCompletion}
+              disabled={saveTask.isPending}
+              className="w-full rounded bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {saveTask.isPending ? "Saving..." : "Save Completed Task"}
+            </button>
+            <p className="mt-2 text-xs text-green-700">
+              Click to save task completion and create next recurring instance
+              (if applicable)
+            </p>
+          </div>
+        )}
+
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
             Task Name *
@@ -207,6 +407,7 @@ export default function TaskForm({
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter task name"
             required
+            disabled={isCompleted && !completionChanged} // Only disable if completed and saved
           />
         </div>
 
@@ -220,6 +421,7 @@ export default function TaskForm({
             value={details}
             onChange={(e) => setDetails(e.target.value)}
             placeholder="Optional task description"
+            disabled={isCompleted && !completionChanged} // Only disable if completed and saved
           />
         </div>
 
@@ -231,6 +433,7 @@ export default function TaskForm({
             className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             value={importance}
             onChange={(e) => setImportance(Number(e.target.value))}
+            disabled={isCompleted && !completionChanged} // Only disable if completed and saved
           >
             {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
               <option key={num} value={num}>
@@ -250,6 +453,7 @@ export default function TaskForm({
             value={formatDateForInput(deadline)}
             onChange={(e) => setDeadline(e.target.value)}
             min={new Date().toISOString().split("T")[0]}
+            disabled={isCompleted && !completionChanged} // Only disable if completed and saved
           />
         </div>
 
@@ -265,6 +469,7 @@ export default function TaskForm({
             value={completionTime}
             onChange={(e) => setCompletionTime(Number(e.target.value))}
             placeholder="e.g. 2.5"
+            disabled={isCompleted && !completionChanged} // Only disable if completed and saved
           />
         </div>
 
@@ -280,13 +485,14 @@ export default function TaskForm({
             value={uniqueDaysRequired}
             onChange={(e) => setUniqueDaysRequired(Number(e.target.value))}
             placeholder="e.g. 3"
+            disabled={isCompleted && !completionChanged} // Only disable if completed and saved
           />
           <p className="mt-1 text-xs text-gray-500">
             Number of separate days needed to complete this task
           </p>
         </div>
 
-        {/* ✅ Recurrence Configuration */}
+        {/* Recurrence Configuration */}
         <RecurrenceConfig
           initialConfig={{
             type: recurrenceConfig.recurrence_type,
@@ -296,21 +502,25 @@ export default function TaskForm({
             endDate: recurrenceConfig.recurrence_end_date,
           }}
           onChange={setRecurrenceConfig}
+          disabled={isCompleted && !completionChanged} // Only disable if completed and saved
           className="border-t pt-4"
         />
 
         <div className="flex justify-between border-t pt-4">
-          {isEditing && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleteTask.isPending}
-              className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              {deleteTask.isPending ? "Deleting..." : "Delete Task"}
-            </button>
-          )}
-          <div className={`${isEditing ? "ml-auto" : ""} space-x-2`}>
+          {isEditing &&
+            !(isCompleted && !completionChanged) && ( // Hide delete for completed tasks
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteTask.isPending}
+                className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteTask.isPending ? "Deleting..." : "Delete Task"}
+              </button>
+            )}
+          <div
+            className={`${isEditing && !(isCompleted && !completionChanged) ? "ml-auto" : ""} space-x-2`}
+          >
             <button
               type="button"
               onClick={onCancel}
@@ -318,19 +528,21 @@ export default function TaskForm({
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={saveTask.isPending || !name.trim()}
-              className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {saveTask.isPending
-                ? isCreating
-                  ? "Creating..."
-                  : "Saving..."
-                : isCreating
-                  ? "Create Task"
-                  : "Save Changes"}
-            </button>
+            {!(isCompleted && !completionChanged) && ( // Hide save for completed tasks that haven't changed
+              <button
+                type="submit"
+                disabled={saveTask.isPending || !name.trim()}
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saveTask.isPending
+                  ? isCreating
+                    ? "Creating..."
+                    : "Saving..."
+                  : isCreating
+                    ? "Create Task"
+                    : "Save Changes"}
+              </button>
+            )}
           </div>
         </div>
       </form>

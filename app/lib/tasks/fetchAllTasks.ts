@@ -1,3 +1,4 @@
+// app/lib/tasks/fetchAllTasks.ts
 import { supabase } from "../data/supabaseClient";
 import type { OrgNodeRow } from "../../types/orgChart";
 import { enrichTasksWithDeadlineInfo } from "../timeReportUtils";
@@ -20,7 +21,7 @@ export async function fetchAllTasks(): Promise<CompleteTaskData[]> {
     .select("*")
     .eq("type", "task")
     .not("deadline", "is", null)
-    .not("is_completed", "is", true);
+    .not("is_completed", "is", true); // ✅ Already filtering out completed tasks
 
   if (fetchError) throw fetchError;
 
@@ -32,7 +33,7 @@ export async function fetchAllTasks(): Promise<CompleteTaskData[]> {
     urgencyLevel: calculateUrgencyLevel(
       task.deadline,
       task.completion_time,
-      task.unique_days_required
+      task.unique_days_required,
     ),
   })) as CompleteTaskData[];
 

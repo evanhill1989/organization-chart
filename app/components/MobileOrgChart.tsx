@@ -1,4 +1,4 @@
-// app/components/MobileOrgChart.tsx (Refactored)
+// app/components/MobileOrgChart.tsx (Fixed)
 import type { OrgNode } from "../types/orgChart";
 import OrgChartNode from "./OrgChartNode";
 
@@ -27,19 +27,49 @@ export default function MobileOrgChart({
   };
 
   const goBack = () => {
-    const parentPath = activePath.split("/").slice(0, -1).join("/") || `/${tabName}`;
+    const parentPath =
+      activePath.split("/").slice(0, -1).join("/") || `/${tabName}`;
     console.log(`Mobile: navigating back to ${parentPath}`);
     setActivePath(parentPath);
   };
 
-  // ✅ Helper for breadcrumb display
+  // ✅ Helper for breadcrumb display with safety checks
   const getBreadcrumb = () => {
-    return activePath.replace(`/${tabName}`, tabName).replace(/\//g, " → ");
+    // Safety check for undefined activePath
+    if (!activePath || typeof activePath !== "string") {
+      console.warn(
+        "MobileOrgChart: activePath is undefined or not a string:",
+        activePath,
+      );
+      return tabName; // Fallback to just the tab name
+    }
+
+    try {
+      return activePath.replace(`/${tabName}`, tabName).replace(/\//g, " → ");
+    } catch (error) {
+      console.error("Error generating breadcrumb:", error);
+      return tabName; // Fallback to just the tab name
+    }
   };
 
+  // ✅ Additional safety checks
+  if (!activePath) {
+    console.error(
+      "MobileOrgChart: activePath is required but was:",
+      activePath,
+    );
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col p-4">
+        <div className="py-8 text-center text-red-600">
+          Navigation error: Invalid path
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full max-w-md mx-auto p-4 flex flex-col">
-      <h2 className="text-2xl font-bold text-center mb-4 text-gray-900 dark:text-gray-100">
+    <div className="mx-auto flex w-full max-w-md flex-col p-4">
+      <h2 className="mb-4 text-center text-2xl font-bold text-gray-900 dark:text-gray-100">
         {tabName}
       </h2>
 
@@ -52,7 +82,7 @@ export default function MobileOrgChart({
       {activePath !== `/${tabName}` && (
         <button
           onClick={goBack}
-          className="mb-4 text-blue-600 dark:text-blue-400 font-semibold text-left hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+          className="mb-4 text-left font-semibold text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
         >
           ← Back
         </button>
@@ -85,7 +115,7 @@ export default function MobileOrgChart({
               {!child.is_completed && child.children?.length ? (
                 <button
                   onClick={() => goForward(child)}
-                  className="flex-shrink-0 px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 border border-blue-600 dark:border-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                  className="flex-shrink-0 rounded border border-blue-600 px-3 py-1 text-sm text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-800 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
                 >
                   Enter →
                 </button>
@@ -96,7 +126,7 @@ export default function MobileOrgChart({
 
         {/* Empty state */}
         {!currentNode.children?.length && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="py-8 text-center text-gray-500 dark:text-gray-400">
             No items in this category
           </div>
         )}
