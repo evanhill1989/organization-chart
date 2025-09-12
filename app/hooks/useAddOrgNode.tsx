@@ -48,7 +48,7 @@ export function useAddOrgNode(root_category: string) {
         details: newNode.details,
         // Removed urgency as it's now calculated
         importance:
-          newNode.type === "task" ? newNode.importance ?? 1 : undefined,
+          newNode.type === "task" ? (newNode.importance ?? 1) : undefined,
         // New deadline-related fields
         deadline: newNode.type === "task" ? newNode.deadline : undefined,
         completion_time:
@@ -62,7 +62,7 @@ export function useAddOrgNode(root_category: string) {
       function addChildToTree(
         tree: OrgNode,
         parentId: number,
-        child: OrgNode
+        child: OrgNode,
       ): OrgNode {
         if (tree.id === parentId) {
           return {
@@ -75,7 +75,7 @@ export function useAddOrgNode(root_category: string) {
           return {
             ...tree,
             children: tree.children.map((c) =>
-              addChildToTree(c, parentId, child)
+              addChildToTree(c, parentId, child),
             ),
           };
         }
@@ -89,7 +89,7 @@ export function useAddOrgNode(root_category: string) {
         newTree = addChildToTree(
           previousTree,
           newNode.parent_id,
-          optimisticNode
+          optimisticNode,
         );
       } else {
         newTree = {
@@ -116,7 +116,7 @@ export function useAddOrgNode(root_category: string) {
       if (context?.previousTree) {
         queryClient.setQueryData(
           ["orgTree", root_category],
-          context.previousTree
+          context.previousTree,
         );
       }
     },
@@ -124,6 +124,8 @@ export function useAddOrgNode(root_category: string) {
     onSettled: () => {
       // Always refetch after error or success to ensure we have the server state
       queryClient.invalidateQueries({ queryKey: ["orgTree", root_category] });
+      // ✅ NEW: Invalidate urgent task counts when tasks are added
+      queryClient.invalidateQueries({ queryKey: ["urgentTaskCount"] });
     },
   });
 

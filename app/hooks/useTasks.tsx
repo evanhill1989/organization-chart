@@ -1,4 +1,4 @@
-// src/hooks/useTasks.tsx
+// app/hooks/useTasks.tsx - Add invalidation to existing mutations
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/data/supabaseClient";
 import type { OrgNodeRow } from "../types/orgChart";
@@ -9,7 +9,7 @@ export const useTask = (taskId?: number) => {
     queryFn: async () => {
       if (!taskId) return null;
       const { data, error } = await supabase
-        .from("org_nodes") // ✅ Changed from "tasks" to "org_nodes"
+        .from("org_nodes")
         .select("*")
         .eq("id", taskId)
         .single();
@@ -28,7 +28,7 @@ export const useSaveTask = () => {
       if (task.id) {
         // Update existing task
         const { data, error } = await supabase
-          .from("org_nodes") // ✅ Changed from "tasks" to "org_nodes"
+          .from("org_nodes")
           .update(task)
           .eq("id", task.id)
           .select()
@@ -36,12 +36,12 @@ export const useSaveTask = () => {
         if (error) throw error;
         return data as OrgNodeRow;
       } else {
-        // Create new task - need parent_id, tab_name, root_category
+        // Create new task
         const { data, error } = await supabase
-          .from("org_nodes") // ✅ Changed from "tasks" to "org_nodes"
+          .from("org_nodes")
           .insert({
             ...task,
-            type: "task", // ✅ Ensure type is set
+            type: "task",
           })
           .select()
           .single();
@@ -53,9 +53,11 @@ export const useSaveTask = () => {
       // Update individual task cache
       queryClient.setQueryData(["task", data.id], data);
 
-      // ✅ Invalidate relevant org tree caches
+      // Invalidate relevant caches
       queryClient.invalidateQueries({ queryKey: ["orgTree"] });
       queryClient.invalidateQueries({ queryKey: ["allTasks"] });
+      // ✅ NEW: Invalidate urgent task counts
+      queryClient.invalidateQueries({ queryKey: ["urgentTaskCount"] });
     },
     onError: (error) => {
       console.error("❌ Save task error:", error);
@@ -69,7 +71,7 @@ export const useDeleteTask = () => {
   return useMutation({
     mutationFn: async (taskId: number) => {
       const { error } = await supabase
-        .from("org_nodes") // ✅ Changed from "tasks" to "org_nodes"
+        .from("org_nodes")
         .delete()
         .eq("id", taskId);
       if (error) throw error;
@@ -79,9 +81,11 @@ export const useDeleteTask = () => {
       // Remove from individual task cache
       queryClient.removeQueries({ queryKey: ["task", taskId] });
 
-      // ✅ Invalidate relevant org tree caches
+      // Invalidate relevant caches
       queryClient.invalidateQueries({ queryKey: ["orgTree"] });
       queryClient.invalidateQueries({ queryKey: ["allTasks"] });
+      // ✅ NEW: Invalidate urgent task counts
+      queryClient.invalidateQueries({ queryKey: ["urgentTaskCount"] });
     },
     onError: (error) => {
       console.error("❌ Delete task error:", error);

@@ -53,7 +53,7 @@ export function useEditOrgNode(root_category: string) {
           is_completed?: boolean;
           completed_at?: string | null;
           completion_comment?: string;
-        }
+        },
       ): OrgNode {
         // If this is the node to update
         if (tree.id === targetId) {
@@ -95,7 +95,7 @@ export function useEditOrgNode(root_category: string) {
         // If this node has children, check them
         if (tree.children && tree.children.length > 0) {
           const updatedChildren = tree.children.map((child) =>
-            updateNodeInTree(child, targetId, updates)
+            updateNodeInTree(child, targetId, updates),
           );
 
           return {
@@ -130,14 +130,14 @@ export function useEditOrgNode(root_category: string) {
         "❌ EDIT ONERROR: Edit failed for node:",
         editData.id,
         "Error:",
-        error
+        error,
       );
 
       // Rollback on error
       if (context?.previousTree) {
         queryClient.setQueryData(
           ["orgTree", root_category],
-          context.previousTree
+          context.previousTree,
         );
       }
     },
@@ -145,6 +145,7 @@ export function useEditOrgNode(root_category: string) {
     onSettled: () => {
       // Always refetch to ensure consistency with server
       queryClient.invalidateQueries({ queryKey: ["orgTree", root_category] });
+      queryClient.invalidateQueries({ queryKey: ["urgentTaskCount"] });
     },
   });
 

@@ -1,13 +1,14 @@
 // app/components/ui/TabNavigationList.tsx
 import { Link } from "react-router";
 import { TABS } from "../../lib/consts/TABS";
+import { useCriticalTaskCounts } from "../../hooks/useCriticalTaskCounts";
 
 interface TabNavigationListProps {
   activeTab: string;
   variant?: "desktop" | "mobile";
-  onTabClick?: () => void; // For mobile to close menu
-  className?: string; // Additional wrapper classes
-  itemClassName?: (tab: string, isActive: boolean) => string; // Function to generate item classes
+  onTabClick?: () => void;
+  className?: string;
+  itemClassName?: (tab: string, isActive: boolean) => string;
 }
 
 export default function TabNavigationList({
@@ -17,6 +18,8 @@ export default function TabNavigationList({
   className = "",
   itemClassName,
 }: TabNavigationListProps) {
+  const criticalTaskCounts = useCriticalTaskCounts();
+
   // Default styling based on variant
   const getDefaultItemClassName = (tab: string, isActive: boolean): string => {
     if (variant === "mobile") {
@@ -27,7 +30,7 @@ export default function TabNavigationList({
       }`;
     }
 
-    // Desktop variant
+    // Desktop variant - keep original styling
     return `border-b-2 px-6 py-3 text-lg font-medium transition-colors duration-200 ${
       isActive
         ? "border-white bg-gray-800 text-white dark:bg-gray-700"
@@ -35,10 +38,35 @@ export default function TabNavigationList({
     }`;
   };
 
+  const CriticalUrgencyBadge = ({
+    count,
+    variant: badgeVariant,
+  }: {
+    count: number;
+    variant: "desktop" | "mobile";
+  }) => {
+    if (count === 0) return null;
+
+    const baseClasses =
+      "inline-flex items-center justify-center rounded-full font-bold text-xs";
+    const sizeClasses =
+      badgeVariant === "mobile"
+        ? "min-w-[20px] h-5 px-1.5"
+        : "min-w-[18px] h-4 px-1";
+    const colorClasses = "bg-red-600 text-white";
+
+    return (
+      <span className={`${baseClasses} ${sizeClasses} ${colorClasses} ml-2`}>
+        {count > 99 ? "99+" : count}
+      </span>
+    );
+  };
+
   return (
     <div className={className}>
       {TABS.map((tab) => {
         const isActive = activeTab === tab;
+        const criticalCount = criticalTaskCounts[tab] || 0;
         const finalClassName = itemClassName
           ? itemClassName(tab, isActive)
           : getDefaultItemClassName(tab, isActive);
@@ -50,7 +78,9 @@ export default function TabNavigationList({
             onClick={onTabClick}
             className={finalClassName}
           >
-            {tab}
+            {/* ✅ FIXED: Use inline layout instead of flex justify-between */}
+            <span>{tab}</span>
+            <CriticalUrgencyBadge count={criticalCount} variant={variant} />
           </Link>
         );
       })}
