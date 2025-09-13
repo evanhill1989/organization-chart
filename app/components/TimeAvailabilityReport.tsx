@@ -1,3 +1,4 @@
+// app/components/TimeAvailabilityReport.tsx
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/data/supabaseClient";
 import type { OrgNodeRow } from "../types/orgChart";
@@ -244,11 +245,11 @@ export default function TimeAvailabilityReport() {
     ];
 
     return (
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {cards.map((card, index) => (
           <div key={index} className="rounded bg-gray-100 p-4">
             <div className="text-sm text-gray-600">{card.label}</div>
-            <div className={`text-2xl font-bold ${card.color}`}>
+            <div className={`text-xl font-bold ${card.color} sm:text-2xl`}>
               {card.value}
             </div>
           </div>
@@ -258,7 +259,7 @@ export default function TimeAvailabilityReport() {
   };
 
   const TaskTable = () => (
-    <div className="">
+    <div className="overflow-x-auto">
       <table className="min-w-full border border-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -351,47 +352,58 @@ export default function TimeAvailabilityReport() {
     </div>
   );
 
+  // ✅ Fixed DetailModal with proper positioning
   const DetailModal = () => (
-    <div className="bg-opacity-50 inset-0 z-50 flex items-center justify-center bg-black">
-      <div className="mx-4 max-h-[80vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">
+    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-start justify-center bg-black p-4 pt-8">
+      <div className="mx-auto max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-lg bg-white shadow-lg">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+          <h2 className="text-xl font-bold text-gray-800 sm:text-2xl">
             Time Availability Report
           </h2>
           <button
             onClick={() => setShowDetailModal(false)}
             className="text-2xl font-bold text-gray-500 hover:text-gray-800"
+            aria-label="Close modal"
           >
-            &times;
+            ×
           </button>
         </div>
 
-        <SummaryCards />
+        <div className="space-y-6 p-6">
+          <SummaryCards />
 
-        <div>
-          <h3 className="mb-3 text-lg font-semibold text-gray-800">
-            Task Breakdown
-          </h3>
-          <TaskTable />
+          <div>
+            <h3 className="mb-3 text-lg font-semibold text-gray-800">
+              Task Breakdown
+            </h3>
+            <TaskTable />
+          </div>
         </div>
       </div>
     </div>
   );
 
   return (
-    <aside className="aside">
-      <div className="flex flex-col items-center text-sm text-white">
-        <DateFilter />
-        <ImportanceFilter />
-        <QuickStats />
-        <TaskListButton />
-        <RefreshButton />
-      </div>
+    <>
+      <aside className="aside">
+        <div className="flex flex-col items-center space-y-2 text-sm text-white">
+          <DateFilter />
+          <ImportanceFilter />
+          <QuickStats />
+          <div className="flex space-x-2">
+            <TaskListButton />
+            <RefreshButton />
+          </div>
+        </div>
+      </aside>
+
+      {/* ✅ Fixed modal positioning and conditional rendering */}
       {showDetailModal && <DetailModal />}
+
       <CompleteTaskListModal
         isOpen={showCompleteTaskList}
         onClose={() => setShowCompleteTaskList(false)}
       />
-    </aside>
+    </>
   );
 }

@@ -69,6 +69,7 @@ function OrgChartContent() {
         {isMobile ? (
           <MobileNav
             onOpenTasksDueToday={() => setShowTasksDueToday(true)}
+            onOpenTimeReport={() => setShowTimeReport(true)}
             onOpenQuickAdd={() => setShowQuickAddEdit(true)}
             onOpenHamburger={() => setShowHamburgerMenu(true)}
           />
@@ -96,7 +97,8 @@ function OrgChartContent() {
         {tree && <OrgChartRoot tabName={activeTab} />}
       </main>
 
-      <TimeAvailabilityReport />
+      {/* Desktop TimeAvailabilityReport aside */}
+      {!isMobile && <TimeAvailabilityReport />}
 
       {/* Mobile Modals (no change) */}
       {showTasksDueToday && (

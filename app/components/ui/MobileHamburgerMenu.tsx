@@ -49,7 +49,7 @@ export default function MobileHamburgerMenu({
               activeTab={activeTab}
               variant="mobile"
               onTabClick={onClose}
-              className="space-y-1"
+              className="flex flex-col space-y-1"
             />
           </div>
         </div>
