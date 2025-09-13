@@ -5,7 +5,7 @@ import TasksDueTodayButton from "./tasks/TasksDueTodayButton";
 export default function MobileNav({
   onOpenTasksDueToday,
   onOpenQuickAdd,
-  onOpenTimeReport,
+
   onOpenHamburger,
 }) {
   return (
@@ -37,7 +37,6 @@ export default function MobileNav({
           <DarkModeToggle />
 
           <TasksDueTodayButton onClick={onOpenTasksDueToday} />
-          <button onClick={onOpenTimeReport}>⏱️</button>
 
           <QuickAddButton onClick={onOpenQuickAdd} />
         </div>

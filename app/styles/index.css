@@ -15,6 +15,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -69,4 +73,30 @@ button:focus-visible {
     background-color: #f9f9f9;
     color: #213547;
   }
+}
+
+.app-layout {
+  display: grid;
+  height: 100vh;
+  width: 100%;
+  /* Defining two columns: main content takes available space, aside has a fixed width of 300px */
+  grid-template-columns: 1fr auto;
+  /* Defining two rows: nav is auto-height, main/aside fill the rest */
+  grid-template-rows: auto 1fr;
+  /* Assigning the grid areas */
+  grid-template-areas:
+    "nav nav"
+    "main aside";
+}
+
+.nav {
+  grid-area: nav;
+}
+
+.main {
+  grid-area: main;
+}
+
+.aside {
+  grid-area: aside;
 }

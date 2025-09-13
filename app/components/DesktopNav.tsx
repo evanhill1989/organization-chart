@@ -3,7 +3,7 @@ import TasksDueTodayButton from "./tasks/TasksDueTodayButton";
 import QuickAddButton from "./tasks/QuickAddButton";
 import { Link } from "react-router";
 import DarkModeToggle from "./ui/DarkModeToggle";
-import TimeAvailabilityReport from "./TimeAvailabilityReport";
+
 import TabNavigationList from "./ui/TabNavigationList";
 
 export default function DesktopNav({
@@ -32,7 +32,6 @@ export default function DesktopNav({
           showLabel
           className="bg-gray-800 hover:bg-gray-700"
         />
-        <TimeAvailabilityReport />
       </div>
     </div>
   );

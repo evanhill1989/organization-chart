@@ -112,10 +112,10 @@ export default function TimeAvailabilityReport() {
 
   // Component renders
   const DateFilter = () => (
-    <div className="flex flex-col space-y-1">
+    <div className="flex flex-col">
       <label className="text-xs text-gray-300">Time Window:</label>
       <select
-        className="rounded border border-gray-600 bg-gray-700 px-2 py-1 text-xs text-white"
+        className="rounded border-gray-600 bg-gray-700 px-2 py-1 text-xs text-white"
         value={dateFilter}
         onChange={(e) => setDateFilter(e.target.value)}
       >
@@ -135,7 +135,7 @@ export default function TimeAvailabilityReport() {
   );
 
   const ImportanceFilter = () => (
-    <div className="flex flex-col space-y-1">
+    <div className="flex flex-col">
       <label className="text-xs text-gray-300">Importance:</label>
       <select
         className="rounded border border-gray-600 bg-gray-700 px-2 py-1 text-xs text-white"
@@ -157,10 +157,10 @@ export default function TimeAvailabilityReport() {
   const QuickStats = () => (
     <button
       onClick={() => setShowDetailModal(true)}
-      className="flex flex-col space-y-1 rounded border-l border-gray-600 p-2 pl-4 transition-colors hover:bg-gray-800"
+      className="flex flex-col rounded border-l border-gray-600 p-2 pl-4 transition-colors hover:bg-gray-800"
     >
       <div className="text-xs text-gray-300">Time Analysis:</div>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center">
         <div className={`font-bold ${getRatioColor(reportData.ratio)}`}>
           {(reportData.ratio * 100).toFixed(1)}%
         </div>
@@ -244,7 +244,7 @@ export default function TimeAvailabilityReport() {
     ];
 
     return (
-      <div className="mb-6 grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         {cards.map((card, index) => (
           <div key={index} className="rounded bg-gray-100 p-4">
             <div className="text-sm text-gray-600">{card.label}</div>
@@ -258,7 +258,7 @@ export default function TimeAvailabilityReport() {
   };
 
   const TaskTable = () => (
-    <div className="overflow-x-auto">
+    <div className="">
       <table className="min-w-full border border-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -352,8 +352,8 @@ export default function TimeAvailabilityReport() {
   );
 
   const DetailModal = () => (
-    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-start justify-center bg-black pt-20">
-      <div className="mx-4 max-h-[calc(80vh-5rem)] w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
+    <div className="bg-opacity-50 inset-0 z-50 flex items-center justify-center bg-black">
+      <div className="mx-4 max-h-[80vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-800">
             Time Availability Report
@@ -379,8 +379,8 @@ export default function TimeAvailabilityReport() {
   );
 
   return (
-    <>
-      <div className="flex flex-col items-center gap-2 space-x-4 text-sm text-white md:flex-row">
+    <aside className="aside">
+      <div className="flex flex-col items-center text-sm text-white">
         <DateFilter />
         <ImportanceFilter />
         <QuickStats />
@@ -392,6 +392,6 @@ export default function TimeAvailabilityReport() {
         isOpen={showCompleteTaskList}
         onClose={() => setShowCompleteTaskList(false)}
       />
-    </>
+    </aside>
   );
 }

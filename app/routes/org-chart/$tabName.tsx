@@ -20,6 +20,7 @@ import MobileTimeReportModal from "../../components/ui/MobileTimeReportModal";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import MobileNav from "../../components/MobileNav";
 import DesktopNav from "../../components/DesktopNav";
+import TimeAvailabilityReport from "../../components/TimeAvailabilityReport";
 
 const queryClient = new QueryClient();
 
@@ -62,19 +63,16 @@ function OrgChartContent() {
   }
 
   return (
-    <div className="flex min-h-screen w-screen flex-col bg-white transition-colors dark:bg-gray-900">
+    <div className="app-layout">
       {/* Navigation */}
-      <nav className="sticky top-0 z-40 bg-gray-900 dark:bg-gray-800">
+      <nav className="nav sticky top-0 z-40 bg-gray-900 dark:bg-gray-800">
         {isMobile ? (
-          // Mobile Navigation
           <MobileNav
             onOpenTasksDueToday={() => setShowTasksDueToday(true)}
             onOpenQuickAdd={() => setShowQuickAddEdit(true)}
-            onOpenTimeReport={() => setShowTimeReport(true)}
             onOpenHamburger={() => setShowHamburgerMenu(true)}
           />
         ) : (
-          // Desktop Navigation (unchanged)
           <DesktopNav
             onOpenTasksDueToday={() => setShowTasksDueToday(true)}
             onOpenQuickAdd={() => setShowQuickAddEdit(true)}
@@ -84,7 +82,7 @@ function OrgChartContent() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex flex-1 p-4">
+      <main className="main flex flex-1 p-4">
         {isLoading && (
           <div className="text-gray-900 dark:text-gray-100">
             Loading {activeTab} tree...
@@ -95,31 +93,30 @@ function OrgChartContent() {
             Error loading {activeTab} tree
           </div>
         )}
-        {tree && <OrgChartRoot  tabName={activeTab} />}
+        {tree && <OrgChartRoot tabName={activeTab} />}
       </main>
 
-      {/* Mobile Modals */}
+      <TimeAvailabilityReport />
+
+      {/* Mobile Modals (no change) */}
       {showTasksDueToday && (
         <TasksDueToday
           isOpen={showTasksDueToday}
           onClose={() => setShowTasksDueToday(false)}
         />
       )}
-
       {showQuickAddEdit && (
         <QuickAddEditModal
           isOpen={showQuickAddEdit}
           onClose={() => setShowQuickAddEdit(false)}
         />
       )}
-
       {showTimeReport && (
         <MobileTimeReportModal
           isOpen={showTimeReport}
           onClose={() => setShowTimeReport(false)}
         />
       )}
-
       {showHamburgerMenu && (
         <MobileHamburgerMenu
           isOpen={showHamburgerMenu}

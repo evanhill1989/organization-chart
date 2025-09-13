@@ -14,8 +14,8 @@ interface UseDebouncedSaveOptions {
  */
 export function useDebouncedSave(
   saveFn: () => void | Promise<void>,
-  deps: any[],
-  { delay = 1000, enabled = true }: UseDebouncedSaveOptions = {}
+  deps: unknown[],
+  { delay = 1000, enabled = true }: UseDebouncedSaveOptions = {},
 ) {
   const fnRef = useRef(saveFn);
   fnRef.current = saveFn; // always latest reference
