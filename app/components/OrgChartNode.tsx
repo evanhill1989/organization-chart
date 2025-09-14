@@ -15,6 +15,8 @@ import {
   getImportanceBorderClasses,
   getImportanceGlowClasses,
 } from "../lib/importanceUtils";
+import CategoryForm from "./ui/CategoryForm";
+import { useDeleteCategory } from "../hooks/useCategories";
 
 type OrgChartNodeProps = {
   node: OrgNode;
@@ -40,12 +42,17 @@ export default function OrgChartNode({
   const isTask = node.type === "task";
   const isOpen = openMap[path] || false;
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Calculate the effective urgency and importance
   const effectiveUrgency = getEffectiveUrgency(node);
   const effectiveImportance = getEffectiveImportance(node);
 
   const handleTaskFormClose = () => setShowTaskForm(false);
+  const handleCategoryFormClose = () => setShowCategoryForm(false);
+
+  const deleteCategory = useDeleteCategory();
 
   // ✅ Handle root node differently (desktop only)
   if (isRoot) {
@@ -82,6 +89,16 @@ export default function OrgChartNode({
         {/* Root level task form */}
         {showTaskForm && (
           <TaskForm
+            parentId={node.id}
+            parentName={node.name}
+            rootCategory={node.root_category}
+            tabName={node.root_category}
+            onCancel={handleTaskFormClose}
+          />
+        )}
+
+        {showCategoryForm && (
+          <CategoryForm
             parentId={node.id}
             parentName={node.name}
             rootCategory={node.root_category}
@@ -153,72 +170,61 @@ export default function OrgChartNode({
         )}
       </div>
 
-      {/* Children and add button */}
+      {/* Updated section for category children */}
       {!isTask && isOpen && !disableExpand && (
-        <div className="mt-4 grid grid-cols-2 grid-rows-1">
-          <div className="grid w-full auto-cols-min grid-flow-col gap-x-4">
-            {node.children?.map((child) => (
-              <OrgChartNode
-                key={child.name}
-                node={child}
-                level={level + 1}
-                onTaskClick={onTaskClick}
-                openMap={openMap}
-                toggleOpen={toggleOpen}
-                path={`${path}/${child.name}`}
-                disableExpand={disableExpand}
-                isRoot={false}
-              />
-            ))}
-            {/* Add Category + Add Task buttons */}
-            <div className="mb-4 flex justify-end gap-4 align-bottom">
+        <div className="mt-4 grid w-full auto-cols-min grid-flow-col gap-4">
+          {node.children?.map((child) => (
+            <OrgChartNode
+              key={child.name}
+              node={child}
+              level={level + 1}
+              onTaskClick={onTaskClick}
+              openMap={openMap}
+              toggleOpen={toggleOpen}
+              path={`${path}/${child.name}`}
+              disableExpand={disableExpand}
+              isRoot={false}
+            />
+          ))}
+
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            {/* Add Task button */}
+            <button
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xl font-bold text-white hover:bg-blue-700"
+              onClick={() => setShowTaskForm(true)}
+              title="Add Task"
+              type="button"
+            >
+              +
+            </button>
+
+            {/* Add Category button */}
+            <button
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-xl font-bold text-white hover:bg-green-700"
+              onClick={() => setShowCategoryForm(true)}
+              title="Add Category"
+              type="button"
+            >
+              📁
+            </button>
+
+            {/* Delete Category button - only show if no children */}
+            {(!node.children || node.children.length === 0) && (
               <button
-                className="flex items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800"
-                onClick={() => setShowTaskForm(true)}
-                title="Add new task or category"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-xl font-bold text-white hover:bg-red-700"
+                onClick={() => {
+                  setShowDeleteConfirm(true);
+                }}
+                title="Delete Category"
                 type="button"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                <span>Task</span>
+                🗑️
               </button>
-              <button
-                className="flex items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800"
-                onClick={() => setShowTaskForm(true)}
-                title="Add new task or category"
-                type="button"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                <span>Category</span>
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
-
       {/* Task form modal */}
       {showTaskForm && (
         <TaskForm
@@ -227,6 +233,44 @@ export default function OrgChartNode({
           rootCategory={node.root_category}
           tabName={node.root_category}
           onCancel={handleTaskFormClose}
+        />
+      )}
+
+      {showDeleteConfirm && (
+        <div className="bg-opacity-50 fixed inset-0 z-[70] flex items-center justify-center bg-black">
+          <div className="mx-4 max-w-sm rounded-lg bg-white p-6 text-black">
+            <h3 className="mb-4 text-lg font-bold">Delete Category</h3>
+            <p className="mb-4">
+              Are you sure you want to delete "{node.name}"?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // Handle delete logic here
+                  setShowDeleteConfirm(false);
+                }}
+                className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCategoryForm && (
+        <CategoryForm
+          parentId={node.id}
+          parentName={node.name}
+          rootCategory={node.root_category}
+          tabName={node.root_category}
+          onCancel={handleCategoryFormClose}
         />
       )}
     </div>
