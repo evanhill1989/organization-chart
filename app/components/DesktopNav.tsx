@@ -9,7 +9,9 @@ import TabNavigationList from "./ui/TabNavigationList";
 export default function DesktopNav({
   onOpenTasksDueToday,
   onOpenQuickAdd,
+  onOpenHamburger,
   activeTab,
+ 
 }) {
   return (
     <div className="flex items-center justify-between px-4">
@@ -20,8 +22,32 @@ export default function DesktopNav({
         >
           ← Home
         </Link>
-
-        <TabNavigationList activeTab={activeTab} variant="desktop" />
+        
+                                      <div >
+               <button
+          onClick={onOpenHamburger}
+          className="rounded p-2 text-gray-300 transition-colors hover:text-white"
+          aria-label="Open navigation menu"
+        >
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+        </div>
+        
+        <div className="hidden min-[1000px]:block">
+          <TabNavigationList activeTab={activeTab} variant="desktop" />
+    </div>
       </div>
 
       <div className="flex items-center space-x-4">

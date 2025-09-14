@@ -77,6 +77,7 @@ function OrgChartContent() {
           <DesktopNav
             onOpenTasksDueToday={() => setShowTasksDueToday(true)}
             onOpenQuickAdd={() => setShowQuickAddEdit(true)}
+            onOpenHamburger={() => setShowHamburgerMenu(true)}
             activeTab={activeTab}
           />
         )}
