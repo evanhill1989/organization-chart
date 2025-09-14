@@ -109,7 +109,7 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
     <>
       <div
         ref={containerRef}
-        className="relative flex h-full w-full items-start justify-center p-4"
+        className="relative flex h-full w-full items-start p-4"
       >
         {isMobile ? (
           // ✅ Mobile view with additional safety checks

@@ -84,7 +84,7 @@ function OrgChartContent() {
       </nav>
 
       {/* Main Content */}
-      <main className="main flex flex-1 p-4">
+      <main className="main p-4">
         {isLoading && (
           <div className="text-gray-900 dark:text-gray-100">
             Loading {activeTab} tree...
@@ -99,7 +99,7 @@ function OrgChartContent() {
       </main>
 
       {/* Desktop TimeAvailabilityReport aside */}
-      {!isMobile && <TimeAvailabilityReport />}
+      {/* {!isMobile && <TimeAvailabilityReport />} */}
 
       {/* Mobile Modals (no change) */}
       {showTasksDueToday && (

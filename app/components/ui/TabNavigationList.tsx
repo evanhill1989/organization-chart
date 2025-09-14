@@ -7,20 +7,19 @@ interface TabNavigationListProps {
   activeTab: string;
   variant?: "desktop" | "mobile";
   onTabClick?: () => void;
-  className?: string;
+
   itemClassName?: (tab: string, isActive: boolean) => string;
 }
 
 export default function TabNavigationList({
   onTabClick,
-  className = "",
 }: TabNavigationListProps) {
   const urgentTaskCounts = useCriticalTaskCounts();
 
   // Keep original styling logic
 
   return (
-    <div className={className}>
+    <div className="flex gap-6">
       {TABS.map((tab) => {
         const criticalCount = urgentTaskCounts[tab] || 0;
 

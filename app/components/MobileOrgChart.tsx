@@ -1,6 +1,8 @@
-// app/components/MobileOrgChart.tsx (Fixed)
+// app/components/MobileOrgChart.tsx (Updated with Add Button)
+import { useState } from "react";
 import type { OrgNode } from "../types/orgChart";
 import OrgChartNode from "./OrgChartNode";
+import TaskForm from "./tasks/TaskForm";
 
 type MobileOrgChartProps = {
   root: OrgNode;
@@ -18,6 +20,9 @@ export default function MobileOrgChart({
   onTaskClick,
   tabName,
 }: MobileOrgChartProps) {
+  // ✅ Add state for task form
+  const [showTaskForm, setShowTaskForm] = useState(false);
+
   // ✅ Pure functions - no state management
   const goForward = (child: OrgNode) => {
     const newPath = `${activePath}/${child.name}`;
@@ -31,6 +36,9 @@ export default function MobileOrgChart({
     console.log(`Mobile: navigating back to ${parentPath}`);
     setActivePath(parentPath);
   };
+
+  // ✅ Handle task form close
+  const handleTaskFormClose = () => setShowTaskForm(false);
 
   // ✅ Helper for breadcrumb display with safety checks
   const getBreadcrumb = () => {
@@ -87,6 +95,33 @@ export default function MobileOrgChart({
         </button>
       )}
 
+      {/* ✅ Add button - positioned prominently at top of children list */}
+      {currentNode.type === "category" && (
+        <div className="mb-4 flex justify-center">
+          <button
+            className="flex items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800"
+            onClick={() => setShowTaskForm(true)}
+            title="Add new task or category"
+            type="button"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            <span>Add Task</span>
+          </button>
+        </div>
+      )}
+
       {/* Children list */}
       <div className="flex flex-col gap-4">
         {currentNode.children?.map((child) => {
@@ -127,9 +162,30 @@ export default function MobileOrgChart({
         {!currentNode.children?.length && (
           <div className="py-8 text-center text-gray-500 dark:text-gray-400">
             No items in this category
+            {currentNode.type === "category" && (
+              <div className="mt-4">
+                <button
+                  className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+                  onClick={() => setShowTaskForm(true)}
+                >
+                  Add First Task
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* ✅ Task form modal */}
+      {showTaskForm && (
+        <TaskForm
+          parentId={currentNode.id}
+          parentName={currentNode.name}
+          rootCategory={currentNode.root_category}
+          tabName={currentNode.root_category}
+          onCancel={handleTaskFormClose}
+        />
+      )}
     </div>
   );
 }

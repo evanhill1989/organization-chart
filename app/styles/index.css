@@ -100,3 +100,9 @@ button:focus-visible {
 .aside {
   grid-area: aside;
 }
+
+.node-with-children {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}

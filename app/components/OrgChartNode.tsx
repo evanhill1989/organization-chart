@@ -50,13 +50,13 @@ export default function OrgChartNode({
   // ✅ Handle root node differently (desktop only)
   if (isRoot) {
     return (
-      <div className="flex w-full flex-col items-center">
+      <div className="grid auto-cols-min grid-flow-col gap-8">
         <h2 className="mb-8 text-center text-3xl font-bold text-gray-900 dark:text-gray-100">
           {node.name}
         </h2>
 
         {node.children && node.children.length > 0 ? (
-          <div className="grid auto-cols-min grid-flow-col gap-8">
+          <div className="node-with-children">
             {node.children.map((child) => (
               <OrgChartNode
                 key={child.name}
@@ -95,27 +95,23 @@ export default function OrgChartNode({
 
   // ✅ Regular node rendering (existing logic)
   return (
-    <div
-      className={`flex flex-col items-center w-full ${
-        level === 0 ? "" : "mt-4"
-      }`}
-    >
+    <div className="flex w-full flex-col items-center">
       <div
         data-node-path={path}
         data-urgency={effectiveUrgency}
-        className={`bg-white rounded-lg shadow-amber-600 min-w-[120px] text-center outline outline-gray-400 relative ${
-          node.is_completed ? "opacity-60 bg-green-50" : ""
+        className={`relative min-w-[120px] rounded-lg bg-white text-center shadow-amber-600 outline outline-gray-400 ${
+          node.is_completed ? "bg-green-50 opacity-60" : ""
         } ${getImportanceBorderClasses(
-          effectiveImportance
+          effectiveImportance,
         )} ${getImportanceGlowClasses(effectiveImportance)}`}
       >
         {/* Urgency Ball */}
         {!node.is_completed && shouldShowUrgencyBall(effectiveUrgency) && (
           <div
-            className={`absolute rounded-full pointer-events-none z-10 ${getUrgencyBallColor(
-              effectiveUrgency
+            className={`pointer-events-none absolute z-10 rounded-full ${getUrgencyBallColor(
+              effectiveUrgency,
             )} ${getUrgencyBallSize(effectiveUrgency)} ${getUrgencyBallGlow(
-              effectiveUrgency
+              effectiveUrgency,
             )}`}
             data-urgency-ball={path}
             style={{
@@ -128,7 +124,7 @@ export default function OrgChartNode({
 
         {isTask ? (
           <button
-            className={`text-lg font-semibold underline hover:text-blue-200 focus:outline-none w-full h-full p-2 rounded-lg ${
+            className={`h-full w-full rounded-lg p-2 text-lg font-semibold underline hover:text-blue-200 focus:outline-none ${
               node.is_completed
                 ? "bg-green-600 text-white line-through"
                 : "bg-blue-600 text-white"
@@ -140,7 +136,7 @@ export default function OrgChartNode({
           </button>
         ) : (
           <button
-            className="text-lg text-white font-semibold w-full text-center focus:outline-none bg-gray-800 p-2 rounded-lg"
+            className="w-full rounded-lg bg-gray-800 p-2 text-center text-lg font-semibold text-white focus:outline-none"
             onClick={() => !disableExpand && toggleOpen(path)}
             type="button"
             disabled={disableExpand}
@@ -159,29 +155,67 @@ export default function OrgChartNode({
 
       {/* Children and add button */}
       {!isTask && isOpen && !disableExpand && (
-        <div className="grid gap-4 mt-4 w-full auto-cols-min grid-flow-col">
-          {node.children?.map((child) => (
-            <OrgChartNode
-              key={child.name}
-              node={child}
-              level={level + 1}
-              onTaskClick={onTaskClick}
-              openMap={openMap}
-              toggleOpen={toggleOpen}
-              path={`${path}/${child.name}`}
-              disableExpand={disableExpand}
-              isRoot={false}
-            />
-          ))}
-
-          <button
-            className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-blue-700"
-            onClick={() => setShowTaskForm(true)}
-            title="Add Task"
-            type="button"
-          >
-            +
-          </button>
+        <div className="mt-4 grid grid-cols-2 grid-rows-1">
+          <div className="grid w-full auto-cols-min grid-flow-col gap-x-4">
+            {node.children?.map((child) => (
+              <OrgChartNode
+                key={child.name}
+                node={child}
+                level={level + 1}
+                onTaskClick={onTaskClick}
+                openMap={openMap}
+                toggleOpen={toggleOpen}
+                path={`${path}/${child.name}`}
+                disableExpand={disableExpand}
+                isRoot={false}
+              />
+            ))}
+            {/* Add Category + Add Task buttons */}
+            <div className="mb-4 flex justify-end gap-4 align-bottom">
+              <button
+                className="flex items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800"
+                onClick={() => setShowTaskForm(true)}
+                title="Add new task or category"
+                type="button"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                <span>Task</span>
+              </button>
+              <button
+                className="flex items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800"
+                onClick={() => setShowTaskForm(true)}
+                title="Add new task or category"
+                type="button"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                <span>Category</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
