@@ -43,9 +43,18 @@ function OrgChartContent() {
   // Mobile menu states
 
   const [showQuickAddEdit, setShowQuickAddEdit] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | undefined>(
+    undefined
+  );
   const [showTimeReport, setShowTimeReport] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
   const isMobile = useIsMobile();
+
+  // Handler for clicking on a recent task
+  const handleRecentTaskClick = (task: { id: number }) => {
+    setSelectedTaskId(task.id);
+    setShowQuickAddEdit(true);
+  };
 
   const {
     data: tree,
@@ -79,6 +88,7 @@ function OrgChartContent() {
             onOpenQuickAdd={() => setShowQuickAddEdit(true)}
             onOpenHamburger={() => setShowHamburgerMenu(true)}
             activeTab={activeTab}
+            onRecentTaskClick={handleRecentTaskClick}
           />
         )}
       </nav>
@@ -111,7 +121,11 @@ function OrgChartContent() {
       {showQuickAddEdit && (
         <QuickAddEditModal
           isOpen={showQuickAddEdit}
-          onClose={() => setShowQuickAddEdit(false)}
+          onClose={() => {
+            setShowQuickAddEdit(false);
+            setSelectedTaskId(undefined);
+          }}
+          initialTaskId={selectedTaskId}
         />
       )}
       {showTimeReport && (

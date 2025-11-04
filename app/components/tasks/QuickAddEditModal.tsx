@@ -7,6 +7,7 @@ import { supabase } from "../../lib/data/supabaseClient";
 interface QuickAddEditModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTaskId?: number; // Optional task ID to open in edit mode
 }
 
 interface FlatNode {
@@ -22,6 +23,7 @@ type ActionMode = "add" | "edit";
 export default function QuickAddEditModal({
   isOpen,
   onClose,
+  initialTaskId,
 }: QuickAddEditModalProps) {
   // Main state
   const [actionMode, setActionMode] = useState<ActionMode>("add");
@@ -173,6 +175,14 @@ export default function QuickAddEditModal({
       fetchData();
     }
   }, [isOpen]);
+
+  // Handle initialTaskId when modal opens with a pre-selected task
+  useEffect(() => {
+    if (isOpen && initialTaskId) {
+      setActionMode("edit");
+      handleTaskSelection(initialTaskId);
+    }
+  }, [isOpen, initialTaskId]);
 
   // Don't render if closed
   if (!isOpen) {
