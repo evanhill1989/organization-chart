@@ -25,6 +25,13 @@ export async function editOrgNode({
   completed_at?: string | null;
   completion_comment?: string;
 }): Promise<OrgNodeRow> {
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   const updateData: Partial<OrgNodeRow> = {};
 
   if (name !== undefined) updateData.name = name;
@@ -50,6 +57,7 @@ export async function editOrgNode({
     .from("org_nodes")
     .update(updateData)
     .eq("id", id)
+    .eq("user_id", user.id) // Safety: only update nodes owned by current user
     .select()
     .single();
 

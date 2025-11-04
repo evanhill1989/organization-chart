@@ -11,11 +11,19 @@ export function useCriticalTaskCounts() {
     queries: TABS.map((tab) => ({
       queryKey: QUERY_KEYS.criticalTaskCount(tab),
       queryFn: async () => {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          throw new Error("User not authenticated");
+        }
+
         const { data: tasks, error } = await supabase
           .from("org_nodes")
           .select("deadline, completion_time, unique_days_required")
           .eq("type", "task")
           .eq("root_category", tab)
+          .eq("user_id", user.id) // Filter by user_id
           .not("deadline", "is", null)
           .not("completion_time", "is", null)
           .not("unique_days_required", "is", null)

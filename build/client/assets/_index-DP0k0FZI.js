@@ -1,0 +1,1 @@
+import{w as e,p as o,y as r}from"./chunk-PVWAREVJ-BwXiJ82s.js";import{P as t}from"./ProtectedRoute-DizjmF6B.js";import"./AuthContext-CfFLjHts.js";import"./supabaseClient-B7OnGE80.js";const p=e(function(){return console.log("🏠 OrgChartIndex component rendered - redirecting to Household"),o.jsx(t,{children:o.jsx(r,{to:"/org-chart/Household",replace:!0})})});export{p as default};

@@ -16,10 +16,18 @@ export interface CompleteTaskData extends OrgNodeRow {
  * and urgency level, sorted by overdue status and proximity.
  */
 export async function fetchAllTasks(): Promise<CompleteTaskData[]> {
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   const { data: tasks, error: fetchError } = await supabase
     .from("org_nodes")
     .select("*")
     .eq("type", "task")
+    .eq("user_id", user.id) // Filter by user_id
     .not("deadline", "is", null)
     .not("is_completed", "is", true); // ✅ Already filtering out completed tasks
 

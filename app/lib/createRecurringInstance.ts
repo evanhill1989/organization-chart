@@ -71,6 +71,7 @@ export async function createRecurringInstance(
     .from("org_nodes")
     .select("id, name, created_at")
     .eq("name", completedTask.name)
+    .eq("user_id", completedTask.user_id) // Filter by user_id
     .eq(
       "recurring_template_id",
       completedTask.is_recurring_template
@@ -160,6 +161,9 @@ export async function createRecurringInstance(
       recurring_template_id: completedTask.is_recurring_template
         ? completedTask.id
         : completedTask.recurring_template_id,
+
+      // Auth: inherit user_id from the completed task
+      user_id: completedTask.user_id,
     };
 
     console.log("🔍 DEBUG - newTaskData before insertion:", newTaskData);

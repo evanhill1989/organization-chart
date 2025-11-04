@@ -4,6 +4,7 @@ import QuickAddButton from "./tasks/QuickAddButton";
 import RecentTasksDropdown from "./tasks/RecentTasksDropdown";
 import { Link } from "react-router";
 import DarkModeToggle from "./ui/DarkModeToggle";
+import { useAuth } from "../context/AuthContext";
 
 import TabNavigationList from "./ui/TabNavigationList";
 
@@ -14,6 +15,12 @@ export default function DesktopNav({
   activeTab,
   onRecentTaskClick,
 }) {
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="border-b border-gray-700/50 bg-gray-900/95 shadow-md backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-800/95">
       <div className="mx-auto flex max-w-[1800px] items-center justify-between px-6 py-3">
@@ -78,6 +85,27 @@ export default function DesktopNav({
             showLabel
             className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
           />
+
+          {/* User section */}
+          {user && (
+            <div className="ml-2 flex items-center gap-3 border-l border-gray-700 pl-3 dark:border-gray-600">
+              {/* User info */}
+              <div className="flex items-center gap-2">
+                {/* Avatar */}
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+                  {user.email?.charAt(0).toUpperCase() || "U"}
+                </div>
+              </div>
+
+              {/* Sign Out button */}
+              <button
+                onClick={handleSignOut}
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-white dark:hover:bg-gray-700"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

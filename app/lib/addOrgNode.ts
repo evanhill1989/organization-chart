@@ -52,6 +52,13 @@ export async function addOrgNode({
     is_recurring_template,
   });
 
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   // Insert the new node
   const insertData = {
     name,
@@ -73,6 +80,8 @@ export async function addOrgNode({
     is_recurring_template,
     // Set last_touched_at for tasks
     last_touched_at: type === "task" ? new Date().toISOString() : undefined,
+    // Add user_id
+    user_id: user.id,
   };
 
   console.log("🔥 addOrgNode: Inserting to DB:", insertData);
@@ -94,7 +103,8 @@ export async function addOrgNode({
   const { data: allNodes, error: fetchError } = await supabase
     .from("org_nodes")
     .select("*")
-    .eq("root_category", root_category);
+    .eq("root_category", root_category)
+    .eq("user_id", user.id); // Filter by user_id
 
   if (fetchError) throw fetchError;
 

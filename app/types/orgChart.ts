@@ -36,6 +36,9 @@ export type OrgNode = {
   recurrence_end_date?: string; // ISO date string
   is_recurring_template?: boolean;
   recurring_template_id?: number;
+
+  // Auth: user ownership
+  user_id?: string;
 };
 
 export interface OrgNodeRow {
@@ -66,6 +69,9 @@ export interface OrgNodeRow {
   recurrence_end_date?: string;
   is_recurring_template?: boolean;
   recurring_template_id?: number;
+
+  // Auth: user ownership
+  user_id: string;
 }
 
 export type OrgChartRootProps = {
@@ -108,6 +114,9 @@ export interface Task {
   // Category linkage
   root_category: string;
   parent_id?: number;
+
+  // Auth: user ownership
+  user_id: string;
 }
 
 export type OrgNodeWithTasks = {

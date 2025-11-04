@@ -9,10 +9,19 @@ export const useCategory = (categoryId?: number) => {
     queryKey: QUERY_KEYS.category(categoryId!),
     queryFn: async () => {
       if (!categoryId) return null;
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       const { data, error } = await supabase
         .from("org_nodes")
         .select("*")
         .eq("id", categoryId)
+        .eq("user_id", user.id) // Filter by user_id
         .single();
       if (error) throw error;
       return data as OrgNodeRow;
@@ -26,6 +35,13 @@ export const useSaveCategory = () => {
 
   return useMutation({
     mutationFn: async (category: Partial<OrgNodeRow>) => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       if (category.id) {
         // Update existing category
         const { data, error } = await supabase
@@ -35,6 +51,7 @@ export const useSaveCategory = () => {
             type: "category", // ✅ Ensure it's always a category
           })
           .eq("id", category.id)
+          .eq("user_id", user.id) // Safety: only update user's own categories
           .select()
           .single();
         if (error) throw error;
@@ -46,6 +63,7 @@ export const useSaveCategory = () => {
           .insert({
             ...category,
             type: "category", // ✅ Ensure it's always a category
+            user_id: user.id, // Set user_id for new category
           })
           .select()
           .single();
@@ -72,10 +90,18 @@ export const useDeleteCategory = () => {
 
   return useMutation({
     mutationFn: async (categoryId: number) => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       const { error } = await supabase
         .from("org_nodes")
         .delete()
-        .eq("id", categoryId);
+        .eq("id", categoryId)
+        .eq("user_id", user.id); // Safety: only delete user's own categories
       if (error) throw error;
       return categoryId;
     },

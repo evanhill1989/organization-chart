@@ -1,6 +1,7 @@
 import DarkModeToggle from "./ui/DarkModeToggle";
 import QuickAddButton from "./tasks/QuickAddButton";
 import TasksDueTodayButton from "./tasks/TasksDueTodayButton";
+import { useAuth } from "../context/AuthContext";
 
 export default function MobileNav({
   onOpenTasksDueToday,
@@ -8,6 +9,12 @@ export default function MobileNav({
   onOpenTimeReport,
   onOpenHamburger,
 }) {
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <>
       <div className="flex items-center justify-between px-4 py-3">
@@ -40,6 +47,24 @@ export default function MobileNav({
           <button onClick={onOpenTimeReport}>⏱️</button>
 
           <QuickAddButton onClick={onOpenQuickAdd} />
+
+          {/* User avatar and sign out */}
+          {user && (
+            <>
+              {/* User avatar - shows first letter of email */}
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+                {user.email?.charAt(0).toUpperCase() || "U"}
+              </div>
+
+              {/* Sign Out button */}
+              <button
+                onClick={handleSignOut}
+                className="rounded-lg px-2 py-1 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
+              >
+                Sign Out
+              </button>
+            </>
+          )}
         </div>
       </div>
     </>

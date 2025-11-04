@@ -1,4 +1,4 @@
-import{s as a}from"./supabaseClient-Btf0BZYh.js";async function l(){const{data:r,error:e}=await a.from("journal_entries").select("*").order("entry_date",{ascending:!1});if(e)throw e;return r||[]}async function f(r){const{data:e,error:n}=await a.from("journal_entries").select("*").eq("id",r).single();if(n){if(n.code==="PGRST116")return null;throw n}const{data:t,error:s}=await a.from("journal_entry_tasks").select(`
+import{s as a}from"./supabaseClient-B7OnGE80.js";async function l(){const{data:r,error:e}=await a.from("journal_entries").select("*").order("entry_date",{ascending:!1});if(e)throw e;return r||[]}async function f(r){const{data:e,error:n}=await a.from("journal_entries").select("*").eq("id",r).single();if(n){if(n.code==="PGRST116")return null;throw n}const{data:t,error:s}=await a.from("journal_entry_tasks").select(`
       id,
       journal_entry_id,
       org_node_id,
