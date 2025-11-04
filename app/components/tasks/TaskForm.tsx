@@ -5,6 +5,8 @@ import type { OrgNodeRow } from "../../types/orgChart";
 import RecurrenceConfig from "../RecurrenceConfig";
 import type { RecurrenceType } from "../../types/orgChart";
 import { createRecurringInstance } from "../../lib/createRecurringInstance";
+import { useTrackTaskView } from "../../hooks/useTrackTaskView";
+import { useEditOrgNode } from "../../hooks/useEditOrgNode";
 
 interface TaskFormProps {
   task?: OrgNodeRow; // undefined = creating new
@@ -66,6 +68,8 @@ export default function TaskForm({
 
   const saveTask = useSaveTask();
   const deleteTask = useDeleteTask();
+  const trackTaskView = useTrackTaskView();
+  const editOrgNode = useEditOrgNode(task?.root_category || "");
 
   const isCreating = !task;
   const isEditing = !!task;
@@ -93,13 +97,18 @@ export default function TaskForm({
       setCompletedAt(task.completed_at ?? null);
 
       // ✅ FIX: Initialize recurrence configuration with actual task values
+      const recType = task.recurrence_type || "none";
       setRecurrenceConfig({
-        recurrence_type: task.recurrence_type || "none",
-        recurrence_interval: task.recurrence_interval || 1,
-        recurrence_day_of_week: task.recurrence_day_of_week,
-        recurrence_day_of_month: task.recurrence_day_of_month,
-        recurrence_end_date: task.recurrence_end_date,
-        is_recurring_template: task.is_recurring_template || false,
+        recurrence_type: recType,
+        recurrence_interval:
+          recType !== "none" ? task.recurrence_interval || 1 : undefined,
+        recurrence_day_of_week:
+          recType === "weekly" ? task.recurrence_day_of_week : undefined,
+        recurrence_day_of_month:
+          recType === "monthly" ? task.recurrence_day_of_month : undefined,
+        recurrence_end_date:
+          recType !== "none" ? task.recurrence_end_date : undefined,
+        is_recurring_template: recType !== "none",
       });
 
       // Reset flags
@@ -107,6 +116,14 @@ export default function TaskForm({
       setCompletionChanged(false);
     }
   }, [task]);
+
+  // Track task view when task ID changes (separate effect to avoid infinite loop)
+  useEffect(() => {
+    if (task?.id) {
+      trackTaskView.mutate(String(task.id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id]);
   // ✅ Handle completion checkbox change (no automatic saving)
   const handleCompletionChange = (newCompletedState: boolean) => {
     setIsCompleted(newCompletedState);
@@ -141,9 +158,9 @@ export default function TaskForm({
 
     console.log("🚀 Saving task completion:", taskData);
 
-    saveTask.mutate(taskData, {
-      onSuccess: async (savedTask) => {
-        console.log("✅ Task completion saved successfully:", savedTask);
+    editOrgNode.mutate(taskData, {
+      onSuccess: async () => {
+        console.log("✅ Task completion saved successfully");
         setCompletionChanged(false);
 
         // Handle recurring task creation if marking as completed
@@ -381,10 +398,10 @@ export default function TaskForm({
                 <button
                   type="button"
                   onClick={handleSaveCompletion}
-                  disabled={saveTask.isPending}
+                  disabled={editOrgNode.isPending}
                   className="w-full rounded bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                 >
-                  {saveTask.isPending ? "Saving..." : "Save Completed Task"}
+                  {editOrgNode.isPending ? "Saving..." : "Save Completed Task"}
                 </button>
                 <p className="mt-2 text-xs text-green-700">
                   Click to save task completion and create next recurring

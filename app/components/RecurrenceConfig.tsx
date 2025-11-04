@@ -1,5 +1,5 @@
 // app/components/RecurrenceConfig.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { RecurrenceType } from "../types/orgChart";
 import { getRecurrenceDescription } from "../lib/recurrenceUtils";
 
@@ -45,22 +45,32 @@ export default function RecurrenceConfig({
     initialConfig?.endDate || "",
   );
 
-  // ✅ FIX: Update state when initialConfig changes
+  // Track previous initialConfig to detect actual changes
+  const prevConfigRef = useRef<string>("");
+
+  // ✅ FIX: Only update state when initialConfig values actually change
   useEffect(() => {
     if (initialConfig) {
-      console.log(
-        "🔄 RecurrenceConfig: Updating from initialConfig:",
-        initialConfig,
-      );
-      setRecurrenceType(initialConfig.type || "none");
-      setRecurrenceInterval(initialConfig.interval || 1);
-      setRecurrenceDayOfWeek(initialConfig.dayOfWeek ?? "");
-      setRecurrenceDayOfMonth(initialConfig.dayOfMonth ?? "");
-      setRecurrenceEndDate(initialConfig.endDate || "");
+      const configString = JSON.stringify(initialConfig);
+
+      // Only update if config values actually changed
+      if (configString !== prevConfigRef.current) {
+        console.log(
+          "🔄 RecurrenceConfig: Updating from initialConfig:",
+          initialConfig,
+        );
+        setRecurrenceType(initialConfig.type || "none");
+        setRecurrenceInterval(initialConfig.interval || 1);
+        setRecurrenceDayOfWeek(initialConfig.dayOfWeek ?? "");
+        setRecurrenceDayOfMonth(initialConfig.dayOfMonth ?? "");
+        setRecurrenceEndDate(initialConfig.endDate || "");
+        prevConfigRef.current = configString;
+      }
     }
   }, [initialConfig]);
 
   // Emit changes to parent
+  // ✅ FIX: Remove onChange from dependencies to prevent infinite loops
   useEffect(() => {
     const config = {
       recurrence_type: recurrenceType,
@@ -83,13 +93,14 @@ export default function RecurrenceConfig({
 
     console.log("🔄 RecurrenceConfig: Emitting config change:", config);
     onChange(config);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     recurrenceType,
     recurrenceInterval,
     recurrenceDayOfWeek,
     recurrenceDayOfMonth,
     recurrenceEndDate,
-    onChange,
+    // onChange is intentionally excluded to prevent infinite loops
   ]);
 
   return (
