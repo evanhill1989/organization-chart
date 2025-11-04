@@ -7,6 +7,7 @@ import type { RecurrenceType } from "../../types/orgChart";
 import { createRecurringInstance } from "../../lib/createRecurringInstance";
 import { useTrackTaskView } from "../../hooks/useTrackTaskView";
 import { useEditOrgNode } from "../../hooks/useEditOrgNode";
+import { generateGoogleCalendarUrl } from "../../lib/googleCalendar";
 
 interface TaskFormProps {
   task?: OrgNodeRow; // undefined = creating new
@@ -520,6 +521,30 @@ export default function TaskForm({
           disabled={isCompleted && !completionChanged} // Only disable if completed and saved
           className="border-t pt-4"
         />
+
+        {/* Google Calendar Integration - Only show for existing tasks */}
+        {isEditing && task && (
+          <div className="border-t pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                const calendarUrl = generateGoogleCalendarUrl(task);
+                window.open(calendarUrl, '_blank', 'noopener,noreferrer');
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded bg-indigo-600 px-4 py-3 font-semibold text-white hover:bg-indigo-700 transition-colors"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z"/>
+              </svg>
+              Add to Google Calendar
+            </button>
+          </div>
+        )}
 
         <div className="flex justify-between border-t pt-4">
           {isEditing &&

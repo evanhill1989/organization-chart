@@ -1,1 +1,0 @@
-import{w as e,p as o,x as r}from"./chunk-PVWAREVJ-BCzKU303.js";const s=e(function(){return console.log("🏠 OrgChartIndex component rendered - redirecting to Household"),o.jsx(r,{to:"/org-chart/Household",replace:!0})});export{s as default};

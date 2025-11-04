@@ -13,6 +13,21 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/login": {
+    params: {};
+  };
+  "/signup": {
+    params: {};
+  };
+  "/forgot-password": {
+    params: {};
+  };
+  "/reset-password": {
+    params: {};
+  };
+  "/auth/callback": {
+    params: {};
+  };
   "/journal": {
     params: {};
   };
@@ -37,11 +52,31 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/journal" | "/journal/new" | "/journal/entry/:entryId" | "/org-chart" | "/org-chart/:tabName";
+    page: "/" | "/login" | "/signup" | "/forgot-password" | "/reset-password" | "/auth/callback" | "/journal" | "/journal/new" | "/journal/entry/:entryId" | "/org-chart" | "/org-chart/:tabName";
   };
   "./routes/_index.tsx": {
     id: "routes/_index";
     page: "/";
+  };
+  "./routes/login/_index.tsx": {
+    id: "routes/login/_index";
+    page: "/login";
+  };
+  "./routes/signup/_index.tsx": {
+    id: "routes/signup/_index";
+    page: "/signup";
+  };
+  "./routes/forgot-password/_index.tsx": {
+    id: "routes/forgot-password/_index";
+    page: "/forgot-password";
+  };
+  "./routes/reset-password/_index.tsx": {
+    id: "routes/reset-password/_index";
+    page: "/reset-password";
+  };
+  "./routes/auth/callback.tsx": {
+    id: "routes/auth/callback";
+    page: "/auth/callback";
   };
   "./routes/journal/_index.tsx": {
     id: "routes/journal/_index";
