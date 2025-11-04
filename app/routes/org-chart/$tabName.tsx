@@ -10,6 +10,7 @@ import {
 
 import OrgChartRoot from "../../components/OrgChartRoot";
 import QuickAddEditModal from "../../components/tasks/QuickAddEditModal";
+import ProtectedRoute from "../../components/auth/ProtectedRoute";
 
 import type { OrgNode } from "../../types/orgChart";
 import { fetchOrgTree } from "../../lib/fetchOrgTree";
@@ -147,8 +148,10 @@ function OrgChartContent() {
 
 export default function OrgChartRoute() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <OrgChartContent />
-    </QueryClientProvider>
+    <ProtectedRoute>
+      <QueryClientProvider client={queryClient}>
+        <OrgChartContent />
+      </QueryClientProvider>
+    </ProtectedRoute>
   );
 }

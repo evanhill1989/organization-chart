@@ -3,12 +3,15 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { LinksFunction } from "react-router";
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { AuthProvider } from "./context/AuthContext";
 
 gsap.registerPlugin(MotionPathPlugin);
 
 import "./styles/index.css";
 // eslint-disable-next-line react-refresh/only-export-components
 export const links: LinksFunction = () => [
+  { rel: "icon", href: "/favicon.png", type: "image/png" },
+  { rel: "apple-touch-icon", href: "/favicon.png" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -28,7 +31,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <AuthProvider>
+          <Outlet />
+        </AuthProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

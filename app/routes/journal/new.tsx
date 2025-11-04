@@ -1,9 +1,11 @@
 // app/routes/journal/new.tsx
 import { Link } from "react-router";
+import ProtectedRoute from "../../components/auth/ProtectedRoute";
 
 export default function NewJournalEntry() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
       <nav className="bg-gray-900 dark:bg-gray-800 px-4 py-3 space-x-4">
         <Link
           to="/"
@@ -32,5 +34,6 @@ export default function NewJournalEntry() {
         </div>
       </main>
     </div>
+    </ProtectedRoute>
   );
 }

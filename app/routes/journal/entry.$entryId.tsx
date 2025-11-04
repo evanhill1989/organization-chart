@@ -11,14 +11,17 @@ import type { OrgNodeRow } from "../../types/orgChart";
 import { useEffect, useState } from "react";
 import { useEditJournal } from "../../hooks/useEditJournal";
 import TaskForm from "../../components/tasks/TaskForm";
+import ProtectedRoute from "../../components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
 export default function JournalEntry() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <JournalEntryContent />
-    </QueryClientProvider>
+    <ProtectedRoute>
+      <QueryClientProvider client={queryClient}>
+        <JournalEntryContent />
+      </QueryClientProvider>
+    </ProtectedRoute>
   );
 }
 

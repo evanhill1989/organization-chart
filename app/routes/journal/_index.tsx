@@ -7,6 +7,7 @@ import {
 import { Link } from "react-router";
 import { fetchAllJournalEntries } from "../../lib/journal";
 import type { JournalEntry } from "../../types/journal";
+import ProtectedRoute from "../../components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -128,8 +129,10 @@ function JournalHomeContent() {
 
 export default function JournalHome() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <JournalHomeContent />
-    </QueryClientProvider>
+    <ProtectedRoute>
+      <QueryClientProvider client={queryClient}>
+        <JournalHomeContent />
+      </QueryClientProvider>
+    </ProtectedRoute>
   );
 }
