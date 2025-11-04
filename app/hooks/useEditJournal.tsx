@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateJournalEntry } from "../lib/journal";
+import { QUERY_KEYS } from "../lib/queryKeys";
 import type { JournalEntry } from "../types/journal";
 
 export function useEditJournal() {
@@ -19,13 +20,12 @@ export function useEditJournal() {
 
     onMutate: async (editData) => {
       await queryClient.cancelQueries({
-        queryKey: ["journalEntry", editData.id],
+        queryKey: QUERY_KEYS.journalEntry(String(editData.id)),
       });
 
-      const previousEntry = queryClient.getQueryData<JournalEntry>([
-        "journalEntry",
-        editData.id,
-      ]);
+      const previousEntry = queryClient.getQueryData<JournalEntry>(
+        QUERY_KEYS.journalEntry(String(editData.id))
+      );
       console.log("🔄 EDIT JOURNAL ONMUTATE: Previous entry:", previousEntry);
 
       if (previousEntry) {
@@ -35,7 +35,10 @@ export function useEditJournal() {
           updated_at: new Date().toISOString(),
         };
 
-        queryClient.setQueryData(["journalEntry", editData.id], newEntry);
+        queryClient.setQueryData(
+          QUERY_KEYS.journalEntry(String(editData.id)),
+          newEntry
+        );
         console.log(
           "🔄 EDIT JOURNAL ONMUTATE: Optimistically updated cache",
           newEntry
@@ -49,7 +52,7 @@ export function useEditJournal() {
       console.error("❌ EDIT JOURNAL ONERROR:", error);
       if (context?.previousEntry) {
         queryClient.setQueryData(
-          ["journalEntry", editData.id],
+          QUERY_KEYS.journalEntry(String(editData.id)),
           context.previousEntry
         );
       }
@@ -58,7 +61,7 @@ export function useEditJournal() {
     onSettled: (_data, _error, editData) => {
       console.log("🔄 EDIT JOURNAL ONSETTLED: Refetching entry", editData?.id);
       queryClient.invalidateQueries({
-        queryKey: ["journalEntry", editData?.id],
+        queryKey: QUERY_KEYS.journalEntry(String(editData?.id)),
       });
     },
   });

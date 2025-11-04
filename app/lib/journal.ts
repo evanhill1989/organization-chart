@@ -42,7 +42,8 @@ export async function fetchJournalEntry(
       journal_entry_id,
       org_node_id,
       action,
-      created_at
+      created_at,
+      org_node:org_nodes(*)
     `
     )
     .eq("journal_entry_id", id)

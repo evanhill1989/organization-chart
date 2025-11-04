@@ -1,4 +1,6 @@
 // app/types/journal.ts
+import type { OrgNodeRow } from "./orgChart";
+
 export interface JournalEntry {
   id: number;
   entry_date: string; // ISO date string
@@ -13,6 +15,7 @@ export interface JournalEntryTask {
   org_node_id: number;
   action: "created" | "edited" | "completed";
   created_at: string; // ISO datetime string
+  org_node?: OrgNodeRow; // Full task details
 }
 
 export interface JournalEntryWithTasks extends JournalEntry {

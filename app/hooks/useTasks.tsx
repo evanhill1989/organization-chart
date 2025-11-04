@@ -1,11 +1,12 @@
 // app/hooks/useTasks.tsx - Add invalidation to existing mutations
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/data/supabaseClient";
+import { QUERY_KEYS } from "../lib/queryKeys";
 import type { OrgNodeRow } from "../types/orgChart";
 
 export const useTask = (taskId?: number) => {
   return useQuery({
-    queryKey: ["task", taskId],
+    queryKey: QUERY_KEYS.task(taskId!),
     queryFn: async () => {
       if (!taskId) return null;
       const { data, error } = await supabase
@@ -51,13 +52,13 @@ export const useSaveTask = () => {
     },
     onSuccess: (data) => {
       // Update individual task cache
-      queryClient.setQueryData(["task", data.id], data);
+      queryClient.setQueryData(QUERY_KEYS.task(data.id), data);
 
       // Invalidate relevant caches
-      queryClient.invalidateQueries({ queryKey: ["orgTree"] });
-      queryClient.invalidateQueries({ queryKey: ["allTasks"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allOrgTrees() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allTasks() });
       // ✅ NEW: Invalidate urgent task counts
-      queryClient.invalidateQueries({ queryKey: ["urgentTaskCount"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.urgentTaskCount() });
     },
     onError: (error) => {
       console.error("❌ Save task error:", error);
@@ -79,13 +80,13 @@ export const useDeleteTask = () => {
     },
     onSuccess: (taskId) => {
       // Remove from individual task cache
-      queryClient.removeQueries({ queryKey: ["task", taskId] });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.task(taskId) });
 
       // Invalidate relevant caches
-      queryClient.invalidateQueries({ queryKey: ["orgTree"] });
-      queryClient.invalidateQueries({ queryKey: ["allTasks"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allOrgTrees() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allTasks() });
       // ✅ NEW: Invalidate urgent task counts
-      queryClient.invalidateQueries({ queryKey: ["urgentTaskCount"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.urgentTaskCount() });
     },
     onError: (error) => {
       console.error("❌ Delete task error:", error);

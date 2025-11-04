@@ -1,11 +1,12 @@
 // app/hooks/useCategories.tsx
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/data/supabaseClient";
+import { QUERY_KEYS } from "../lib/queryKeys";
 import type { OrgNodeRow } from "../types/orgChart";
 
 export const useCategory = (categoryId?: number) => {
   return useQuery({
-    queryKey: ["category", categoryId],
+    queryKey: QUERY_KEYS.category(categoryId!),
     queryFn: async () => {
       if (!categoryId) return null;
       const { data, error } = await supabase
@@ -54,10 +55,10 @@ export const useSaveCategory = () => {
     },
     onSuccess: (data) => {
       // Update individual category cache
-      queryClient.setQueryData(["category", data.id], data);
+      queryClient.setQueryData(QUERY_KEYS.category(data.id), data);
 
       // Invalidate relevant caches
-      queryClient.invalidateQueries({ queryKey: ["orgTree"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allOrgTrees() });
       // Categories don't affect task-specific queries, so we don't need to invalidate those
     },
     onError: (error) => {
@@ -80,10 +81,10 @@ export const useDeleteCategory = () => {
     },
     onSuccess: (categoryId) => {
       // Remove from individual category cache
-      queryClient.removeQueries({ queryKey: ["category", categoryId] });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.category(categoryId) });
 
       // Invalidate relevant caches
-      queryClient.invalidateQueries({ queryKey: ["orgTree"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allOrgTrees() });
       // Categories don't affect task-specific queries
     },
     onError: (error) => {

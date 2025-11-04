@@ -6,6 +6,7 @@ import type { OrgNode } from "../types/orgChart";
 import { useOrgChartAnimations } from "../hooks/useOrgChartAnimations";
 import { useToggleOpen } from "../hooks/useToggleOpen";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { QUERY_KEYS } from "../lib/queryKeys";
 import { fetchOrgTree } from "../lib/fetchOrgTree";
 
 import OrgChartNode from "./OrgChartNode";
@@ -52,7 +53,7 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
     isLoading,
     error,
   } = useQuery<OrgNode>({
-    queryKey: ["orgTree", tabName],
+    queryKey: QUERY_KEYS.orgTree(tabName),
     queryFn: () => fetchOrgTree(tabName),
     placeholderData: keepPreviousData,
   });

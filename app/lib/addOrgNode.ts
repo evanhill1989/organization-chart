@@ -71,6 +71,8 @@ export async function addOrgNode({
     recurrence_day_of_month,
     recurrence_end_date,
     is_recurring_template,
+    // Set last_touched_at for tasks
+    last_touched_at: type === "task" ? new Date().toISOString() : undefined,
   };
 
   console.log("🔥 addOrgNode: Inserting to DB:", insertData);

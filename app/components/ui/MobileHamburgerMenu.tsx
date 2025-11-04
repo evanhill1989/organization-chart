@@ -1,16 +1,27 @@
 // app/components/ui/MobileHamburgerMenu.tsx
 import { Link } from "react-router";
 import TabNavigationList from "./TabNavigationList";
+import { useRecentTasks } from "../../hooks/useRecentTasks";
+import type { OrgNodeRow } from "../../types/orgChart";
 
 export default function MobileHamburgerMenu({
   isOpen,
   onClose,
   activeTab,
+  onRecentTaskClick,
 }: {
   isOpen: boolean;
   onClose: () => void;
   activeTab: string;
+  onRecentTaskClick?: (task: OrgNodeRow) => void;
 }) {
+  const { data: recentTasks, isLoading } = useRecentTasks();
+
+  const handleTaskClick = (task: OrgNodeRow) => {
+    onRecentTaskClick?.(task);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -49,9 +60,51 @@ export default function MobileHamburgerMenu({
               activeTab={activeTab}
               variant="mobile"
               onTabClick={onClose}
-              className="flex flex-col space-y-1"
             />
           </div>
+
+          {/* Recent Tasks Section */}
+          {onRecentTaskClick && (
+            <div className="mt-4 border-t border-gray-700 pt-4">
+              <h3 className="mb-3 text-sm font-medium tracking-wide text-gray-400 uppercase">
+                Recent Tasks
+              </h3>
+
+              {isLoading && (
+                <div className="flex items-center justify-center py-4">
+                  <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                </div>
+              )}
+
+              {!isLoading && (!recentTasks || recentTasks.length === 0) && (
+                <p className="px-4 py-2 text-sm text-gray-500">
+                  No recent tasks yet
+                </p>
+              )}
+
+              {!isLoading && recentTasks && recentTasks.length > 0 && (
+                <div className="space-y-1">
+                  {recentTasks.map((task) => (
+                    <button
+                      key={task.id}
+                      onClick={() => handleTaskClick(task)}
+                      className="w-full rounded px-4 py-2 text-left text-sm text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="truncate">{task.name}</span>
+                        {task.importance && task.importance >= 8 && (
+                          <span className="ml-2 text-purple-400">★</span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-xs text-gray-500">
+                        {task.root_category}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

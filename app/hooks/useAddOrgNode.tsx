@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { addOrgNode } from "../lib/addOrgNode";
+import { TreeOps } from "../lib/treeUtils";
+import { QUERY_KEYS } from "../lib/queryKeys";
 import type { OrgNode } from "../types/orgChart";
 
 // Custom hook for adding a node with optimistic update
@@ -26,13 +28,14 @@ export function useAddOrgNode(root_category: string) {
 
     onMutate: async (newNode) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["orgTree", root_category] });
+      await queryClient.cancelQueries({
+        queryKey: QUERY_KEYS.orgTree(root_category),
+      });
 
       // Snapshot the previous value
-      const previousTree = queryClient.getQueryData<OrgNode>([
-        "orgTree",
-        root_category,
-      ]);
+      const previousTree = queryClient.getQueryData<OrgNode>(
+        QUERY_KEYS.orgTree(root_category),
+      );
 
       if (!previousTree) {
         return { previousTree: null };
@@ -58,48 +61,15 @@ export function useAddOrgNode(root_category: string) {
         children: [],
       };
 
-      // Recursively find the parent and add the new node
-      function addChildToTree(
-        tree: OrgNode,
-        parentId: number,
-        child: OrgNode,
-      ): OrgNode {
-        if (tree.id === parentId) {
-          return {
-            ...tree,
-            children: [...(tree.children ?? []), child],
-          };
-        }
-
-        if (tree.children && tree.children.length > 0) {
-          return {
-            ...tree,
-            children: tree.children.map((c) =>
-              addChildToTree(c, parentId, child),
-            ),
-          };
-        }
-
-        return tree;
-      }
-
-      // Apply the optimistic update
-      let newTree: OrgNode;
-      if (newNode.parent_id) {
-        newTree = addChildToTree(
-          previousTree,
-          newNode.parent_id,
-          optimisticNode,
-        );
-      } else {
-        newTree = {
-          ...previousTree,
-          children: [...(previousTree.children ?? []), optimisticNode],
-        };
-      }
+      // Apply the optimistic update using TreeOps
+      const newTree = TreeOps.addChild(
+        previousTree,
+        newNode.parent_id,
+        optimisticNode,
+      );
 
       // Optimistically update to the new value
-      queryClient.setQueryData(["orgTree", root_category], newTree);
+      queryClient.setQueryData(QUERY_KEYS.orgTree(root_category), newTree);
 
       // Return a context object with the snapshotted value
       return { previousTree };
@@ -107,7 +77,7 @@ export function useAddOrgNode(root_category: string) {
 
     onSuccess: (data) => {
       // Update the cache with the server response (complete tree)
-      queryClient.setQueryData(["orgTree", root_category], data);
+      queryClient.setQueryData(QUERY_KEYS.orgTree(root_category), data);
     },
 
     onError: (error, _newNode, context) => {
@@ -115,7 +85,7 @@ export function useAddOrgNode(root_category: string) {
       console.error(error);
       if (context?.previousTree) {
         queryClient.setQueryData(
-          ["orgTree", root_category],
+          QUERY_KEYS.orgTree(root_category),
           context.previousTree,
         );
       }
@@ -123,9 +93,13 @@ export function useAddOrgNode(root_category: string) {
 
     onSettled: () => {
       // Always refetch after error or success to ensure we have the server state
-      queryClient.invalidateQueries({ queryKey: ["orgTree", root_category] });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.orgTree(root_category),
+      });
       // ✅ NEW: Invalidate urgent task counts when tasks are added
-      queryClient.invalidateQueries({ queryKey: ["urgentTaskCount"] });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.urgentTaskCount(),
+      });
     },
   });
 

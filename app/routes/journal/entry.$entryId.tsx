@@ -7,8 +7,10 @@ import {
 } from "@tanstack/react-query";
 import { fetchJournalEntry } from "../../lib/journal";
 import type { JournalEntryWithTasks } from "../../types/journal";
+import type { OrgNodeRow } from "../../types/orgChart";
 import { useEffect, useState } from "react";
 import { useEditJournal } from "../../hooks/useEditJournal";
+import TaskForm from "../../components/tasks/TaskForm";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,7 @@ function JournalEntryContent() {
   });
 
   const [editorialText, setEditorialText] = useState("");
+  const [selectedTask, setSelectedTask] = useState<OrgNodeRow | null>(null);
   const editJournalMutation = useEditJournal();
 
   // Initialize text from entry when it loads
@@ -170,11 +173,11 @@ function JournalEntryContent() {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Journal Entry
               </h2>
-              <label className="block mb-2 font-semibold text-gray-700">
+              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300">
                 Details:
               </label>
               <textarea
-                className="w-full  p-2 border rounded mb-4"
+                className="w-full p-2 border rounded mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                 rows={4}
                 value={editorialText}
                 onChange={(e) => setEditorialText(e.target.value)}
@@ -191,7 +194,8 @@ function JournalEntryContent() {
                   {entry.tasks.map((task) => (
                     <div
                       key={task.id}
-                      className="flex items-center justify-between bg-white dark:bg-gray-700 rounded p-3"
+                      onClick={() => task.org_node && setSelectedTask(task.org_node)}
+                      className="flex items-center justify-between bg-white dark:bg-gray-700 rounded p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     >
                       <div className="flex items-center space-x-3">
                         <div
@@ -208,6 +212,7 @@ function JournalEntryContent() {
                         </span>
                         <span className="text-gray-600 dark:text-gray-400">
                           task #{task.org_node_id}
+                          {task.org_node && `: ${task.org_node.name}`}
                         </span>
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -215,6 +220,75 @@ function JournalEntryContent() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Prompt Template */}
+            {entry.tasks && entry.tasks.length > 0 && (
+              <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-6 border-2 border-purple-200 dark:border-purple-800">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    AI Journal Prompt
+                  </h2>
+                  <button
+                    onClick={() => {
+                      const promptText = document.getElementById("ai-prompt")?.innerText;
+                      if (promptText) {
+                        navigator.clipboard.writeText(promptText);
+                        alert("Prompt copied to clipboard!");
+                      }
+                    }}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                  >
+                    Copy Prompt
+                  </button>
+                </div>
+                <div
+                  id="ai-prompt"
+                  className="bg-white dark:bg-gray-800 rounded p-4 font-mono text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap"
+                >
+{`I'm creating a journal entry for ${formatDate(entry.entry_date)}. Please help me write a meaningful reflection based on my task activity for the day.
+
+Task Activity Summary:
+${entry.tasks.map((task) => {
+  const taskNode = task.org_node;
+  if (!taskNode) return `- ${task.action.toUpperCase()}: task #${task.org_node_id} (details unavailable)`;
+
+  const parts = [`- ${task.action.toUpperCase()}: ${taskNode.name}`];
+
+  if (taskNode.details) {
+    parts.push(`  Description: ${taskNode.details}`);
+  }
+
+  if (taskNode.importance) {
+    parts.push(`  Importance: ${taskNode.importance}/10`);
+  }
+
+  if (taskNode.deadline) {
+    parts.push(`  Deadline: ${new Date(taskNode.deadline).toLocaleDateString()}`);
+  }
+
+  if (taskNode.completion_time) {
+    parts.push(`  Estimated time: ${taskNode.completion_time} hours`);
+  }
+
+  if (task.action === "completed" && taskNode.completion_comment) {
+    parts.push(`  Completion note: ${taskNode.completion_comment}`);
+  }
+
+  return parts.join('\n');
+}).join('\n\n')}
+
+${editorialText ? `\nMy initial thoughts:\n${editorialText}\n` : ''}
+Please help me create a journal entry that:
+1. Reflects on the significance of these task activities
+2. Identifies any patterns or themes in my work
+3. Acknowledges progress and accomplishments
+4. Notes any challenges or concerns
+5. Provides thoughtful perspective on my productivity and priorities
+
+Write in a personal, reflective tone suitable for a private journal entry.`}
                 </div>
               </div>
             )}
@@ -235,6 +309,11 @@ function JournalEntryContent() {
               </Link>
             </div>
           </div>
+        )}
+
+        {/* Task Form Modal */}
+        {selectedTask && (
+          <TaskForm task={selectedTask} onCancel={() => setSelectedTask(null)} />
         )}
       </main>
     </div>

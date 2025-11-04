@@ -2,13 +2,14 @@
 import { useQueries } from "@tanstack/react-query";
 import { supabase } from "../lib/data/supabaseClient";
 import { TABS } from "../lib/consts/TABS";
+import { QUERY_KEYS } from "../lib/queryKeys";
 import { calculateUrgencyLevel } from "../lib/urgencyUtils";
 
 export function useCriticalTaskCounts() {
   // Fetch Critical task counts for all tabs in parallel
   const results = useQueries({
     queries: TABS.map((tab) => ({
-      queryKey: ["criticalTaskCount", tab],
+      queryKey: QUERY_KEYS.criticalTaskCount(tab),
       queryFn: async () => {
         const { data: tasks, error } = await supabase
           .from("org_nodes")

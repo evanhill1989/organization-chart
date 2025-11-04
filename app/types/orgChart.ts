@@ -26,6 +26,7 @@ export type OrgNode = {
   completion_comment?: string;
   parent_id?: number;
   tab_name?: string;
+  last_touched_at?: string;
 
   // Recurring task fields
   recurrence_type?: RecurrenceType;
@@ -55,6 +56,7 @@ export interface OrgNodeRow {
   completion_comment?: string;
   parent_id?: number;
   tab_name?: string;
+  last_touched_at?: string;
 
   //recurring tasks
   recurrence_type?: RecurrenceType;

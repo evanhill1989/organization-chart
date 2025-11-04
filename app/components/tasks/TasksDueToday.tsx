@@ -12,6 +12,7 @@ import {
   TaskSorters,
   type EnrichedTask,
 } from "../../lib/taskEnrichmentUtils";
+import { QUERY_KEYS } from "../../lib/queryKeys";
 import type { OrgNode } from "../../types/orgChart";
 import { fetchOrgTree } from "../../lib/fetchOrgTree";
 
@@ -37,7 +38,7 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
   // 🔹 Fetch ALL tabs when modal is open
   const allTabQueries = useQueries({
     queries: ALL_TABS.map((tab) => ({
-      queryKey: ["orgTree", tab],
+      queryKey: QUERY_KEYS.orgTree(tab),
       queryFn: () => fetchOrgTree(tab),
       enabled: isOpen, // Only fetch when modal is open
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -95,7 +96,7 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
   const handleTaskFormClose = () => {
     setSelectedTask(null);
     // Invalidate so next open is fresh
-    queryClient.invalidateQueries({ queryKey: ["orgTree"] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allOrgTrees() });
   };
 
   const todayFormatted = new Date().toLocaleDateString("en-US", {

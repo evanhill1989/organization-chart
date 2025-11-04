@@ -43,6 +43,9 @@ export async function editOrgNode({
   if (completion_comment !== undefined)
     updateData.completion_comment = completion_comment;
 
+  // Always update last_touched_at when editing
+  updateData.last_touched_at = new Date().toISOString();
+
   const { data, error } = await supabase
     .from("org_nodes")
     .update(updateData)
