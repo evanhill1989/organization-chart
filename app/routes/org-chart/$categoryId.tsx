@@ -21,7 +21,7 @@ import MobileTimeReportModal from "../../components/ui/MobileTimeReportModal";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import MobileNav from "../../components/MobileNav";
 import DesktopNav from "../../components/DesktopNav";
-import SecondaryNav from "../../components/ui/SecondaryNav";
+
 import { useCategoriesQuery } from "../../hooks/useCategoriesQuery";
 import { QUERY_KEYS } from "../../lib/queryKeys";
 
@@ -35,7 +35,7 @@ function OrgChartContent() {
   const [showTasksDueToday, setShowTasksDueToday] = useState(false);
   const [showQuickAddEdit, setShowQuickAddEdit] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<number | undefined>(
-    undefined
+    undefined,
   );
   const [showTimeReport, setShowTimeReport] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
@@ -85,7 +85,7 @@ function OrgChartContent() {
   return (
     <div className="app-layout">
       {/* Navigation */}
-      <nav className="nav sticky top-0 z-40 bg-gray-900 dark:bg-gray-800">
+      <nav className="nav bg-gray-900 dark:bg-gray-800">
         {isMobile ? (
           <MobileNav
             onOpenTasksDueToday={() => setShowTasksDueToday(true)}
@@ -104,11 +104,6 @@ function OrgChartContent() {
       </nav>
 
       {/* Secondary Navigation - Category Tabs (Desktop only) */}
-      {!isMobile && (
-        <div className="sticky top-[60px] z-30">
-          <SecondaryNav activeTab={categoryId} variant="desktop" />
-        </div>
-      )}
 
       {/* Main Content */}
       <main className="main p-4">

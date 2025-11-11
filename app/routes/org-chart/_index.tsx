@@ -4,7 +4,7 @@ import ProtectedRoute from "../../components/auth/ProtectedRoute";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import MobileNav from "../../components/MobileNav";
 import DesktopNav from "../../components/DesktopNav";
-import SecondaryNav from "../../components/ui/SecondaryNav";
+
 import { useIsMobile } from "../../hooks/useIsMobile";
 import QuickAddEditModal from "../../components/tasks/QuickAddEditModal";
 import TasksDueToday from "../../components/tasks/TasksDueToday";
@@ -21,7 +21,7 @@ function OrgChartHomepageContent() {
   const [showTasksDueToday, setShowTasksDueToday] = useState(false);
   const [showQuickAddEdit, setShowQuickAddEdit] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<number | undefined>(
-    undefined
+    undefined,
   );
   const [showTimeReport, setShowTimeReport] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
@@ -35,7 +35,7 @@ function OrgChartHomepageContent() {
   return (
     <div className="app-layout">
       {/* Navigation */}
-      <nav className="nav sticky top-0 z-40 bg-gray-900 dark:bg-gray-800">
+      <nav className="nav bg-gray-900 dark:bg-gray-800">
         {isMobile ? (
           <MobileNav
             onOpenTasksDueToday={() => setShowTasksDueToday(true)}
@@ -52,13 +52,6 @@ function OrgChartHomepageContent() {
           />
         )}
       </nav>
-
-      {/* Secondary Navigation - Category Tabs (Desktop only) */}
-      {!isMobile && (
-        <div className="sticky top-[60px] z-30">
-          <SecondaryNav activeTab="" variant="desktop" />
-        </div>
-      )}
 
       {/* Header */}
       <div className="border-b border-gray-700/50 bg-gray-900/95 px-6 py-8 dark:border-gray-600/50 dark:bg-gray-800/95">
