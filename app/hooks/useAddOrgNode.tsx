@@ -19,9 +19,7 @@ export function useAddOrgNode(categoryId: string) {
       completion_time?: number;
       unique_days_required?: number;
       parent_id?: number;
-      tab_name: string; // Keep for backward compatibility with buildOrgTree
-      root_category: string; // Keep for backward compatibility
-      category_id: string; // New UUID reference
+      category_id: string; // UUID reference
     }) => {
       const result = await addOrgNode(newNode);
       return result;
@@ -47,8 +45,6 @@ export function useAddOrgNode(categoryId: string) {
         id: Date.now(), // Use timestamp for more unique temporary ID
         name: newNode.name,
         type: newNode.type,
-        tab_name: newNode.tab_name,
-        root_category: newNode.root_category,
         category_id: newNode.category_id,
         details: newNode.details,
         // Removed urgency as it's now calculated

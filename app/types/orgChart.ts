@@ -33,13 +33,8 @@ export type OrgNode = {
   id: number;
   name: string;
   type: "top_category" | "category" | "task";
-  /**
-   * @deprecated Legacy field - use category_id instead. Will be removed in future version.
-   * Kept temporarily for backward compatibility during migration.
-   */
-  root_category?: string;
-  /** New UUID reference to categories table (required after migration_04) */
-  category_id?: string;
+  /** UUID reference to categories table */
+  category_id: string;
   children?: OrgNode[];
   details?: string;
   // Removed urgency as it's now calculated
@@ -53,10 +48,6 @@ export type OrgNode = {
   completed_at?: string; // ISO date string
   completion_comment?: string;
   parent_id?: number;
-  /**
-   * @deprecated Legacy field - use category_id instead. Will be removed in future version.
-   */
-  tab_name?: string;
   last_touched_at?: string;
 
   // Recurring task fields
@@ -76,13 +67,8 @@ export interface OrgNodeRow {
   id: number;
   name: string;
   type: string;
-  /**
-   * @deprecated Legacy field - use category_id instead. Will be removed in future version.
-   * Kept temporarily for backward compatibility during migration.
-   */
-  root_category?: string;
-  /** New UUID reference to categories table (required after migration_04) */
-  category_id?: string;
+  /** UUID reference to categories table */
+  category_id: string;
   details?: string;
   // Removed urgency as it's now calculated
   importance?: number; // 1-10, defaults to 1
@@ -95,10 +81,6 @@ export interface OrgNodeRow {
   completed_at?: string; // ISO date string
   completion_comment?: string;
   parent_id?: number;
-  /**
-   * @deprecated Legacy field - use category_id instead. Will be removed in future version.
-   */
-  tab_name?: string;
   last_touched_at?: string;
 
   //recurring tasks
@@ -152,12 +134,8 @@ export interface Task {
   is_recurring_template: boolean;
 
   // Category linkage
-  /**
-   * @deprecated Legacy field - use category_id instead. Will be removed in future version.
-   */
-  root_category?: string;
-  /** New UUID reference to categories table (required after migration_04) */
-  category_id?: string;
+  /** UUID reference to categories table */
+  category_id: string;
   parent_id?: number;
 
   // Auth: user ownership

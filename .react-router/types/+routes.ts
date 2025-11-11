@@ -42,9 +42,9 @@ type Pages = {
   "/org-chart": {
     params: {};
   };
-  "/org-chart/:tabName": {
+  "/org-chart/:categoryId": {
     params: {
-      "tabName": string;
+      "categoryId": string;
     };
   };
   "/food-planning": {
@@ -61,7 +61,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/login" | "/signup" | "/forgot-password" | "/reset-password" | "/auth/callback" | "/journal" | "/journal/new" | "/journal/entry/:entryId" | "/org-chart" | "/org-chart/:tabName" | "/food-planning" | "/food-planning/meal-plan" | "/food-planning/grocery-list";
+    page: "/" | "/login" | "/signup" | "/forgot-password" | "/reset-password" | "/auth/callback" | "/journal" | "/journal/new" | "/journal/entry/:entryId" | "/org-chart" | "/org-chart/:categoryId" | "/food-planning" | "/food-planning/meal-plan" | "/food-planning/grocery-list";
   };
   "./routes/_index.tsx": {
     id: "routes/_index";
@@ -103,9 +103,9 @@ type RouteFiles = {
     id: "routes/org-chart/_index";
     page: "/org-chart";
   };
-  "./routes/org-chart/$tabName.tsx": {
-    id: "routes/org-chart/$tabName";
-    page: "/org-chart/:tabName";
+  "./routes/org-chart/$categoryId.tsx": {
+    id: "routes/org-chart/$categoryId";
+    page: "/org-chart/:categoryId";
   };
   "./routes/food-planning/_index.tsx": {
     id: "routes/food-planning/_index";

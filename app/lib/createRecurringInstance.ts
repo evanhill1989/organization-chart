@@ -148,8 +148,7 @@ export async function createRecurringInstance(
       completion_time: completedTask.completion_time,
       unique_days_required: completedTask.unique_days_required,
       parent_id: completedTask.parent_id || null, // 🔥 Ensure this is preserved
-      tab_name: completedTask.tab_name,
-      root_category: completedTask.root_category,
+      category_id: completedTask.category_id,
 
       // Copy recurrence settings
       recurrence_type: completedTask.recurrence_type,

@@ -14,8 +14,6 @@ export async function addOrgNode({
   unique_days_required,
   parent_id,
   category_id,
-  tab_name, // Keep for backward compatibility with buildOrgTree
-  root_category, // Keep for backward compatibility with buildOrgTree
   // Add recurrence fields
   recurrence_type = "none",
   recurrence_interval,
@@ -32,9 +30,7 @@ export async function addOrgNode({
   completion_time?: number;
   unique_days_required?: number;
   parent_id?: number;
-  category_id: string; // New UUID reference (required)
-  tab_name: string; // Keep for backward compatibility
-  root_category: string; // Keep for backward compatibility
+  category_id: string; // UUID reference (required)
   // Add recurrence field types
   recurrence_type?: RecurrenceType;
   recurrence_interval?: number;
@@ -71,9 +67,7 @@ export async function addOrgNode({
     completion_time: type === "task" ? completion_time : undefined,
     unique_days_required: type === "task" ? unique_days_required : undefined,
     parent_id,
-    category_id, // ✅ New UUID reference
-    tab_name, // Keep for backward compatibility
-    root_category, // Keep for backward compatibility
+    category_id, // UUID reference
     // Add recurrence fields
     recurrence_type,
     recurrence_interval,
@@ -102,6 +96,16 @@ export async function addOrgNode({
     throw insertError;
   }
 
+  // Fetch category name
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .select("name")
+    .eq("id", category_id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (categoryError) throw categoryError;
+
   // Fetch all nodes for this category_id to rebuild the complete tree
   const { data: allNodes, error: fetchError } = await supabase
     .from("org_nodes")
@@ -112,17 +116,7 @@ export async function addOrgNode({
   if (fetchError) throw fetchError;
 
   const typedData = allNodes as OrgNodeRow[];
-  const tree = buildOrgTree(typedData ?? []);
+  const tree = buildOrgTree(typedData ?? [], category.name);
 
-  // Return the complete tree for this category (using root_category name for backward compatibility)
-  return (
-    tree[root_category] ?? {
-      id: 0,
-      name: root_category,
-      type: "category",
-      root_category,
-      category_id,
-      children: [],
-    }
-  );
+  return tree;
 }

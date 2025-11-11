@@ -27,6 +27,8 @@ type OrgChartNodeProps = {
   path: string;
   disableExpand?: boolean;
   isRoot?: boolean; // ✅ New prop for root-level handling
+  categoryId?: string; // UUID of the category this node belongs to
+  categoryName?: string; // Name of the category for display
 };
 
 export default function OrgChartNode({
@@ -38,6 +40,8 @@ export default function OrgChartNode({
   path,
   disableExpand,
   isRoot = false,
+  categoryId,
+  categoryName,
 }: OrgChartNodeProps) {
   const isTask = node.type === "task";
   const isOpen = openMap[path] || false;
@@ -66,7 +70,7 @@ export default function OrgChartNode({
           <div className="node-with-children">
             {node.children.map((child) => (
               <OrgChartNode
-                key={child.name}
+                key={child.id}
                 node={child}
                 level={level + 1}
                 onTaskClick={onTaskClick}
@@ -75,6 +79,8 @@ export default function OrgChartNode({
                 path={`${path}/${child.name}`}
                 disableExpand={disableExpand}
                 isRoot={false}
+                categoryId={categoryId || node.category_id}
+                categoryName={categoryName || node.name}
               />
             ))}
           </div>
@@ -91,8 +97,8 @@ export default function OrgChartNode({
           <TaskForm
             parentId={node.id}
             parentName={node.name}
-            rootCategory={node.root_category}
-            tabName={node.root_category}
+            categoryId={categoryId || node.category_id}
+            tabName={categoryName || node.name}
             onCancel={handleTaskFormClose}
           />
         )}
@@ -101,8 +107,8 @@ export default function OrgChartNode({
           <CategoryForm
             parentId={node.id}
             parentName={node.name}
-            rootCategory={node.root_category}
-            tabName={node.root_category}
+            categoryId={categoryId || node.category_id}
+            tabName={categoryName || node.name}
             onCancel={handleTaskFormClose}
           />
         )}
@@ -175,7 +181,7 @@ export default function OrgChartNode({
         <div className="mt-4 grid w-full auto-cols-min grid-flow-col gap-4">
           {node.children?.map((child) => (
             <OrgChartNode
-              key={child.name}
+              key={child.id}
               node={child}
               level={level + 1}
               onTaskClick={onTaskClick}
@@ -184,6 +190,8 @@ export default function OrgChartNode({
               path={`${path}/${child.name}`}
               disableExpand={disableExpand}
               isRoot={false}
+              categoryId={categoryId}
+              categoryName={categoryName}
             />
           ))}
 
@@ -230,8 +238,8 @@ export default function OrgChartNode({
         <TaskForm
           parentId={node.id}
           parentName={node.name}
-          rootCategory={node.root_category}
-          tabName={node.root_category}
+          categoryId={categoryId}
+          tabName={categoryName}
           onCancel={handleTaskFormClose}
         />
       )}
@@ -268,8 +276,8 @@ export default function OrgChartNode({
         <CategoryForm
           parentId={node.id}
           parentName={node.name}
-          rootCategory={node.root_category}
-          tabName={node.root_category}
+          categoryId={categoryId}
+          tabName={categoryName}
           onCancel={handleCategoryFormClose}
         />
       )}

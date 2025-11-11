@@ -14,7 +14,8 @@ interface FlatNode {
   id: number;
   name: string;
   type: string;
-  root_category: string;
+  category_id: string; // UUID reference to categories table
+  category_name: string; // Category display name
   path: string;
 }
 
@@ -39,6 +40,7 @@ export default function QuickAddEditModal({
   // Edit mode state
   const [selectedTask, setSelectedTask] = useState<number | "new" | "">("");
   const [taskForEditing, setTaskForEditing] = useState<OrgNodeRow | null>(null);
+  const [editingTaskCategoryName, setEditingTaskCategoryName] = useState<string>("");
 
   // Get selected parent node for add form
   const selectedParentNode = selectedParent
@@ -69,10 +71,22 @@ export default function QuickAddEditModal({
       setIsLoading(true);
       setError(null);
 
+      // Fetch categories first to create a lookup map
+      const { data: categoryData, error: categoryError } = await supabase
+        .from("categories")
+        .select("id, name");
+
+      if (categoryError) throw categoryError;
+
+      // Create category name lookup map
+      const categoryNameMap = new Map(
+        categoryData?.map((cat) => [cat.id, cat.name]) || []
+      );
+
       const { data: nodes, error: nodesError } = await supabase
         .from("org_nodes")
         .select("*")
-        .order("root_category, name");
+        .order("name");
 
       if (nodesError) throw nodesError;
 
@@ -85,7 +99,8 @@ export default function QuickAddEditModal({
           id: node.id,
           name: node.name,
           type: node.type,
-          root_category: node.root_category,
+          category_id: node.category_id,
+          category_name: categoryNameMap.get(node.category_id) || "Unknown",
           path: buildNodePath(node, typedNodes),
         }));
 
@@ -96,7 +111,8 @@ export default function QuickAddEditModal({
           id: node.id,
           name: node.name,
           type: node.type,
-          root_category: node.root_category,
+          category_id: node.category_id,
+          category_name: categoryNameMap.get(node.category_id) || "Unknown",
           path: buildNodePath(node, typedNodes),
         }));
 
@@ -121,7 +137,17 @@ export default function QuickAddEditModal({
 
       if (error) throw error;
 
+      // Fetch category name
+      const { data: category, error: catError } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("id", task.category_id)
+        .single();
+
+      if (catError) throw catError;
+
       setTaskForEditing(task);
+      setEditingTaskCategoryName(category.name);
     } catch (err) {
       console.error("Error loading task:", err);
       setError("Failed to load task data");
@@ -365,8 +391,8 @@ export default function QuickAddEditModal({
         <TaskForm
           parentId={selectedParent as number}
           parentName={selectedParentNode.name}
-          rootCategory={selectedParentNode.root_category}
-          tabName={selectedParentNode.root_category}
+          categoryId={selectedParentNode.category_id}
+          categoryName={selectedParentNode.category_name}
           onCancel={() => {
             setShowAddForm(false);
             setSelectedParent("");
@@ -376,7 +402,12 @@ export default function QuickAddEditModal({
 
       {/* Edit Form Modal - Reuse existing TaskDetailsModal */}
       {taskForEditing && (
-        <TaskForm task={taskForEditing} onCancel={handleEditSuccess} />
+        <TaskForm
+          task={taskForEditing}
+          categoryId={taskForEditing.category_id}
+          categoryName={editingTaskCategoryName}
+          onCancel={handleEditSuccess}
+        />
       )}
     </div>
   );

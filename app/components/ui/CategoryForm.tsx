@@ -10,8 +10,8 @@ interface CategoryFormProps {
   // Props for category creation
   parentId?: number;
   parentName?: string;
-  rootCategory?: string;
-  tabName?: string;
+  categoryId: string; // UUID reference to categories table
+  categoryName: string; // Category display name
 }
 
 export default function CategoryForm({
@@ -19,8 +19,8 @@ export default function CategoryForm({
   onCancel,
   parentId,
   parentName,
-  rootCategory,
-  tabName,
+  categoryId,
+  categoryName,
 }: CategoryFormProps) {
   const [name, setName] = useState(category?.name ?? "");
 
@@ -40,11 +40,11 @@ export default function CategoryForm({
 
   // Display parent context for user clarity
   const displayParentPath = () => {
-    if (isEditing && category?.root_category) {
-      return category.root_category;
+    if (isEditing && categoryName) {
+      return categoryName;
     }
-    if (isCreating && parentName && rootCategory) {
-      return `${rootCategory} > ${parentName}`;
+    if (isCreating && parentName && categoryName) {
+      return `${categoryName} > ${parentName}`;
     }
     return "Unknown";
   };
@@ -54,18 +54,13 @@ export default function CategoryForm({
 
     // Determine parent context - use props for new categories, existing data for edits
     const effectiveParentId = category?.parent_id ?? parentId;
-    const effectiveRootCategory = category?.root_category ?? rootCategory;
-    const effectiveTabName = category?.tab_name ?? tabName;
+    const effectiveCategoryId = category?.category_id ?? categoryId;
 
     // Validation for new categories
-    if (
-      isCreating &&
-      (!effectiveParentId || !effectiveRootCategory || !effectiveTabName)
-    ) {
+    if (isCreating && (!effectiveParentId || !effectiveCategoryId)) {
       console.error("❌ Missing required parent context for new category:", {
         parentId: effectiveParentId,
-        rootCategory: effectiveRootCategory,
-        tabName: effectiveTabName,
+        categoryId: effectiveCategoryId,
       });
       alert("Missing parent information. Please try again.");
       return;
@@ -75,8 +70,7 @@ export default function CategoryForm({
       id: category?.id,
       name: name.trim(),
       parent_id: effectiveParentId,
-      root_category: effectiveRootCategory,
-      tab_name: effectiveTabName,
+      category_id: effectiveCategoryId,
       type: "category" as const,
     };
 

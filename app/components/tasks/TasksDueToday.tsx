@@ -15,32 +15,26 @@ import {
 import { QUERY_KEYS } from "../../lib/queryKeys";
 import type { OrgNode } from "../../types/orgChart";
 import { fetchOrgTree } from "../../lib/fetchOrgTree";
+import { useCategoriesQuery } from "../../hooks/useCategoriesQuery";
 
 interface TasksDueTodayProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const ALL_TABS = [
-  "Household",
-  "Finances",
-  "Cleo",
-  "Job",
-  "Social",
-  "Personal",
-  "Orphans",
-] as const;
-
 export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
   const [selectedTask, setSelectedTask] = useState<EnrichedTask | null>(null);
   const queryClient = useQueryClient();
 
-  // 🔹 Fetch ALL tabs when modal is open
+  // Fetch user's categories
+  const { data: categories, isLoading: categoriesLoading } = useCategoriesQuery();
+
+  // 🔹 Fetch ALL categories' trees when modal is open
   const allTabQueries = useQueries({
-    queries: ALL_TABS.map((tab) => ({
-      queryKey: QUERY_KEYS.orgTree(tab),
-      queryFn: () => fetchOrgTree(tab),
-      enabled: isOpen, // Only fetch when modal is open
+    queries: (categories || []).map((category) => ({
+      queryKey: QUERY_KEYS.orgTree(category.id),
+      queryFn: () => fetchOrgTree(category.id),
+      enabled: isOpen && !categoriesLoading, // Only fetch when modal is open and categories are loaded
       staleTime: 5 * 60 * 1000, // 5 minutes
     })),
   });
@@ -48,7 +42,7 @@ export default function TasksDueToday({ isOpen, onClose }: TasksDueTodayProps) {
   if (!isOpen) return null;
 
   // Wait for all queries to complete
-  const isLoading = allTabQueries.some((query) => query.isLoading);
+  const isLoading = categoriesLoading || allTabQueries.some((query) => query.isLoading);
   const hasError = allTabQueries.some((query) => query.error);
 
   if (isLoading) {

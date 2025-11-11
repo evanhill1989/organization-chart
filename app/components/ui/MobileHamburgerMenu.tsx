@@ -97,7 +97,7 @@ export default function MobileHamburgerMenu({
                         )}
                       </div>
                       <div className="mt-0.5 text-xs text-gray-500">
-                        {task.root_category}
+                        {task.category_name}
                       </div>
                     </button>
                   ))}

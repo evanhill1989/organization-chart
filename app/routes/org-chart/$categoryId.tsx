@@ -123,7 +123,7 @@ function OrgChartContent() {
             {error instanceof Error ? error.message : "Unknown error"}
           </div>
         )}
-        {tree && <OrgChartRoot tabName={categoryName} />}
+        {tree && <OrgChartRoot categoryId={categoryId} />}
       </main>
 
       {/* Modals */}

@@ -7,7 +7,12 @@
       "Bash(npx tsc:*)",
       "Bash(find:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell.exe -Command \"Stop-Process -Id 23500,26536 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(findstr:*)",
+      "Bash(powershell.exe:*)"
     ],
     "deny": [],
     "ask": []

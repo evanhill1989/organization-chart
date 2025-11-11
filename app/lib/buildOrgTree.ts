@@ -1,10 +1,11 @@
 // app/lib/buildOrgTree.ts
 import type { OrgNode, OrgNodeRow } from "../types/orgChart";
 
-export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
+export function buildOrgTree(flatNodes: OrgNodeRow[], categoryName: string): OrgNode {
   const nodeMap = new Map<number, OrgNode>();
-  const roots: Record<string, OrgNode> = {};
+  const topLevelNodes: OrgNode[] = [];
 
+  // First pass: create all nodes
   flatNodes.forEach((row) => {
     nodeMap.set(row.id, {
       id: row.id,
@@ -19,9 +20,8 @@ export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
       completed_at: row.completed_at ?? undefined,
       completion_comment: row.completion_comment ?? undefined,
       children: [],
-      tab_name: row.tab_name,
-      root_category: row.root_category,
-      parent_id: row.parent_id, // 🔥 THE MISSING LINE!
+      parent_id: row.parent_id,
+      category_id: row.category_id,
 
       // Add recurrence fields
       recurrence_type: row.recurrence_type ?? undefined,
@@ -34,15 +34,26 @@ export function buildOrgTree(flatNodes: OrgNodeRow[]): Record<string, OrgNode> {
     });
   });
 
+  // Second pass: build parent-child relationships
   flatNodes.forEach((row) => {
     const node = nodeMap.get(row.id)!;
     if (row.parent_id) {
       const parent = nodeMap.get(row.parent_id);
-      if (parent) parent.children!.push(node);
+      if (parent) {
+        parent.children!.push(node);
+      }
     } else {
-      roots[row.root_category ?? "default"] = node;
+      // No parent means this is a top-level node
+      topLevelNodes.push(node);
     }
   });
 
-  return roots;
+  // Return synthetic root node for the category
+  return {
+    id: 0,
+    name: categoryName,
+    type: "category" as const,
+    category_id: flatNodes[0]?.category_id || "",
+    children: topLevelNodes,
+  };
 }

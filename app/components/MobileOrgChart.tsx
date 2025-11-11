@@ -10,7 +10,8 @@ type MobileOrgChartProps = {
   activePath: string;
   setActivePath: (path: string) => void;
   onTaskClick: (node: OrgNode) => void;
-  tabName: string;
+  categoryId: string; // UUID reference to categories table
+  categoryName: string; // Category display name
 };
 
 export default function MobileOrgChart({
@@ -18,7 +19,8 @@ export default function MobileOrgChart({
   activePath,
   setActivePath,
   onTaskClick,
-  tabName,
+  categoryId,
+  categoryName,
 }: MobileOrgChartProps) {
   // ✅ Add state for task form
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -32,7 +34,7 @@ export default function MobileOrgChart({
 
   const goBack = () => {
     const parentPath =
-      activePath.split("/").slice(0, -1).join("/") || `/${tabName}`;
+      activePath.split("/").slice(0, -1).join("/") || `/${categoryName}`;
     console.log(`Mobile: navigating back to ${parentPath}`);
     setActivePath(parentPath);
   };
@@ -48,14 +50,14 @@ export default function MobileOrgChart({
         "MobileOrgChart: activePath is undefined or not a string:",
         activePath,
       );
-      return tabName; // Fallback to just the tab name
+      return categoryName; // Fallback to just the category name
     }
 
     try {
-      return activePath.replace(`/${tabName}`, tabName).replace(/\//g, " → ");
+      return activePath.replace(`/${categoryName}`, categoryName).replace(/\//g, " → ");
     } catch (error) {
       console.error("Error generating breadcrumb:", error);
-      return tabName; // Fallback to just the tab name
+      return categoryName; // Fallback to just the category name
     }
   };
 
@@ -77,7 +79,7 @@ export default function MobileOrgChart({
   return (
     <div className="mx-auto flex w-full max-w-md flex-col p-4">
       <h2 className="mb-4 text-center text-2xl font-bold text-gray-900 dark:text-gray-100">
-        {tabName}
+        {categoryName}
       </h2>
 
       {/* Breadcrumb */}
@@ -86,7 +88,7 @@ export default function MobileOrgChart({
       </div>
 
       {/* Back button */}
-      {activePath !== `/${tabName}` && (
+      {activePath !== `/${categoryName}` && (
         <button
           onClick={goBack}
           className="mb-4 text-left font-semibold text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
@@ -181,8 +183,8 @@ export default function MobileOrgChart({
         <TaskForm
           parentId={currentNode.id}
           parentName={currentNode.name}
-          rootCategory={currentNode.root_category}
-          tabName={currentNode.root_category}
+          categoryId={categoryId}
+          categoryName={categoryName}
           onCancel={handleTaskFormClose}
         />
       )}

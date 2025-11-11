@@ -8,13 +8,14 @@ import { useToggleOpen } from "../hooks/useToggleOpen";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { QUERY_KEYS } from "../lib/queryKeys";
 import { fetchOrgTree } from "../lib/fetchOrgTree";
+import { supabase } from "../lib/data/supabaseClient";
 
 import OrgChartNode from "./OrgChartNode";
 import MobileOrgChart from "./MobileOrgChart";
 import TaskForm from "./tasks/TaskForm";
 
 interface OrgChartRootProps {
-  tabName: string;
+  categoryId: string;
 }
 
 // ✅ Utility function to find a node by its path
@@ -31,7 +32,7 @@ const getNodeByPath = (root: OrgNode, path: string): OrgNode | null => {
   return current || null;
 };
 
-export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
+export default function OrgChartRoot({ categoryId }: OrgChartRootProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
@@ -39,13 +40,37 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
   const [selectedTask, setSelectedTask] = useState<OrgNode | null>(null);
 
-  // ✅ Mobile navigation state (properly initialized)
-  const [activePath, setActivePath] = useState<string>(`/${tabName}`);
+  // Fetch category to get the name
+  const { data: category } = useQuery({
+    queryKey: ["category", categoryId],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
 
-  // ✅ Reset activePath when tabName changes
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("id", categoryId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data as { id: string; name: string };
+    },
+    enabled: !!categoryId,
+  });
+
+  const categoryName = category?.name || "";
+
+  // ✅ Mobile navigation state (properly initialized)
+  const [activePath, setActivePath] = useState<string>(`/${categoryName}`);
+
+  // ✅ Reset activePath when categoryName changes
   useEffect(() => {
-    setActivePath(`/${tabName}`);
-  }, [tabName]);
+    if (categoryName) {
+      setActivePath(`/${categoryName}`);
+    }
+  }, [categoryName]);
 
   // Data fetching
   const {
@@ -53,15 +78,16 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
     isLoading,
     error,
   } = useQuery<OrgNode>({
-    queryKey: QUERY_KEYS.orgTree(tabName),
-    queryFn: () => fetchOrgTree(tabName),
+    queryKey: QUERY_KEYS.orgTree(categoryId),
+    queryFn: () => fetchOrgTree(categoryId),
     placeholderData: keepPreviousData,
+    enabled: !!categoryId,
   });
 
   // Desktop hooks (only used when not mobile)
   const toggleOpen = useToggleOpen(
     tree || ({} as OrgNode),
-    tabName,
+    categoryName,
     setOpenMap,
   );
 
@@ -69,7 +95,7 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
     containerRef,
     tree: tree || ({} as OrgNode),
     openMap,
-    tabName,
+    tabName: categoryName,
     isMobile,
     activePath: isMobile ? activePath : undefined, // Only pass for mobile
   });
@@ -79,10 +105,10 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
   const handleCloseTaskForm = () => setSelectedTask(null);
 
   // Loading/error states
-  if (isLoading) {
+  if (isLoading || !category) {
     return (
       <div className="py-8 text-center text-gray-900 dark:text-gray-100">
-        Loading {tabName} tree...
+        Loading {categoryName || "category"} tree...
       </div>
     );
   }
@@ -90,7 +116,7 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
   if (error) {
     return (
       <div className="py-8 text-center text-red-600 dark:text-red-400">
-        Error loading {tabName} tree
+        Error loading {categoryName} tree
       </div>
     );
   }
@@ -121,13 +147,13 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
               activePath={activePath}
               setActivePath={setActivePath}
               onTaskClick={handleTaskClick}
-              tabName={tabName}
+              tabName={categoryName}
             />
           ) : (
             <div className="py-8 text-center text-red-600">
               Navigation error: Node not found
               <div className="mt-2 text-sm">
-                Tab: {tabName}, Path: {activePath || "undefined"}
+                Category: {categoryName}, Path: {activePath || "undefined"}
               </div>
             </div>
           )
@@ -139,8 +165,10 @@ export default function OrgChartRoot({ tabName }: OrgChartRootProps) {
             onTaskClick={handleTaskClick}
             openMap={openMap}
             toggleOpen={toggleOpen}
-            path={`/${tabName}`}
+            path={`/${categoryName}`}
             isRoot={true}
+            categoryId={categoryId}
+            categoryName={categoryName}
           />
         )}
       </div>

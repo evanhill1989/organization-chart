@@ -15,8 +15,8 @@ interface TaskFormProps {
   // New props for task creation
   parentId?: number;
   parentName?: string;
-  rootCategory?: string;
-  tabName?: string;
+  categoryId: string; // UUID reference to categories table
+  categoryName: string; // Category display name
 }
 
 type RecurrenceConfigType = {
@@ -33,8 +33,8 @@ export default function TaskForm({
   onCancel,
   parentId,
   parentName,
-  rootCategory,
-  tabName,
+  categoryId,
+  categoryName,
 }: TaskFormProps) {
   const [name, setName] = useState(task?.name ?? "");
   const [details, setDetails] = useState(task?.details ?? "");
@@ -70,7 +70,7 @@ export default function TaskForm({
   const saveTask = useSaveTask();
   const deleteTask = useDeleteTask();
   const trackTaskView = useTrackTaskView();
-  const editOrgNode = useEditOrgNode(task?.root_category || "");
+  const editOrgNode = useEditOrgNode(task?.category_id || categoryId);
 
   const isCreating = !task;
   const isEditing = !!task;
@@ -225,18 +225,13 @@ export default function TaskForm({
 
     // Determine parent context - use props for new tasks, existing data for edits
     const effectiveParentId = task?.parent_id ?? parentId;
-    const effectiveRootCategory = task?.root_category ?? rootCategory;
-    const effectiveTabName = task?.tab_name ?? tabName;
+    const effectiveCategoryId = task?.category_id ?? categoryId;
 
     // Validation for new tasks
-    if (
-      isCreating &&
-      (!effectiveParentId || !effectiveRootCategory || !effectiveTabName)
-    ) {
+    if (isCreating && (!effectiveParentId || !effectiveCategoryId)) {
       console.error("❌ Missing required parent context for new task:", {
         parentId: effectiveParentId,
-        rootCategory: effectiveRootCategory,
-        tabName: effectiveTabName,
+        categoryId: effectiveCategoryId,
       });
       alert("Missing parent information. Please try again.");
       return;
@@ -251,8 +246,7 @@ export default function TaskForm({
       completion_time: completionTime,
       unique_days_required: uniqueDaysRequired,
       parent_id: effectiveParentId,
-      root_category: effectiveRootCategory,
-      tab_name: effectiveTabName,
+      category_id: effectiveCategoryId,
       type: "task" as const,
 
       // ✅ Only include completion fields if we're updating an existing task
@@ -310,11 +304,11 @@ export default function TaskForm({
 
   // Display parent context for user clarity
   const displayParentPath = () => {
-    if (isEditing && task?.root_category) {
-      return task.root_category;
+    if (isEditing && categoryName) {
+      return categoryName;
     }
-    if (isCreating && parentName && rootCategory) {
-      return `${rootCategory} > ${parentName}`;
+    if (isCreating && parentName && categoryName) {
+      return `${categoryName} > ${parentName}`;
     }
     return "Unknown";
   };
