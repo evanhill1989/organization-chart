@@ -6,7 +6,7 @@ import { QUERY_KEYS } from "../lib/queryKeys";
 import type { OrgNode } from "../types/orgChart";
 
 // Custom hook for editing a node with optimistic update
-export function useEditOrgNode(root_category: string) {
+export function useEditOrgNode(categoryId: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -30,12 +30,12 @@ export function useEditOrgNode(root_category: string) {
     onMutate: async (editData) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        queryKey: QUERY_KEYS.orgTree(root_category),
+        queryKey: QUERY_KEYS.orgTree(categoryId),
       });
 
       // Snapshot the previous value
       const previousTree = queryClient.getQueryData<OrgNode>(
-        QUERY_KEYS.orgTree(root_category)
+        QUERY_KEYS.orgTree(categoryId)
       );
 
       if (!previousTree || !editData.id) {
@@ -67,7 +67,7 @@ export function useEditOrgNode(root_category: string) {
       const newTree = TreeOps.updateNode(previousTree, editData.id, updates);
 
       // Optimistically update the cache
-      queryClient.setQueryData(QUERY_KEYS.orgTree(root_category), newTree);
+      queryClient.setQueryData(QUERY_KEYS.orgTree(categoryId), newTree);
 
       return { previousTree };
     },
@@ -83,7 +83,7 @@ export function useEditOrgNode(root_category: string) {
       // Rollback on error
       if (context?.previousTree) {
         queryClient.setQueryData(
-          QUERY_KEYS.orgTree(root_category),
+          QUERY_KEYS.orgTree(categoryId),
           context.previousTree
         );
       }
@@ -92,7 +92,7 @@ export function useEditOrgNode(root_category: string) {
     onSettled: () => {
       // Always refetch to ensure consistency with server
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.orgTree(root_category),
+        queryKey: QUERY_KEYS.orgTree(categoryId),
       });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.urgentTaskCount(),

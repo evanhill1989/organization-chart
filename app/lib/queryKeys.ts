@@ -1,7 +1,7 @@
 // app/lib/queryKeys.ts
 export const QUERY_KEYS = {
-  // Org tree keys
-  orgTree: (category: string) => ["orgTree", category] as const,
+  // Org tree keys - category is now categoryId (UUID) instead of tabName
+  orgTree: (categoryId: string) => ["orgTree", categoryId] as const,
   allOrgTrees: () => ["orgTree"] as const,
 
   // Task keys

@@ -22,6 +22,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import MobileNav from "../../components/MobileNav";
 import DesktopNav from "../../components/DesktopNav";
 import TimeAvailabilityReport from "../../components/TimeAvailabilityReport";
+import SecondaryNav from "../../components/ui/SecondaryNav";
 
 const queryClient = new QueryClient();
 
@@ -88,11 +89,17 @@ function OrgChartContent() {
             onOpenTasksDueToday={() => setShowTasksDueToday(true)}
             onOpenQuickAdd={() => setShowQuickAddEdit(true)}
             onOpenHamburger={() => setShowHamburgerMenu(true)}
-            activeTab={activeTab}
             onRecentTaskClick={handleRecentTaskClick}
           />
         )}
       </nav>
+
+      {/* Secondary Navigation - Category Tabs (Desktop only) */}
+      {!isMobile && (
+        <div className="sticky top-[60px] z-30">
+          <SecondaryNav activeTab={activeTab} variant="desktop" />
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="main p-4">

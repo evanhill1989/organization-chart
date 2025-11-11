@@ -6,13 +6,10 @@ import { Link } from "react-router";
 import DarkModeToggle from "./ui/DarkModeToggle";
 import { useAuth } from "../context/AuthContext";
 
-import TabNavigationList from "./ui/TabNavigationList";
-
 export default function DesktopNav({
   onOpenTasksDueToday,
   onOpenQuickAdd,
   onOpenHamburger,
-  activeTab,
   onRecentTaskClick,
 }) {
   const { user, signOut } = useAuth();
@@ -67,11 +64,6 @@ export default function DesktopNav({
                 />
               </svg>
             </button>
-          </div>
-
-          {/* Tab navigation - only show on larger screens */}
-          <div className="hidden min-[1000px]:block">
-            <TabNavigationList activeTab={activeTab} variant="desktop" />
           </div>
         </div>
 

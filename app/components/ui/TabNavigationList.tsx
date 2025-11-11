@@ -1,10 +1,10 @@
 // app/components/ui/TabNavigationList.tsx
 import { Link } from "react-router";
-import { TABS } from "../../lib/consts/TABS";
+import { useCategoriesQuery } from "../../hooks/useCategoriesQuery";
 import { useCriticalTaskCounts } from "../../hooks/useCriticalTaskCounts";
 
 interface TabNavigationListProps {
-  activeTab: string;
+  activeTab: string; // Now categoryId instead of tabName
   variant?: "desktop" | "mobile";
   onTabClick?: () => void;
 
@@ -16,28 +16,50 @@ export default function TabNavigationList({
   variant = "desktop",
   onTabClick,
 }: TabNavigationListProps) {
+  const { data: categories, isLoading } = useCategoriesQuery();
   const urgentTaskCounts = useCriticalTaskCounts();
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="text-sm text-gray-400">Loading categories...</div>
+      </div>
+    );
+  }
+
+  // No categories state
+  if (!categories || categories.length === 0) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="text-sm text-gray-500">No categories yet</div>
+      </div>
+    );
+  }
 
   if (variant === "mobile") {
     // Mobile variant - vertical list
     return (
       <div className="flex flex-col gap-2">
-        {TABS.map((tab) => {
-          const criticalCount = urgentTaskCounts[tab] || 0;
-          const isActive = activeTab === tab;
+        {categories.map((category) => {
+          const criticalCount = urgentTaskCounts[category.name] || 0;
+          const isActive = activeTab === category.id;
 
           return (
             <Link
-              key={tab}
-              to={`/org-chart/${tab}`}
+              key={category.id}
+              to={`/org-chart/${category.id}`}
               onClick={onTabClick}
               className={`flex items-center justify-between rounded-lg px-4 py-3 text-base font-medium transition-all ${
                 isActive
                   ? "bg-blue-600 text-white dark:bg-blue-700"
                   : "text-gray-300 hover:bg-gray-800/60 hover:text-white dark:hover:bg-gray-700/60"
               }`}
+              style={{
+                borderLeft: isActive ? `3px solid ${category.color}` : undefined,
+              }}
             >
-              <span>{tab}</span>
+              <span>{category.name}</span>
               {criticalCount > 0 && (
                 <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-red-500 px-2 text-xs font-bold text-white">
                   {criticalCount > 99 ? "99+" : criticalCount}
@@ -53,14 +75,14 @@ export default function TabNavigationList({
   // Desktop variant - horizontal list
   return (
     <div className="flex items-center gap-1">
-      {TABS.map((tab) => {
-        const criticalCount = urgentTaskCounts[tab] || 0;
-        const isActive = activeTab === tab;
+      {categories.map((category) => {
+        const criticalCount = urgentTaskCounts[category.name] || 0;
+        const isActive = activeTab === category.id;
 
         return (
           <Link
-            key={tab}
-            to={`/org-chart/${tab}`}
+            key={category.id}
+            to={`/org-chart/${category.id}`}
             onClick={onTabClick}
             className={`relative flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
               isActive
@@ -68,14 +90,22 @@ export default function TabNavigationList({
                 : "text-gray-300 hover:bg-gray-800/60 hover:text-white dark:hover:bg-gray-700/60"
             }`}
           >
-            <span>{tab}</span>
+            {/* Color indicator dot */}
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: category.color }}
+            />
+            <span>{category.name}</span>
             {criticalCount > 0 && (
               <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
                 {criticalCount > 99 ? "99+" : criticalCount}
               </span>
             )}
             {isActive && (
-              <span className="absolute bottom-0 left-1/2 h-0.5 w-3/4 -translate-x-1/2 rounded-full bg-blue-400 dark:bg-blue-300" />
+              <span
+                className="absolute bottom-0 left-1/2 h-0.5 w-3/4 -translate-x-1/2 rounded-full"
+                style={{ backgroundColor: category.color }}
+              />
             )}
           </Link>
         );

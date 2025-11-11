@@ -6,7 +6,7 @@ import { QUERY_KEYS } from "../lib/queryKeys";
 import type { OrgNode } from "../types/orgChart";
 
 // Custom hook for adding a node with optimistic update
-export function useAddOrgNode(root_category: string) {
+export function useAddOrgNode(categoryId: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -19,8 +19,9 @@ export function useAddOrgNode(root_category: string) {
       completion_time?: number;
       unique_days_required?: number;
       parent_id?: number;
-      tab_name: string;
-      root_category: string;
+      tab_name: string; // Keep for backward compatibility with buildOrgTree
+      root_category: string; // Keep for backward compatibility
+      category_id: string; // New UUID reference
     }) => {
       const result = await addOrgNode(newNode);
       return result;
@@ -29,12 +30,12 @@ export function useAddOrgNode(root_category: string) {
     onMutate: async (newNode) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({
-        queryKey: QUERY_KEYS.orgTree(root_category),
+        queryKey: QUERY_KEYS.orgTree(categoryId),
       });
 
       // Snapshot the previous value
       const previousTree = queryClient.getQueryData<OrgNode>(
-        QUERY_KEYS.orgTree(root_category),
+        QUERY_KEYS.orgTree(categoryId),
       );
 
       if (!previousTree) {
@@ -48,6 +49,7 @@ export function useAddOrgNode(root_category: string) {
         type: newNode.type,
         tab_name: newNode.tab_name,
         root_category: newNode.root_category,
+        category_id: newNode.category_id,
         details: newNode.details,
         // Removed urgency as it's now calculated
         importance:
@@ -69,7 +71,7 @@ export function useAddOrgNode(root_category: string) {
       );
 
       // Optimistically update to the new value
-      queryClient.setQueryData(QUERY_KEYS.orgTree(root_category), newTree);
+      queryClient.setQueryData(QUERY_KEYS.orgTree(categoryId), newTree);
 
       // Return a context object with the snapshotted value
       return { previousTree };
@@ -77,7 +79,7 @@ export function useAddOrgNode(root_category: string) {
 
     onSuccess: (data) => {
       // Update the cache with the server response (complete tree)
-      queryClient.setQueryData(QUERY_KEYS.orgTree(root_category), data);
+      queryClient.setQueryData(QUERY_KEYS.orgTree(categoryId), data);
     },
 
     onError: (error, _newNode, context) => {
@@ -85,7 +87,7 @@ export function useAddOrgNode(root_category: string) {
       console.error(error);
       if (context?.previousTree) {
         queryClient.setQueryData(
-          QUERY_KEYS.orgTree(root_category),
+          QUERY_KEYS.orgTree(categoryId),
           context.previousTree,
         );
       }
@@ -94,11 +96,15 @@ export function useAddOrgNode(root_category: string) {
     onSettled: () => {
       // Always refetch after error or success to ensure we have the server state
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.orgTree(root_category),
+        queryKey: QUERY_KEYS.orgTree(categoryId),
       });
-      // ✅ NEW: Invalidate urgent task counts when tasks are added
+      // Invalidate urgent task counts when tasks are added
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.urgentTaskCount(),
+      });
+      // Invalidate category node counts
+      queryClient.invalidateQueries({
+        queryKey: ["categoryNodeCounts"],
       });
     },
   });

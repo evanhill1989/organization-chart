@@ -3,7 +3,7 @@ import type { OrgNode, OrgNodeRow, RecurrenceType } from "../types/orgChart";
 import { buildOrgTree } from "./buildOrgTree";
 import { supabase } from "./data/supabaseClient";
 
-// Returns the complete tree for the tab, not just the inserted row
+// Returns the complete tree for the category, not just the inserted row
 export async function addOrgNode({
   name,
   type,
@@ -13,8 +13,9 @@ export async function addOrgNode({
   completion_time,
   unique_days_required,
   parent_id,
-  tab_name,
-  root_category,
+  category_id,
+  tab_name, // Keep for backward compatibility with buildOrgTree
+  root_category, // Keep for backward compatibility with buildOrgTree
   // Add recurrence fields
   recurrence_type = "none",
   recurrence_interval,
@@ -31,8 +32,9 @@ export async function addOrgNode({
   completion_time?: number;
   unique_days_required?: number;
   parent_id?: number;
-  tab_name: string;
-  root_category: string;
+  category_id: string; // New UUID reference (required)
+  tab_name: string; // Keep for backward compatibility
+  root_category: string; // Keep for backward compatibility
   // Add recurrence field types
   recurrence_type?: RecurrenceType;
   recurrence_interval?: number;
@@ -69,8 +71,9 @@ export async function addOrgNode({
     completion_time: type === "task" ? completion_time : undefined,
     unique_days_required: type === "task" ? unique_days_required : undefined,
     parent_id,
-    tab_name,
-    root_category,
+    category_id, // ✅ New UUID reference
+    tab_name, // Keep for backward compatibility
+    root_category, // Keep for backward compatibility
     // Add recurrence fields
     recurrence_type,
     recurrence_interval,
@@ -99,25 +102,26 @@ export async function addOrgNode({
     throw insertError;
   }
 
-  // Fetch all nodes for this root_category to rebuild the complete tree
+  // Fetch all nodes for this category_id to rebuild the complete tree
   const { data: allNodes, error: fetchError } = await supabase
     .from("org_nodes")
     .select("*")
-    .eq("root_category", root_category)
-    .eq("user_id", user.id); // Filter by user_id
+    .eq("category_id", category_id)
+    .eq("user_id", user.id);
 
   if (fetchError) throw fetchError;
 
   const typedData = allNodes as OrgNodeRow[];
   const tree = buildOrgTree(typedData ?? []);
 
-  // Return the complete tree for this root_category
+  // Return the complete tree for this category (using root_category name for backward compatibility)
   return (
     tree[root_category] ?? {
       id: 0,
       name: root_category,
       type: "category",
       root_category,
+      category_id,
       children: [],
     }
   );

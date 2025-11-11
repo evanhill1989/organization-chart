@@ -3,7 +3,7 @@ import type { OrgNodeRow } from "../types/orgChart";
 import { buildOrgTree } from "./buildOrgTree";
 import { supabase } from "./data/supabaseClient";
 
-export async function fetchOrgTree(tabName: string) {
+export async function fetchOrgTree(categoryId: string) {
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -11,12 +11,25 @@ export async function fetchOrgTree(tabName: string) {
     throw new Error("User not authenticated");
   }
 
+  // First, validate that the category exists and belongs to the user
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .select("id, name, user_id")
+    .eq("id", categoryId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (categoryError || !category) {
+    throw new Error("Category not found or access denied");
+  }
+
+  // Fetch org nodes for this category
   const { data, error } = await supabase
     .from("org_nodes")
     .select("*")
-    .eq("root_category", tabName)
-    .eq("user_id", user.id) // Filter by user_id
-    .not("is_completed", "is", true); // ✅ Already filtering out completed tasks
+    .eq("category_id", categoryId)
+    .eq("user_id", user.id)
+    .not("is_completed", "is", true); // Filter out completed tasks
 
   const typedData = data as OrgNodeRow[];
 
@@ -24,13 +37,15 @@ export async function fetchOrgTree(tabName: string) {
 
   const tree = buildOrgTree(typedData ?? []);
 
-  // Always return a valid node (or a default empty node if not found)
+  // Return the tree for this category (using category name as key)
+  // or return a default empty node
   return (
-    tree[tabName] ?? {
+    tree[category.name] ?? {
       id: 0,
-      name: tabName,
+      name: category.name,
       type: "category",
-      root_category: tabName,
+      root_category: category.name, // Keep for backward compatibility
+      category_id: categoryId,
       children: [],
     }
   );

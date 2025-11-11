@@ -6,7 +6,7 @@ import { QUERY_KEYS } from "../lib/queryKeys";
 import type { OrgNode } from "../types/orgChart";
 
 // Custom hook for deleting a node with optimistic update
-export function useDeleteOrgNode(root_category: string) {
+export function useDeleteOrgNode(categoryId: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -18,12 +18,12 @@ export function useDeleteOrgNode(root_category: string) {
     onMutate: async (nodeId: number) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        queryKey: QUERY_KEYS.orgTree(root_category),
+        queryKey: QUERY_KEYS.orgTree(categoryId),
       });
 
       // Snapshot the previous value
       const previousTree = queryClient.getQueryData<OrgNode>(
-        QUERY_KEYS.orgTree(root_category)
+        QUERY_KEYS.orgTree(categoryId)
       );
 
       if (!previousTree) {
@@ -38,7 +38,7 @@ export function useDeleteOrgNode(root_category: string) {
       }
 
       // Optimistically update the cache
-      queryClient.setQueryData(QUERY_KEYS.orgTree(root_category), newTree);
+      queryClient.setQueryData(QUERY_KEYS.orgTree(categoryId), newTree);
 
       return { previousTree };
     },
@@ -54,7 +54,7 @@ export function useDeleteOrgNode(root_category: string) {
       console.log(nodeId);
       if (context?.previousTree) {
         queryClient.setQueryData(
-          QUERY_KEYS.orgTree(root_category),
+          QUERY_KEYS.orgTree(categoryId),
           context.previousTree
         );
       }
@@ -63,10 +63,14 @@ export function useDeleteOrgNode(root_category: string) {
     onSettled: () => {
       // Always refetch to ensure consistency with server
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.orgTree(root_category),
+        queryKey: QUERY_KEYS.orgTree(categoryId),
       });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.recentTasks(),
+      });
+      // Invalidate category node counts
+      queryClient.invalidateQueries({
+        queryKey: ["categoryNodeCounts"],
       });
     },
   });

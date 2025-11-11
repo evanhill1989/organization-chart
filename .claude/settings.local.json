@@ -6,7 +6,8 @@
       "Bash(npm run typegen:*)",
       "Bash(npx tsc:*)",
       "Bash(find:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

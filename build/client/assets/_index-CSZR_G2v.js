@@ -1,0 +1,1 @@
+import{w as t,p as o,y as n}from"./chunk-PVWAREVJ-C9qE2fA-.js";import{P as e}from"./ProtectedRoute-C6dujsSR.js";import"./AuthContext-BGMu_9un.js";import"./supabaseClient-BIEPa1cA.js";const m=t(function(){return o.jsx(e,{children:o.jsx(n,{to:"/food-planning/meal-plan",replace:!0})})});export{m as default};

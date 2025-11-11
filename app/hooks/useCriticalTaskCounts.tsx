@@ -1,15 +1,18 @@
 // app/hooks/useCriticalTaskCounts.tsx
 import { useQueries } from "@tanstack/react-query";
 import { supabase } from "../lib/data/supabaseClient";
-import { TABS } from "../lib/consts/TABS";
 import { QUERY_KEYS } from "../lib/queryKeys";
 import { calculateUrgencyLevel } from "../lib/urgencyUtils";
+import { useCategoriesQuery } from "./useCategoriesQuery";
 
 export function useCriticalTaskCounts() {
-  // Fetch Critical task counts for all tabs in parallel
+  // Fetch user's categories first
+  const { data: categories } = useCategoriesQuery();
+
+  // Fetch Critical task counts for all categories in parallel
   const results = useQueries({
-    queries: TABS.map((tab) => ({
-      queryKey: QUERY_KEYS.criticalTaskCount(tab),
+    queries: (categories || []).map((category) => ({
+      queryKey: QUERY_KEYS.criticalTaskCount(category.name),
       queryFn: async () => {
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
@@ -22,8 +25,8 @@ export function useCriticalTaskCounts() {
           .from("org_nodes")
           .select("deadline, completion_time, unique_days_required")
           .eq("type", "task")
-          .eq("root_category", tab)
-          .eq("user_id", user.id) // Filter by user_id
+          .eq("category_id", category.id) // ✅ Now querying by category_id
+          .eq("user_id", user.id)
           .not("deadline", "is", null)
           .not("completion_time", "is", null)
           .not("unique_days_required", "is", null)
@@ -45,15 +48,18 @@ export function useCriticalTaskCounts() {
       },
       staleTime: 2 * 60 * 1000, // Cache for 2 minutes
       gcTime: 5 * 60 * 1000, // Keep in memory for 5 minutes
+      enabled: !!categories, // Only run when categories are loaded
     })),
     combine: (results) => {
-      // Transform array of results into object keyed by tab name
+      // Transform array of results into object keyed by category name
       const counts: Record<string, number> = {};
       const isLoading = results.some((result) => result.isLoading);
       const hasError = results.some((result) => result.error);
 
       results.forEach((result, index) => {
-        counts[TABS[index]] = result.data || 0;
+        if (categories && categories[index]) {
+          counts[categories[index].name] = result.data || 0;
+        }
       });
 
       return {
