@@ -47,12 +47,21 @@ type Pages = {
       "tabName": string;
     };
   };
+  "/food-planning": {
+    params: {};
+  };
+  "/food-planning/meal-plan": {
+    params: {};
+  };
+  "/food-planning/grocery-list": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/login" | "/signup" | "/forgot-password" | "/reset-password" | "/auth/callback" | "/journal" | "/journal/new" | "/journal/entry/:entryId" | "/org-chart" | "/org-chart/:tabName";
+    page: "/" | "/login" | "/signup" | "/forgot-password" | "/reset-password" | "/auth/callback" | "/journal" | "/journal/new" | "/journal/entry/:entryId" | "/org-chart" | "/org-chart/:tabName" | "/food-planning" | "/food-planning/meal-plan" | "/food-planning/grocery-list";
   };
   "./routes/_index.tsx": {
     id: "routes/_index";
@@ -97,5 +106,17 @@ type RouteFiles = {
   "./routes/org-chart/$tabName.tsx": {
     id: "routes/org-chart/$tabName";
     page: "/org-chart/:tabName";
+  };
+  "./routes/food-planning/_index.tsx": {
+    id: "routes/food-planning/_index";
+    page: "/food-planning";
+  };
+  "./routes/food-planning/meal-plan.tsx": {
+    id: "routes/food-planning/meal-plan";
+    page: "/food-planning/meal-plan";
+  };
+  "./routes/food-planning/grocery-list.tsx": {
+    id: "routes/food-planning/grocery-list";
+    page: "/food-planning/grocery-list";
   };
 };

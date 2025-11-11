@@ -19,4 +19,9 @@ export default [
   // Org chart routes
   route("org-chart", "./routes/org-chart/_index.tsx"),
   route("org-chart/:tabName", "./routes/org-chart/$tabName.tsx"),
+
+  // Food planning routes
+  route("food-planning", "./routes/food-planning/_index.tsx"),
+  route("food-planning/meal-plan", "./routes/food-planning/meal-plan.tsx"),
+  route("food-planning/grocery-list", "./routes/food-planning/grocery-list.tsx"),
 ] satisfies RouteConfig;

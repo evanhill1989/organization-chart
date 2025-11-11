@@ -15,14 +15,6 @@ const queryClient = new QueryClient();
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  // Auto-redirect authenticated users to org-chart
-  useEffect(() => {
-    if (!loading && user) {
-      navigate("/org-chart");
-    }
-  }, [user, loading, navigate]);
 
   // Show loading state while checking authentication
   if (loading) {
@@ -35,7 +27,7 @@ export default function Dashboard() {
     );
   }
 
-  // Show landing page for unauthenticated users
+  // Show landing page
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen w-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
@@ -47,6 +39,28 @@ export default function Dashboard() {
             >
               Home
             </Link>
+            {user && (
+              <>
+                <Link
+                  to="/org-chart"
+                  className="px-6 py-3 text-lg font-medium text-white hover:text-blue-400 transition-colors"
+                >
+                  Org Chart
+                </Link>
+                <Link
+                  to="/journal"
+                  className="px-6 py-3 text-lg font-medium text-white hover:text-blue-400 transition-colors"
+                >
+                  Journal
+                </Link>
+                <Link
+                  to="/food-planning"
+                  className="px-6 py-3 text-lg font-medium text-white hover:text-blue-400 transition-colors"
+                >
+                  Food Planning
+                </Link>
+              </>
+            )}
           </div>
 
           <DarkModeToggle />
@@ -75,6 +89,30 @@ export default function Dashboard() {
                   className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors min-w-[150px]"
                 >
                   Sign Up
+                </Link>
+              </div>
+            )}
+
+            {/* Feature links for authenticated users */}
+            {user && (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link
+                  to="/org-chart"
+                  className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[150px]"
+                >
+                  Org Chart
+                </Link>
+                <Link
+                  to="/journal"
+                  className="bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors min-w-[150px]"
+                >
+                  Journal
+                </Link>
+                <Link
+                  to="/food-planning"
+                  className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors min-w-[150px]"
+                >
+                  Food Planning
                 </Link>
               </div>
             )}
