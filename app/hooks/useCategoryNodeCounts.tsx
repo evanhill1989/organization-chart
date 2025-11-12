@@ -2,11 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/data/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
-interface CategoryNodeCount {
-  category_id: string;
-  count: number;
-}
-
 // Fetch node counts per category for the current user
 async function fetchCategoryNodeCounts(
   userId: string

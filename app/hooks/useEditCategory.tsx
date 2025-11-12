@@ -3,13 +3,6 @@ import { editCategory } from "../lib/categories/editCategory";
 import { QUERY_KEYS } from "../lib/queryKeys";
 import type { Category } from "../types/orgChart";
 
-interface EditCategoryInput {
-  id: string;
-  name?: string;
-  description?: string;
-  color?: string;
-}
-
 export function useEditCategory() {
   const queryClient = useQueryClient();
 

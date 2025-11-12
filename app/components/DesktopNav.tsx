@@ -5,7 +5,6 @@ import RecentTasksDropdown from "./tasks/RecentTasksDropdown";
 import { Link } from "react-router";
 import DarkModeToggle from "./ui/DarkModeToggle";
 import { useAuth } from "../context/AuthContext";
-import SecondaryNav from "./ui/SecondaryNav";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 export default function DesktopNav({
@@ -13,6 +12,7 @@ export default function DesktopNav({
   onOpenQuickAdd,
   onOpenHamburger,
   onRecentTaskClick,
+  onTaskSelect,
 }) {
   const { user, signOut } = useAuth();
 
@@ -106,12 +106,6 @@ export default function DesktopNav({
           </div>
         </div>
       </div>
-      {/* Secondary Navigation - Category Tabs (Desktop only) */}
-      {!isMobile && (
-        <div className="">
-          <SecondaryNav activeTab="" variant="desktop" />
-        </div>
-      )}
     </div>
   );
 }

@@ -24,7 +24,7 @@ export default function CategoryTemplateModal({
 
     try {
       // Create all categories from the template
-      for (const [index, category] of selectedTemplate.categories.entries()) {
+      for (const category of selectedTemplate.categories) {
         await addCategoryMutation.mutateAsync({
           name: category.name,
           description: category.description,

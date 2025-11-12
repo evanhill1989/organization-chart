@@ -101,7 +101,7 @@ export default function RecentTasksDropdown({
                         <div className="flex-1">
                           <p className="font-medium text-white">{task.name}</p>
                           <p className="text-xs text-gray-400">
-                            {task.root_category}
+                            {task.category_name}
                             {task.deadline && (
                               <>
                                 {" "}

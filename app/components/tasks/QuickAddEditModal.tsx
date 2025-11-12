@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { OrgNodeRow } from "../../types/orgChart";
 import TaskForm from "./TaskForm";
 
@@ -66,7 +66,7 @@ export default function QuickAddEditModal({
   };
 
   // Fetch all nodes and tasks
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -124,10 +124,10 @@ export default function QuickAddEditModal({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Load task for editing
-  const loadTaskForEditing = async (taskId: number) => {
+  const loadTaskForEditing = useCallback(async (taskId: number) => {
     try {
       const { data: task, error } = await supabase
         .from("org_nodes")
@@ -152,7 +152,7 @@ export default function QuickAddEditModal({
       console.error("Error loading task:", err);
       setError("Failed to load task data");
     }
-  };
+  }, []);
 
   // Handle action mode change
   const handleActionModeChange = (mode: ActionMode) => {
@@ -170,7 +170,7 @@ export default function QuickAddEditModal({
   };
 
   // Handle task selection for edit mode
-  const handleTaskSelection = async (taskId: number | "new" | "") => {
+  const handleTaskSelection = useCallback(async (taskId: number | "new" | "") => {
     setSelectedTask(taskId);
 
     if (taskId === "new") {
@@ -185,7 +185,7 @@ export default function QuickAddEditModal({
       setTaskForEditing(null);
       setShowAddForm(false);
     }
-  };
+  }, [loadTaskForEditing]);
 
   // Handle successful add
 
@@ -200,7 +200,7 @@ export default function QuickAddEditModal({
     if (isOpen) {
       fetchData();
     }
-  }, [isOpen]);
+  }, [isOpen, fetchData]);
 
   // Handle initialTaskId when modal opens with a pre-selected task
   useEffect(() => {
@@ -208,7 +208,7 @@ export default function QuickAddEditModal({
       setActionMode("edit");
       handleTaskSelection(initialTaskId);
     }
-  }, [isOpen, initialTaskId]);
+  }, [isOpen, initialTaskId, handleTaskSelection]);
 
   // Don't render if closed
   if (!isOpen) {

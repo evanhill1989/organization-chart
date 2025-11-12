@@ -55,7 +55,7 @@ export default function TaskTable({ tasks, onTaskSelect }: TaskTableProps) {
               </td>
               <td className="px-3 py-2 text-sm text-gray-600">
                 <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                  {task.root_category}
+                  {task.category_name}
                 </span>
               </td>
               <td className="px-3 py-2 text-sm text-gray-600">

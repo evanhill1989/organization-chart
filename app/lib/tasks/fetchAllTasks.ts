@@ -9,6 +9,7 @@ export interface CompleteTaskData extends OrgNodeRow {
   daysUntilDeadline: number;
   isOverdue: boolean;
   urgencyLevel: number;
+  category_name: string;
 }
 
 /**
@@ -25,7 +26,7 @@ export async function fetchAllTasks(): Promise<CompleteTaskData[]> {
 
   const { data: tasks, error: fetchError } = await supabase
     .from("org_nodes")
-    .select("*")
+    .select("*, categories(name)")
     .eq("type", "task")
     .eq("user_id", user.id) // Filter by user_id
     .not("deadline", "is", null)
@@ -33,10 +34,15 @@ export async function fetchAllTasks(): Promise<CompleteTaskData[]> {
 
   if (fetchError) throw fetchError;
 
-  const typedTasks = tasks as OrgNodeRow[];
+  // Map to include category_name at top level
+  const tasksWithCategoryName = (tasks || []).map((task: OrgNodeRow & { categories?: { name: string } | null }) => ({
+    ...task,
+    category_name: task.categories?.name || "Unknown",
+    categories: undefined,
+  })) as OrgNodeRow[];
 
   // Enrich with deadline info and urgency levels
-  const enrichedTasks = enrichTasksWithDeadlineInfo(typedTasks).map((task) => ({
+  const enrichedTasks = enrichTasksWithDeadlineInfo(tasksWithCategoryName).map((task) => ({
     ...task,
     urgencyLevel: calculateUrgencyLevel(
       task.deadline,

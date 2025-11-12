@@ -26,7 +26,7 @@ export async function fetchRecentTasks(): Promise<EnrichedTask[]> {
   if (error) throw error;
 
   // Map to include category_name at top level
-  return (data || []).map((task: any) => ({
+  return (data || []).map((task: OrgNodeRow & { categories?: { name: string } | null }) => ({
     ...task,
     category_name: task.categories?.name || "Unknown",
     categories: undefined, // Remove nested object

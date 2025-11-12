@@ -16,7 +16,6 @@ import {
   getImportanceGlowClasses,
 } from "../lib/importanceUtils";
 import CategoryForm from "./ui/CategoryForm";
-import { useDeleteCategory } from "../hooks/useCategories";
 
 type OrgChartNodeProps = {
   node: OrgNode;
@@ -55,8 +54,6 @@ export default function OrgChartNode({
 
   const handleTaskFormClose = () => setShowTaskForm(false);
   const handleCategoryFormClose = () => setShowCategoryForm(false);
-
-  const deleteCategory = useDeleteCategory();
 
   // ✅ Handle root node differently (desktop only)
   if (isRoot) {

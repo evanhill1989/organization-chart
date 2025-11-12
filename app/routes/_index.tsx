@@ -1,7 +1,6 @@
 // app/routes/_index.tsx
 
-import { Link, useNavigate } from "react-router";
-import { useEffect } from "react";
+import { Link } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Register the MotionPathPlugin
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";

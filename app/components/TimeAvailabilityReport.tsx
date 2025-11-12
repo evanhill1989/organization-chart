@@ -1,5 +1,5 @@
 // app/components/TimeAvailabilityReport.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/data/supabaseClient";
 import type { OrgNodeRow } from "../types/orgChart";
 import type { TimeReportData, ImportanceFilter } from "../lib/timeReportUtils";
@@ -36,7 +36,7 @@ export default function TimeAvailabilityReport() {
     useState<ImportanceFilter>("All levels");
 
   // Fetch and calculate report data
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -50,7 +50,7 @@ export default function TimeAvailabilityReport() {
       // Disregard completed task
       const { data: allTasks, error: fetchError } = await supabase
         .from("org_nodes")
-        .select("*")
+        .select("*, categories(name)")
         .eq("type", "task")
         .gte("deadline", startDate.toISOString().split("T")[0])
         .not("deadline", "is", null)
@@ -59,7 +59,14 @@ export default function TimeAvailabilityReport() {
 
       if (fetchError) throw fetchError;
 
-      const filteredTasks = (allTasks as OrgNodeRow[]).filter((task) =>
+      // Map to include category_name at top level
+      const tasksWithCategoryName = (allTasks || []).map((task: OrgNodeRow & { categories?: { name: string } | null }) => ({
+        ...task,
+        category_name: task.categories?.name || "Unknown",
+        categories: undefined,
+      })) as OrgNodeRow[];
+
+      const filteredTasks = tasksWithCategoryName.filter((task) =>
         matchesImportanceFilter(task.importance, importanceFilter),
       );
 
@@ -90,11 +97,11 @@ export default function TimeAvailabilityReport() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dateFilter, customEndDate, importanceFilter]);
 
   useEffect(() => {
     fetchReportData();
-  }, [dateFilter, customEndDate, importanceFilter]);
+  }, [dateFilter, customEndDate, importanceFilter, fetchReportData]);
 
   // Loading state
   if (isLoading) {
@@ -343,7 +350,7 @@ export default function TimeAvailabilityReport() {
                 Level {task.importance || 1}
               </td>
               <td className="px-4 py-2 text-sm text-gray-600">
-                {task.root_category}
+                {task.category_name}
               </td>
             </tr>
           ))}

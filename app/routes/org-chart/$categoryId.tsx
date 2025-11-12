@@ -17,6 +17,7 @@ import { fetchOrgTree } from "../../lib/fetchOrgTree";
 import TasksDueToday from "../../components/tasks/TasksDueToday";
 import MobileHamburgerMenu from "../../components/ui/MobileHamburgerMenu";
 import MobileTimeReportModal from "../../components/ui/MobileTimeReportModal";
+import SecondaryNav from "../../components/ui/SecondaryNav";
 
 import { useIsMobile } from "../../hooks/useIsMobile";
 import MobileNav from "../../components/MobileNav";
@@ -47,6 +48,12 @@ function OrgChartContent() {
   // Handler for clicking on a recent task
   const handleRecentTaskClick = (task: { id: number }) => {
     setSelectedTaskId(task.id);
+    setShowQuickAddEdit(true);
+  };
+
+  // Handler for selecting a task from global search
+  const handleTaskSelect = (taskId: number) => {
+    setSelectedTaskId(taskId);
     setShowQuickAddEdit(true);
   };
 
@@ -92,6 +99,7 @@ function OrgChartContent() {
             onOpenTimeReport={() => setShowTimeReport(true)}
             onOpenQuickAdd={() => setShowQuickAddEdit(true)}
             onOpenHamburger={() => setShowHamburgerMenu(true)}
+            onTaskSelect={handleTaskSelect}
           />
         ) : (
           <DesktopNav
@@ -99,11 +107,17 @@ function OrgChartContent() {
             onOpenQuickAdd={() => setShowQuickAddEdit(true)}
             onOpenHamburger={() => setShowHamburgerMenu(true)}
             onRecentTaskClick={handleRecentTaskClick}
+            onTaskSelect={handleTaskSelect}
           />
         )}
       </nav>
 
-      {/* Secondary Navigation - Category Tabs (Desktop only) */}
+      {/* Secondary Navigation - Search bar for mobile and desktop */}
+      <SecondaryNav
+        activeTab={categoryId}
+        variant={isMobile ? "mobile" : "desktop"}
+        onTaskSelect={handleTaskSelect}
+      />
 
       {/* Main Content */}
       <main className="main p-4">

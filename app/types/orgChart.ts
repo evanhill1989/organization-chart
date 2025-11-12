@@ -96,10 +96,7 @@ export interface OrgNodeRow {
   user_id: string;
 }
 
-export type OrgChartRootProps = {
-  tree: OrgNode;
-  tab_name: string;
-};
+// OrgChartRootProps removed - each component defines its own interface
 
 // export type Task = {
 //   id: string;

@@ -6,6 +6,7 @@ export interface EnrichedTask extends OrgNodeRow {
   urgencyLevel: number;
   daysUntilDeadline: number;
   isOverdue: boolean;
+  category_name: string;
 }
 
 // Enrich tasks with urgency and deadline calculations

@@ -45,7 +45,7 @@ export default function TaskListItem({ task, onClick }: TaskListItemProps) {
           )}
           <div className="flex items-center space-x-4 mt-2">
             <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-              {task.root_category}
+              {task.category_name}
             </span>
             {task.completion_time && (
               <span className="text-xs text-gray-500">
