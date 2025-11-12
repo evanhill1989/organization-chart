@@ -5,18 +5,14 @@ import RecentTasksDropdown from "./tasks/RecentTasksDropdown";
 import { Link } from "react-router";
 import DarkModeToggle from "./ui/DarkModeToggle";
 import { useAuth } from "../context/AuthContext";
-import { useIsMobile } from "../hooks/useIsMobile";
 
 export default function DesktopNav({
   onOpenTasksDueToday,
   onOpenQuickAdd,
   onOpenHamburger,
   onRecentTaskClick,
-  onTaskSelect,
 }) {
   const { user, signOut } = useAuth();
-
-  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     await signOut();

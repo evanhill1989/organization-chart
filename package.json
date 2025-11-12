@@ -8,7 +8,10 @@
     "build": "react-router build",
     "start": "react-router-serve ./build/server/index.js",
     "typegen": "react-router typegen",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "predeploy": "npm run typecheck && npm run lint && npm run build",
+    "deploy:check": "npm run predeploy"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

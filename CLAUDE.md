@@ -39,9 +39,24 @@ npm run start
 # Run linter
 npm run lint
 
+# Run TypeScript type checking
+npm run typecheck
+
 # Generate React Router types
 npm run typegen
+
+# Pre-deployment check (typecheck + lint + build)
+npm run deploy:check
 ```
+
+## Deployment
+
+Before deploying to Vercel, always run:
+```bash
+npm run deploy:check
+```
+
+This ensures TypeScript, ESLint, and build all pass without errors. See [DEPLOYMENT.md](./DEPLOYMENT.md) for the complete deployment guide and checklist.
 
 ## Architecture & Data Flow
 

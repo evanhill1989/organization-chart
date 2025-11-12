@@ -82,7 +82,7 @@ export default function SearchResults({
           <div className="sticky top-0 bg-gray-800/90 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
             Categories
           </div>
-          {categories.map((result, index) => {
+          {categories.map((result) => {
             const globalIndex = results.indexOf(result);
             return (
               <ResultItem
