@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/data/supabaseClient";
 import { QUERY_KEYS } from "../lib/queryKeys";
 import type { OrgNodeRow } from "../types/orgChart";
+import { getOrCreateQuickInbox } from "../lib/getOrCreateQuickInbox";
 
 export const useTask = (taskId?: number) => {
   return useQuery({
@@ -116,6 +117,82 @@ export const useDeleteTask = () => {
     },
     onError: (error) => {
       console.error("❌ Delete task error:", error);
+    },
+  });
+};
+
+/**
+ * Hook for quick-adding tasks with minimal friction.
+ * Automatically creates tasks in the "Quick Inbox" under Orphans category
+ * with sensible defaults.
+ */
+export const useQuickAddTask = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskName: string) => {
+      if (!taskName || taskName.trim() === "") {
+        throw new Error("Task name is required");
+      }
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Get or create the Quick Inbox parent
+      const quickInboxId = await getOrCreateQuickInbox();
+
+      // Get the Orphans category UUID
+      const { data: orphansCategory, error: categoryError } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("name", "Orphans")
+        .single();
+
+      if (categoryError || !orphansCategory) {
+        throw new Error("Orphans category not found");
+      }
+
+      // Create task with auto-populated defaults
+      const { data, error } = await supabase
+        .from("org_nodes")
+        .insert({
+          name: taskName.trim(),
+          type: "task",
+          user_id: user.id,
+          parent_id: quickInboxId,
+          category_id: orphansCategory.id,
+          importance: 1, // Minimum importance
+          completion_time: 1, // 1 hour default
+          unique_days_required: 1, // 1 day default
+          details: "",
+          deadline: null,
+          is_completed: false,
+          recurrence_type: "none",
+          is_recurring_template: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as OrgNodeRow;
+    },
+    onSuccess: (data) => {
+      // Update individual task cache
+      queryClient.setQueryData(QUERY_KEYS.task(data.id), data);
+
+      // Invalidate relevant caches
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allOrgTrees() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allTasks() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.urgentTaskCount() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allCategories() });
+    },
+    onError: (error) => {
+      console.error("❌ Quick add task error:", error);
     },
   });
 };

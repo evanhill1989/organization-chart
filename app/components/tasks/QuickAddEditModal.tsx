@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { OrgNodeRow } from "../../types/orgChart";
 import TaskForm from "./TaskForm";
+import { QuickAddInput } from "./QuickAddInput";
 
 import { supabase } from "../../lib/data/supabaseClient";
 
@@ -19,7 +20,7 @@ interface FlatNode {
   path: string;
 }
 
-type ActionMode = "add" | "edit";
+type ActionMode = "quickAdd" | "add" | "edit";
 
 export default function QuickAddEditModal({
   isOpen,
@@ -27,7 +28,7 @@ export default function QuickAddEditModal({
   initialTaskId,
 }: QuickAddEditModalProps) {
   // Main state
-  const [actionMode, setActionMode] = useState<ActionMode>("add");
+  const [actionMode, setActionMode] = useState<ActionMode>("quickAdd");
   const [allNodes, setAllNodes] = useState<FlatNode[]>([]);
   const [allTasks, setAllTasks] = useState<FlatNode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -238,8 +239,19 @@ export default function QuickAddEditModal({
             <div className="flex space-x-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-700">
               <button
                 type="button"
+                onClick={() => handleActionModeChange("quickAdd")}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  actionMode === "quickAdd"
+                    ? "bg-white text-blue-600 shadow-sm dark:bg-gray-600 dark:text-blue-400"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+                }`}
+              >
+                Quick Add
+              </button>
+              <button
+                type="button"
                 onClick={() => handleActionModeChange("add")}
-                className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   actionMode === "add"
                     ? "bg-white text-blue-600 shadow-sm dark:bg-gray-600 dark:text-blue-400"
                     : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
@@ -250,7 +262,7 @@ export default function QuickAddEditModal({
               <button
                 type="button"
                 onClick={() => handleActionModeChange("edit")}
-                className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   actionMode === "edit"
                     ? "bg-white text-blue-600 shadow-sm dark:bg-gray-600 dark:text-blue-400"
                     : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
@@ -279,6 +291,11 @@ export default function QuickAddEditModal({
           {/* Content */}
           {!isLoading && (
             <div className="space-y-4 p-6">
+              {/* QUICK ADD MODE */}
+              {actionMode === "quickAdd" && (
+                <QuickAddInput />
+              )}
+
               {/* ADD MODE */}
               {actionMode === "add" && (
                 <>

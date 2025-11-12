@@ -8,6 +8,8 @@ import { createRecurringInstance } from "../../lib/createRecurringInstance";
 import { useTrackTaskView } from "../../hooks/useTrackTaskView";
 import { useEditOrgNode } from "../../hooks/useEditOrgNode";
 import { generateGoogleCalendarUrl } from "../../lib/googleCalendar";
+import { useCategoriesQuery } from "../../hooks/useCategoriesQuery";
+import { supabase } from "../../lib/data/supabaseClient";
 
 interface TaskFormProps {
   task?: OrgNodeRow; // undefined = creating new
@@ -67,10 +69,21 @@ export default function TaskForm({
       is_recurring_template: false,
     });
 
+  // Category/Parent selection states (for editing)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    task?.category_id || categoryId
+  );
+  const [selectedParentId, setSelectedParentId] = useState<number | undefined>(
+    task?.parent_id || parentId
+  );
+  const [availableParents, setAvailableParents] = useState<OrgNodeRow[]>([]);
+  const [isLoadingParents, setIsLoadingParents] = useState(false);
+
   const saveTask = useSaveTask();
   const deleteTask = useDeleteTask();
   const trackTaskView = useTrackTaskView();
   const editOrgNode = useEditOrgNode(task?.category_id || categoryId);
+  const categoriesQuery = useCategoriesQuery();
 
   const isCreating = !task;
   const isEditing = !!task;
@@ -125,6 +138,46 @@ export default function TaskForm({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task?.id]);
+
+  // Fetch available parent categories when selectedCategoryId changes
+  useEffect(() => {
+    const fetchParents = async () => {
+      if (!selectedCategoryId) return;
+
+      setIsLoadingParents(true);
+      try {
+        const { data, error } = await supabase
+          .from("org_nodes")
+          .select("*")
+          .eq("category_id", selectedCategoryId)
+          .eq("type", "category")
+          .order("name");
+
+        if (error) throw error;
+        setAvailableParents((data as OrgNodeRow[]) || []);
+      } catch (error) {
+        console.error("Failed to fetch parent categories:", error);
+        setAvailableParents([]);
+      } finally {
+        setIsLoadingParents(false);
+      }
+    };
+
+    fetchParents();
+  }, [selectedCategoryId]);
+
+  // Helper to check if task is in Orphans category
+  const isOrphaned = () => {
+    const orphansCategory = categoriesQuery.data?.find(
+      (cat) => cat.name === "Orphans"
+    );
+    return orphansCategory && selectedCategoryId === orphansCategory.id;
+  };
+
+  // Helper to get category name by ID
+  const getCategoryNameById = (catId: string) => {
+    return categoriesQuery.data?.find((cat) => cat.id === catId)?.name || "Unknown";
+  };
   // ✅ Handle completion checkbox change (no automatic saving)
   const handleCompletionChange = (newCompletedState: boolean) => {
     setIsCompleted(newCompletedState);
@@ -223,17 +276,17 @@ export default function TaskForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Determine parent context - use props for new tasks, existing data for edits
-    const effectiveParentId = task?.parent_id ?? parentId;
-    const effectiveCategoryId = task?.category_id ?? categoryId;
+    // Use selected values for category and parent (allows editing to move tasks)
+    const effectiveParentId = selectedParentId ?? parentId;
+    const effectiveCategoryId = selectedCategoryId ?? categoryId;
 
-    // Validation for new tasks
-    if (isCreating && (!effectiveParentId || !effectiveCategoryId)) {
-      console.error("❌ Missing required parent context for new task:", {
+    // Validation
+    if (!effectiveParentId || !effectiveCategoryId) {
+      console.error("❌ Missing required parent context for task:", {
         parentId: effectiveParentId,
         categoryId: effectiveCategoryId,
       });
-      alert("Missing parent information. Please try again.");
+      alert("Please select a category and parent location for this task.");
       return;
     }
 
@@ -338,6 +391,105 @@ export default function TaskForm({
             ×
           </button>
         </div>
+
+        {/* ⚠️ Orphaned Task Warning + Category/Parent Selection */}
+        {isEditing && isOrphaned() && (
+          <div className="mb-4 rounded-lg border-2 border-amber-400 bg-amber-50 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <svg
+                className="h-6 w-6 text-amber-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              <h4 className="font-semibold text-amber-900">
+                Quick Task - Needs Organization
+              </h4>
+            </div>
+            <p className="mb-3 text-sm text-amber-800">
+              This task was created with Quick Add and needs to be moved to a proper category.
+            </p>
+          </div>
+        )}
+
+        {/* Category and Parent Selection - Only show when editing */}
+        {isEditing && (
+          <div className="mb-4 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h4 className="font-semibold text-gray-700">Task Location</h4>
+
+            {/* Category Selection */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Category *
+              </label>
+              <select
+                className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                value={selectedCategoryId}
+                onChange={(e) => {
+                  setSelectedCategoryId(e.target.value);
+                  setSelectedParentId(undefined); // Reset parent when category changes
+                }}
+                disabled={isCompleted && !completionChanged}
+              >
+                <option value="">Select a category...</option>
+                {categoriesQuery.data?.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Parent Selection */}
+            {selectedCategoryId && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Parent Category *
+                </label>
+                {isLoadingParents ? (
+                  <div className="flex items-center gap-2 p-2 text-sm text-gray-500">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+                    Loading categories...
+                  </div>
+                ) : availableParents.length === 0 ? (
+                  <p className="p-2 text-sm text-amber-600">
+                    No parent categories available in this category. Please select a different category.
+                  </p>
+                ) : (
+                  <select
+                    className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    value={selectedParentId || ""}
+                    onChange={(e) =>
+                      setSelectedParentId(e.target.value ? Number(e.target.value) : undefined)
+                    }
+                    disabled={isCompleted && !completionChanged}
+                  >
+                    <option value="">Select a parent...</option>
+                    {availableParents.map((parent) => (
+                      <option key={parent.id} value={parent.id}>
+                        {parent.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+
+            {selectedCategoryId && selectedParentId && (
+              <p className="text-xs text-gray-500">
+                Task will be moved to: {getCategoryNameById(selectedCategoryId)} {" > "}
+                {availableParents.find((p) => p.id === selectedParentId)?.name}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ✅ Completion Section - Only show for existing tasks */}
         {isEditing && (
